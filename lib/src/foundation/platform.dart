@@ -2,9 +2,6 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-import '_platform_io.dart'
-  if (dart.library.html) '_platform_web.dart' as _platform;
-
 /// The [TargetPlatform] that matches the platform on which the framework is
 /// currently executing.
 ///
@@ -36,7 +33,7 @@ import '_platform_io.dart'
 // that would mean we'd be stuck with that platform forever emulating the other,
 // and we'd never be able to introduce dedicated behavior for that platform
 // (since doing so would be a big breaking change).
-TargetPlatform get defaultTargetPlatform => _platform.defaultTargetPlatform;
+TargetPlatform get defaultTargetPlatform => TargetPlatform.android;
 
 /// The platform that user interaction should adapt to target.
 ///

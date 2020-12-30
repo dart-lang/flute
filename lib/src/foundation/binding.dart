@@ -4,7 +4,7 @@
 
 import 'dart:convert' show json;
 import 'dart:developer' as developer;
-import 'dart:io' show exit;
+import 'package:flute/io.dart' show exit;
 import 'package:flute/ui.dart' as ui show SingletonFlutterWindow, Brightness, PlatformDispatcher, window;
 // Before adding any more dart:ui imports, please read the README.
 

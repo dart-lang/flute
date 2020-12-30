@@ -5,7 +5,6 @@
 
 import 'dart:async';
 import 'dart:convert';
-import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:flute/foundation.dart';
@@ -89,16 +88,10 @@ abstract class AssetBundle {
     // For strings larger than 50 KB, run the computation in an isolate to
     // avoid causing main thread jank.
     return compute(
-      unzip ? _utf8ZipDecode : _utf8Decode,
+      _utf8Decode,
       data,
       debugLabel: '${unzip ? "Unzip and ": ""}UTF8 decode for "$key"',
     );
-  }
-
-  static String _utf8ZipDecode(ByteData data) {
-    List<int> bytes = data.buffer.asUint8List();
-    bytes = gzip.decode(bytes);
-    return utf8.decode(bytes);
   }
 
   static String _utf8Decode(ByteData data) {
@@ -119,54 +112,6 @@ abstract class AssetBundle {
 
   @override
   String toString() => '${describeIdentity(this)}()';
-}
-
-/// An [AssetBundle] that loads resources over the network.
-///
-/// This asset bundle does not cache any resources, though the underlying
-/// network stack may implement some level of caching itself.
-class NetworkAssetBundle extends AssetBundle {
-  /// Creates an network asset bundle that resolves asset keys as URLs relative
-  /// to the given base URL.
-  NetworkAssetBundle(Uri baseUrl)
-    : _baseUrl = baseUrl,
-      _httpClient = HttpClient();
-
-  final Uri _baseUrl;
-  final HttpClient _httpClient;
-
-  Uri _urlFromKey(String key) => _baseUrl.resolve(key);
-
-  @override
-  Future<ByteData> load(String key) async {
-    final HttpClientRequest request = await _httpClient.getUrl(_urlFromKey(key));
-    final HttpClientResponse response = await request.close();
-    if (response.statusCode != HttpStatus.ok)
-      throw FlutterError.fromParts(<DiagnosticsNode>[
-        ErrorSummary('Unable to load asset: $key'),
-        IntProperty('HTTP status code', response.statusCode),
-      ]);
-    final Uint8List bytes = await consolidateHttpClientResponseBytes(response);
-    return bytes.buffer.asByteData();
-  }
-
-  /// Retrieve a string from the asset bundle, parse it with the given function,
-  /// and return the function's result.
-  ///
-  /// The result is not cached. The parser is run each time the resource is
-  /// fetched.
-  @override
-  Future<T> loadStructuredData<T>(String key, Future<T> parser(String value)) async {
-    assert(key != null);
-    assert(parser != null);
-    return parser(await loadString(key));
-  }
-
-  // TODO(ianh): Once the underlying network logic learns about caching, we
-  // should implement evict().
-
-  @override
-  String toString() => '${describeIdentity(this)}($_baseUrl)';
 }
 
 /// An [AssetBundle] that permanently caches string and structured resources

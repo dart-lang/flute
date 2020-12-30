@@ -1,4 +1,6 @@
+import 'dart:async';
 import 'package:flute/material.dart';
+import 'package:flute/scheduler.dart';
 
 void main() {
   runApp(MyApp());
@@ -26,13 +28,26 @@ class MyHomePage extends StatefulWidget {
   _MyHomePageState createState() => _MyHomePageState();
 }
 
-class _MyHomePageState extends State<MyHomePage> {
+class _MyHomePageState extends State<MyHomePage> with SingleTickerProviderStateMixin {
   int _counter = 0;
 
   void _incrementCounter() {
     setState(() {
       _counter++;
     });
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    AnimationController(
+      vsync: this,
+      duration: const Duration(hours: 5),
+    )
+    ..addListener(() {
+      _incrementCounter();
+    })
+    ..forward();
   }
 
   @override

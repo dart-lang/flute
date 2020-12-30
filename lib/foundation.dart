@@ -41,7 +41,6 @@ export 'src/foundation/binding.dart';
 export 'src/foundation/bitfield.dart';
 export 'src/foundation/change_notifier.dart';
 export 'src/foundation/collections.dart';
-export 'src/foundation/consolidate_response.dart';
 export 'src/foundation/constants.dart';
 export 'src/foundation/debug.dart';
 export 'src/foundation/diagnostics.dart';

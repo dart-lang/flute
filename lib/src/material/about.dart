@@ -3,7 +3,7 @@
 // found in the LICENSE file.
 
 import 'dart:developer' show Timeline, Flow;
-import 'dart:io' show Platform;
+import 'package:flute/io.dart' show Platform;
 
 import 'package:flute/foundation.dart';
 import 'package:flute/scheduler.dart';

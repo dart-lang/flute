@@ -3,7 +3,6 @@
 // found in the LICENSE file.
 
 import 'dart:async';
-import 'dart:io';
 import 'dart:typed_data';
 import 'package:flute/ui.dart' as ui show Codec;
 import 'package:flute/ui.dart' show Size, Locale, TextDirection, hashValues;
@@ -11,7 +10,6 @@ import 'package:flute/ui.dart' show Size, Locale, TextDirection, hashValues;
 import 'package:flute/foundation.dart';
 import 'package:flute/services.dart';
 
-import '_network_image_io.dart' as network_image;
 import 'binding.dart';
 import 'image_cache.dart';
 import 'image_stream.dart';
@@ -798,113 +796,6 @@ class ResizeImage extends ImageProvider<_SizeAwareCacheKey> {
     completer = Completer<_SizeAwareCacheKey>();
     return completer.future;
   }
-}
-
-/// Fetches the given URL from the network, associating it with the given scale.
-///
-/// The image will be cached regardless of cache headers from the server.
-///
-/// When a network image is used on the Web platform, the `cacheWidth` and
-/// `cacheHeight` parameters of the [DecoderCallback] are ignored as the Web
-/// engine delegates image decoding of network images to the Web, which does
-/// not support custom decode sizes.
-///
-/// See also:
-///
-///  * [Image.network] for a shorthand of an [Image] widget backed by [NetworkImage].
-// TODO(ianh): Find some way to honor cache headers to the extent that when the
-// last reference to an image is released, we proactively evict the image from
-// our cache if the headers describe the image as having expired at that point.
-abstract class NetworkImage extends ImageProvider<NetworkImage> {
-  /// Creates an object that fetches the image at the given URL.
-  ///
-  /// The arguments [url] and [scale] must not be null.
-  const factory NetworkImage(String url, { double scale, Map<String, String>? headers }) = network_image.NetworkImage;
-
-  /// The URL from which the image will be fetched.
-  String get url;
-
-  /// The scale to place in the [ImageInfo] object of the image.
-  double get scale;
-
-  /// The HTTP headers that will be used with [HttpClient.get] to fetch image from network.
-  ///
-  /// When running flutter on the web, headers are not used.
-  Map<String, String>? get headers;
-
-  @override
-  ImageStreamCompleter load(NetworkImage key, DecoderCallback decode);
-}
-
-/// Decodes the given [File] object as an image, associating it with the given
-/// scale.
-///
-/// The provider does not monitor the file for changes. If you expect the
-/// underlying data to change, you should call the [evict] method.
-///
-/// See also:
-///
-///  * [Image.file] for a shorthand of an [Image] widget backed by [FileImage].
-@immutable
-class FileImage extends ImageProvider<FileImage> {
-  /// Creates an object that decodes a [File] as an image.
-  ///
-  /// The arguments must not be null.
-  const FileImage(this.file, { this.scale = 1.0 })
-    : assert(file != null),
-      assert(scale != null);
-
-  /// The file to decode into an image.
-  final File file;
-
-  /// The scale to place in the [ImageInfo] object of the image.
-  final double scale;
-
-  @override
-  Future<FileImage> obtainKey(ImageConfiguration configuration) {
-    return SynchronousFuture<FileImage>(this);
-  }
-
-  @override
-  ImageStreamCompleter load(FileImage key, DecoderCallback decode) {
-    return MultiFrameImageStreamCompleter(
-      codec: _loadAsync(key, decode),
-      scale: key.scale,
-      debugLabel: key.file.path,
-      informationCollector: () sync* {
-        yield ErrorDescription('Path: ${file.path}');
-      },
-    );
-  }
-
-  Future<ui.Codec> _loadAsync(FileImage key, DecoderCallback decode) async {
-    assert(key == this);
-
-    final Uint8List bytes = await file.readAsBytes();
-
-    if (bytes.lengthInBytes == 0) {
-      // The file may become available later.
-      PaintingBinding.instance!.imageCache!.evict(key);
-      throw StateError('$file is empty and cannot be loaded as an image.');
-    }
-
-    return await decode(bytes);
-  }
-
-  @override
-  bool operator ==(Object other) {
-    if (other.runtimeType != runtimeType)
-      return false;
-    return other is FileImage
-        && other.file.path == file.path
-        && other.scale == scale;
-  }
-
-  @override
-  int get hashCode => hashValues(file.path, scale);
-
-  @override
-  String toString() => '${objectRuntimeType(this, 'FileImage')}("${file.path}", scale: $scale)';
 }
 
 /// Decodes the given [Uint8List] buffer as an image, associating it with the

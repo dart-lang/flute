@@ -3,7 +3,7 @@
 // found in the LICENSE file.
 
 import 'dart:async';
-import 'dart:io' show Platform;
+import 'package:flute/io.dart' show Platform;
 import 'package:flute/ui.dart' show
   FontWeight,
   Offset,

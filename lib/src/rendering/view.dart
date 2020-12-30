@@ -3,7 +3,7 @@
 // found in the LICENSE file.
 
 import 'dart:developer';
-import 'dart:io' show Platform;
+import 'package:flute/io.dart' show Platform;
 import 'package:flute/ui.dart' as ui show Scene, SceneBuilder, FlutterView;
 
 import 'package:flute/foundation.dart';

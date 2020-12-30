@@ -3,7 +3,7 @@
 // found in the LICENSE file.
 
 import 'dart:async';
-import 'dart:io' show File;
+import 'package:flute/io.dart' show File;
 import 'dart:typed_data';
 
 import 'package:flute/foundation.dart';
@@ -24,14 +24,12 @@ import 'ticker_provider.dart';
 export 'package:flute/painting.dart' show
   AssetImage,
   ExactAssetImage,
-  FileImage,
   FilterQuality,
   ImageConfiguration,
   ImageInfo,
   ImageStream,
   ImageProvider,
-  MemoryImage,
-  NetworkImage;
+  MemoryImage;
 
 /// Creates an [ImageConfiguration] based on the given [BuildContext] (and
 /// optionally size).
@@ -346,139 +344,6 @@ class Image extends StatefulWidget {
        assert(matchTextDirection != null),
        assert(isAntiAlias != null),
        super(key: key);
-
-  /// Creates a widget that displays an [ImageStream] obtained from the network.
-  ///
-  /// The [src], [scale], and [repeat] arguments must not be null.
-  ///
-  /// Either the [width] and [height] arguments should be specified, or the
-  /// widget should be placed in a context that sets tight layout constraints.
-  /// Otherwise, the image dimensions will change as the image is loaded, which
-  /// will result in ugly layout changes.
-  ///
-  /// All network images are cached regardless of HTTP headers.
-  ///
-  /// An optional [headers] argument can be used to send custom HTTP headers
-  /// with the image request.
-  ///
-  /// Use [filterQuality] to change the quality when scaling an image.
-  /// Use the [FilterQuality.low] quality setting to scale the image,
-  /// which corresponds to bilinear interpolation, rather than the default
-  /// [FilterQuality.none] which corresponds to nearest-neighbor.
-  ///
-  /// If [excludeFromSemantics] is true, then [semanticLabel] will be ignored.
-  ///
-  /// If [cacheWidth] or [cacheHeight] are provided, it indicates to the
-  /// engine that the image should be decoded at the specified size. The image
-  /// will be rendered to the constraints of the layout or [width] and [height]
-  /// regardless of these parameters. These parameters are primarily intended
-  /// to reduce the memory usage of [ImageCache].
-  ///
-  /// In the case where the network image is on the Web platform, the [cacheWidth]
-  /// and [cacheHeight] parameters are ignored as the web engine delegates
-  /// image decoding to the web which does not support custom decode sizes.
-  //
-  // TODO(garyq): We should eventually support custom decoding of network images
-  // on Web as well, see https://github.com/flutter/flutter/issues/42789.
-  Image.network(
-    String src, {
-    Key? key,
-    double scale = 1.0,
-    this.frameBuilder,
-    this.loadingBuilder,
-    this.errorBuilder,
-    this.semanticLabel,
-    this.excludeFromSemantics = false,
-    this.width,
-    this.height,
-    this.color,
-    this.colorBlendMode,
-    this.fit,
-    this.alignment = Alignment.center,
-    this.repeat = ImageRepeat.noRepeat,
-    this.centerSlice,
-    this.matchTextDirection = false,
-    this.gaplessPlayback = false,
-    this.filterQuality = FilterQuality.low,
-    this.isAntiAlias = false,
-    Map<String, String>? headers,
-    int? cacheWidth,
-    int? cacheHeight,
-  }) : image = ResizeImage.resizeIfNeeded(cacheWidth, cacheHeight, NetworkImage(src, scale: scale, headers: headers)),
-       assert(alignment != null),
-       assert(repeat != null),
-       assert(matchTextDirection != null),
-       assert(cacheWidth == null || cacheWidth > 0),
-       assert(cacheHeight == null || cacheHeight > 0),
-       assert(isAntiAlias != null),
-       super(key: key);
-
-  /// Creates a widget that displays an [ImageStream] obtained from a [File].
-  ///
-  /// The [file], [scale], and [repeat] arguments must not be null.
-  ///
-  /// Either the [width] and [height] arguments should be specified, or the
-  /// widget should be placed in a context that sets tight layout constraints.
-  /// Otherwise, the image dimensions will change as the image is loaded, which
-  /// will result in ugly layout changes.
-  ///
-  /// On Android, this may require the
-  /// `android.permission.READ_EXTERNAL_STORAGE` permission.
-  ///
-  /// Use [filterQuality] to change the quality when scaling an image.
-  /// Use the [FilterQuality.low] quality setting to scale the image,
-  /// which corresponds to bilinear interpolation, rather than the default
-  /// [FilterQuality.none] which corresponds to nearest-neighbor.
-  ///
-  /// If [excludeFromSemantics] is true, then [semanticLabel] will be ignored.
-  ///
-  /// If [cacheWidth] or [cacheHeight] are provided, it indicates to the
-  /// engine that the image must be decoded at the specified size. The image
-  /// will be rendered to the constraints of the layout or [width] and [height]
-  /// regardless of these parameters. These parameters are primarily intended
-  /// to reduce the memory usage of [ImageCache].
-  ///
-  /// Loading an image from a file creates an in memory copy of the file,
-  /// which is retained in the [ImageCache]. The underlying file is not
-  /// monitored for changes. If it does change, the application should evict
-  /// the entry from the [ImageCache].
-  ///
-  /// See also:
-  ///
-  ///  * [FileImage] provider for evicting the underlying file easily.
-  Image.file(
-    File file, {
-    Key? key,
-    double scale = 1.0,
-    this.frameBuilder,
-    this.errorBuilder,
-    this.semanticLabel,
-    this.excludeFromSemantics = false,
-    this.width,
-    this.height,
-    this.color,
-    this.colorBlendMode,
-    this.fit,
-    this.alignment = Alignment.center,
-    this.repeat = ImageRepeat.noRepeat,
-    this.centerSlice,
-    this.matchTextDirection = false,
-    this.gaplessPlayback = false,
-    this.isAntiAlias = false,
-    this.filterQuality = FilterQuality.low,
-    int? cacheWidth,
-    int? cacheHeight,
-  }) : image = ResizeImage.resizeIfNeeded(cacheWidth, cacheHeight, FileImage(file, scale: scale)),
-       loadingBuilder = null,
-       assert(alignment != null),
-       assert(repeat != null),
-       assert(filterQuality != null),
-       assert(matchTextDirection != null),
-       assert(cacheWidth == null || cacheWidth > 0),
-       assert(cacheHeight == null || cacheHeight > 0),
-       assert(isAntiAlias != null),
-       super(key: key);
-
 
   // TODO(ianh): Implement the following (see ../services/image_resolution.dart):
   //
