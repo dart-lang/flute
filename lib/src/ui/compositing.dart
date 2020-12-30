@@ -11,7 +11,7 @@ part of dart.ui;
 ///
 /// Scene objects can be displayed on the screen using the [FlutterView.render]
 /// method.
-class Scene extends NativeFieldWrapperClass2 {
+class Scene {
   /// This class is created by the engine, and should not be instantiated
   /// or extended directly.
   ///
@@ -45,15 +45,13 @@ class Scene extends NativeFieldWrapperClass2 {
 // passed as `oldLayer` to `pushTransform`. This is achieved by having one
 // concrete subclass of this class per push method.
 abstract class _EngineLayerWrapper implements EngineLayer {
-  _EngineLayerWrapper._(this._nativeLayer);
-
-  EngineLayer _nativeLayer;
+  _EngineLayerWrapper._();
 
   // Children of this layer.
   //
   // Null if this layer has no children. This field is populated only in debug
   // mode.
-  List<_EngineLayerWrapper>? _debugChildren;
+  List<_EngineLayerWrapper>? _children;
 
   // Whether this layer was used as `oldLayer` in a past frame.
   //
@@ -73,6 +71,15 @@ abstract class _EngineLayerWrapper implements EngineLayer {
   }
 }
 
+class _PictureLayer extends _EngineLayerWrapper {
+  _PictureLayer(this.dx, this.dy, this.picture, this.hints) : super._();
+
+  final double dx;
+  final double dy;
+  final Picture picture;
+  final int hints;
+}
+
 /// An opaque handle to a transform engine layer.
 ///
 /// Instances of this class are created by [SceneBuilder.pushTransform].
@@ -83,7 +90,10 @@ abstract class _EngineLayerWrapper implements EngineLayer {
 /// a custom implementation of this class.
 /// {@endtemplate}
 class TransformEngineLayer extends _EngineLayerWrapper {
-  TransformEngineLayer._(EngineLayer nativeLayer) : super._(nativeLayer);
+  TransformEngineLayer._(Float64List matrix4)
+    : this.matrix4 = Float64List.fromList(matrix4), super._();
+
+  final Float64List matrix4;
 }
 
 /// An opaque handle to an offset engine layer.
@@ -92,7 +102,10 @@ class TransformEngineLayer extends _EngineLayerWrapper {
 ///
 /// {@macro dart.ui.sceneBuilder.oldLayerCompatibility}
 class OffsetEngineLayer extends _EngineLayerWrapper {
-  OffsetEngineLayer._(EngineLayer nativeLayer) : super._(nativeLayer);
+  OffsetEngineLayer._(this.dx, this.dy) : super._();
+
+  final double dx;
+  final double dy;
 }
 
 /// An opaque handle to a clip rect engine layer.
@@ -101,7 +114,13 @@ class OffsetEngineLayer extends _EngineLayerWrapper {
 ///
 /// {@macro dart.ui.sceneBuilder.oldLayerCompatibility}
 class ClipRectEngineLayer extends _EngineLayerWrapper {
-  ClipRectEngineLayer._(EngineLayer nativeLayer) : super._(nativeLayer);
+  ClipRectEngineLayer._(this.left, this.right, this.top, this.bottom, this.clipBehavior) : super._();
+
+  final double left;
+  final double top;
+  final double right;
+  final double bottom;
+  final int clipBehavior;
 }
 
 /// An opaque handle to a clip rounded rect engine layer.
@@ -110,7 +129,10 @@ class ClipRectEngineLayer extends _EngineLayerWrapper {
 ///
 /// {@macro dart.ui.sceneBuilder.oldLayerCompatibility}
 class ClipRRectEngineLayer extends _EngineLayerWrapper {
-  ClipRRectEngineLayer._(EngineLayer nativeLayer) : super._(nativeLayer);
+  ClipRRectEngineLayer._(this.rrect, this.clipBehavior) : super._();
+
+  final Float32List rrect;
+  final int clipBehavior;
 }
 
 /// An opaque handle to a clip path engine layer.
@@ -119,7 +141,9 @@ class ClipRRectEngineLayer extends _EngineLayerWrapper {
 ///
 /// {@macro dart.ui.sceneBuilder.oldLayerCompatibility}
 class ClipPathEngineLayer extends _EngineLayerWrapper {
-  ClipPathEngineLayer._(EngineLayer nativeLayer) : super._(nativeLayer);
+  ClipPathEngineLayer._(this.path) : super._();
+
+  final Path path;
 }
 
 /// An opaque handle to an opacity engine layer.
@@ -128,7 +152,11 @@ class ClipPathEngineLayer extends _EngineLayerWrapper {
 ///
 /// {@macro dart.ui.sceneBuilder.oldLayerCompatibility}
 class OpacityEngineLayer extends _EngineLayerWrapper {
-  OpacityEngineLayer._(EngineLayer nativeLayer) : super._(nativeLayer);
+  OpacityEngineLayer._(this.alpha, this.dx, this.dy) : super._();
+
+  final int alpha;
+  final double dx;
+  final double dy;
 }
 
 /// An opaque handle to a color filter engine layer.
@@ -137,7 +165,9 @@ class OpacityEngineLayer extends _EngineLayerWrapper {
 ///
 /// {@macro dart.ui.sceneBuilder.oldLayerCompatibility}
 class ColorFilterEngineLayer extends _EngineLayerWrapper {
-  ColorFilterEngineLayer._(EngineLayer nativeLayer) : super._(nativeLayer);
+  ColorFilterEngineLayer._(this.filter) : super._();
+
+  final _ColorFilter filter;
 }
 
 /// An opaque handle to an image filter engine layer.
@@ -146,7 +176,9 @@ class ColorFilterEngineLayer extends _EngineLayerWrapper {
 ///
 /// {@macro dart.ui.sceneBuilder.oldLayerCompatibility}
 class ImageFilterEngineLayer extends _EngineLayerWrapper {
-  ImageFilterEngineLayer._(EngineLayer nativeLayer) : super._(nativeLayer);
+  ImageFilterEngineLayer._(this.filter) : super._();
+
+  final _ImageFilter filter;
 }
 
 /// An opaque handle to a backdrop filter engine layer.
@@ -155,7 +187,9 @@ class ImageFilterEngineLayer extends _EngineLayerWrapper {
 ///
 /// {@macro dart.ui.sceneBuilder.oldLayerCompatibility}
 class BackdropFilterEngineLayer extends _EngineLayerWrapper {
-  BackdropFilterEngineLayer._(EngineLayer nativeLayer) : super._(nativeLayer);
+  BackdropFilterEngineLayer._(this.filter) : super._();
+
+  final _ImageFilter filter;
 }
 
 /// An opaque handle to a shader mask engine layer.
@@ -164,7 +198,21 @@ class BackdropFilterEngineLayer extends _EngineLayerWrapper {
 ///
 /// {@macro dart.ui.sceneBuilder.oldLayerCompatibility}
 class ShaderMaskEngineLayer extends _EngineLayerWrapper {
-  ShaderMaskEngineLayer._(EngineLayer nativeLayer) : super._(nativeLayer);
+  ShaderMaskEngineLayer._(
+    this.shader,
+    this.left,
+    this.right,
+    this.top,
+    this.bottom,
+    this.blendMode,
+  ) : super._();
+
+  final Shader shader;
+  final double left;
+  final double top;
+  final double right;
+  final double bottom;
+  final int blendMode;
 }
 
 /// An opaque handle to a physical shape engine layer.
@@ -173,7 +221,19 @@ class ShaderMaskEngineLayer extends _EngineLayerWrapper {
 ///
 /// {@macro dart.ui.sceneBuilder.oldLayerCompatibility}
 class PhysicalShapeEngineLayer extends _EngineLayerWrapper {
-  PhysicalShapeEngineLayer._(EngineLayer nativeLayer) : super._(nativeLayer);
+  PhysicalShapeEngineLayer._(
+    this.path,
+    this.elevation,
+    this.colorValue,
+    this.shadowColorValue,
+    this.clipBehavior,
+  ) : super._();
+
+  final Path path;
+  final double elevation;
+  final int colorValue;
+  final int shadowColorValue;
+  final int clipBehavior;
 }
 
 /// Builds a [Scene] containing the given visuals.
@@ -183,9 +243,8 @@ class PhysicalShapeEngineLayer extends _EngineLayerWrapper {
 /// To draw graphical operations onto a [Scene], first create a
 /// [Picture] using a [PictureRecorder] and a [Canvas], and then add
 /// it to the scene using [addPicture].
-class SceneBuilder extends NativeFieldWrapperClass2 {
+class SceneBuilder {
   /// Creates an empty [SceneBuilder] object.
-  @pragma('vm:entry-point')
   SceneBuilder();
 
   // Layers used in this scene.
@@ -223,21 +282,17 @@ class SceneBuilder extends NativeFieldWrapperClass2 {
     return true;
   }
 
+  _EngineLayerWrapper? _rootLayer;
   final List<_EngineLayerWrapper> _layerStack = <_EngineLayerWrapper>[];
 
-  // Pushes the `newLayer` onto the `_layerStack` and adds it to the
-  // `_debugChildren` of the current layer in the stack, if any.
-  bool _debugPushLayer(_EngineLayerWrapper newLayer) {
-    assert(() {
-      if (_layerStack.isNotEmpty) {
-        final _EngineLayerWrapper currentLayer = _layerStack.last;
-        currentLayer._debugChildren ??= <_EngineLayerWrapper>[];
-        currentLayer._debugChildren!.add(newLayer);
-      }
-      _layerStack.add(newLayer);
-      return true;
-    }());
-    return true;
+  void _pushLayer(_EngineLayerWrapper layer) {
+    _rootLayer ??= layer;
+    if (_layerStack.isNotEmpty) {
+      final _EngineLayerWrapper currentLayer = _layerStack.last;
+      currentLayer._children ??= <_EngineLayerWrapper>[];
+      currentLayer._children!.add(layer);
+    }
+    _layerStack.add(layer);
   }
 
   /// Pushes a transform operation onto the operation stack.
@@ -274,14 +329,10 @@ class SceneBuilder extends NativeFieldWrapperClass2 {
   }) {
     assert(_matrix4IsValid(matrix4));
     assert(_debugCheckCanBeUsedAsOldLayer(oldLayer, 'pushTransform'));
-    final EngineLayer engineLayer = EngineLayer._();
-    _pushTransform(engineLayer, matrix4);
-    final TransformEngineLayer layer = TransformEngineLayer._(engineLayer);
-    assert(_debugPushLayer(layer));
+    final TransformEngineLayer layer = TransformEngineLayer._(matrix4);
+    _pushLayer(layer);
     return layer;
   }
-
-  void _pushTransform(EngineLayer layer, Float64List matrix4) { throw UnimplementedError(); }
 
   /// Pushes an offset operation onto the operation stack.
   ///
@@ -298,14 +349,10 @@ class SceneBuilder extends NativeFieldWrapperClass2 {
     OffsetEngineLayer? oldLayer,
   }) {
     assert(_debugCheckCanBeUsedAsOldLayer(oldLayer, 'pushOffset'));
-    final EngineLayer engineLayer = EngineLayer._();
-    _pushOffset(engineLayer, dx, dy);
-    final OffsetEngineLayer layer = OffsetEngineLayer._(engineLayer);
-    assert(_debugPushLayer(layer));
+    final OffsetEngineLayer layer = OffsetEngineLayer._(dx ,dy);
+    _pushLayer(layer);
     return layer;
   }
-
-  void _pushOffset(EngineLayer layer, double dx, double dy) { throw UnimplementedError(); }
 
   /// Pushes a rectangular clip operation onto the operation stack.
   ///
@@ -325,15 +372,10 @@ class SceneBuilder extends NativeFieldWrapperClass2 {
     assert(clipBehavior != null); // ignore: unnecessary_null_comparison
     assert(clipBehavior != Clip.none);
     assert(_debugCheckCanBeUsedAsOldLayer(oldLayer, 'pushClipRect'));
-    final EngineLayer engineLayer = EngineLayer._();
-    _pushClipRect(engineLayer, rect.left, rect.right, rect.top, rect.bottom, clipBehavior.index);
-    final ClipRectEngineLayer layer = ClipRectEngineLayer._(engineLayer);
-    assert(_debugPushLayer(layer));
+    final ClipRectEngineLayer layer = ClipRectEngineLayer._(rect.left, rect.right, rect.top, rect.bottom, clipBehavior.index);
+    _pushLayer(layer);
     return layer;
   }
-
-  void _pushClipRect(EngineLayer outEngineLayer, double left, double right, double top, double bottom, int clipBehavior)
-      { throw UnimplementedError(); }
 
   /// Pushes a rounded-rectangular clip operation onto the operation stack.
   ///
@@ -353,15 +395,10 @@ class SceneBuilder extends NativeFieldWrapperClass2 {
     assert(clipBehavior != null); // ignore: unnecessary_null_comparison
     assert(clipBehavior != Clip.none);
     assert(_debugCheckCanBeUsedAsOldLayer(oldLayer, 'pushClipRRect'));
-    final EngineLayer engineLayer = EngineLayer._();
-    _pushClipRRect(engineLayer, rrect._value32, clipBehavior.index);
-    final ClipRRectEngineLayer layer = ClipRRectEngineLayer._(engineLayer);
-    assert(_debugPushLayer(layer));
+    final ClipRRectEngineLayer layer = ClipRRectEngineLayer._(rrect._value32, clipBehavior.index);
+    _pushLayer(layer);
     return layer;
   }
-
-  void _pushClipRRect(EngineLayer layer, Float32List rrect, int clipBehavior)
-      { throw UnimplementedError(); }
 
   /// Pushes a path clip operation onto the operation stack.
   ///
@@ -381,14 +418,10 @@ class SceneBuilder extends NativeFieldWrapperClass2 {
     assert(clipBehavior != null); // ignore: unnecessary_null_comparison
     assert(clipBehavior != Clip.none);
     assert(_debugCheckCanBeUsedAsOldLayer(oldLayer, 'pushClipPath'));
-    final EngineLayer engineLayer = EngineLayer._();
-    _pushClipPath(engineLayer, path, clipBehavior.index);
-    final ClipPathEngineLayer layer = ClipPathEngineLayer._(engineLayer);
-    assert(_debugPushLayer(layer));
+    final ClipPathEngineLayer layer = ClipPathEngineLayer._(path);
+    _pushLayer(layer);
     return layer;
   }
-
-  void _pushClipPath(EngineLayer layer, Path path, int clipBehavior) { throw UnimplementedError(); }
 
   /// Pushes an opacity operation onto the operation stack.
   ///
@@ -408,14 +441,10 @@ class SceneBuilder extends NativeFieldWrapperClass2 {
     OpacityEngineLayer? oldLayer,
   }) {
     assert(_debugCheckCanBeUsedAsOldLayer(oldLayer, 'pushOpacity'));
-    final EngineLayer engineLayer = EngineLayer._();
-    _pushOpacity(engineLayer, alpha, offset!.dx, offset.dy);
-    final OpacityEngineLayer layer = OpacityEngineLayer._(engineLayer);
-    assert(_debugPushLayer(layer));
+    final OpacityEngineLayer layer = OpacityEngineLayer._(alpha, offset!.dx, offset.dy);
+    _pushLayer(layer);
     return layer;
   }
-
-  void _pushOpacity(EngineLayer layer, int alpha, double dx, double dy) { throw UnimplementedError(); }
 
   /// Pushes a color filter operation onto the operation stack.
   ///
@@ -435,14 +464,10 @@ class SceneBuilder extends NativeFieldWrapperClass2 {
     assert(_debugCheckCanBeUsedAsOldLayer(oldLayer, 'pushColorFilter'));
     final _ColorFilter nativeFilter = filter._toNativeColorFilter()!;
     assert(nativeFilter != null); // ignore: unnecessary_null_comparison
-    final EngineLayer engineLayer = EngineLayer._();
-    _pushColorFilter(engineLayer, nativeFilter);
-    final ColorFilterEngineLayer layer = ColorFilterEngineLayer._(engineLayer);
-    assert(_debugPushLayer(layer));
+    final ColorFilterEngineLayer layer = ColorFilterEngineLayer._(nativeFilter);
+    _pushLayer(layer);
     return layer;
   }
-
-  void _pushColorFilter(EngineLayer layer, _ColorFilter filter) { throw UnimplementedError(); }
 
   /// Pushes an image filter operation onto the operation stack.
   ///
@@ -462,14 +487,10 @@ class SceneBuilder extends NativeFieldWrapperClass2 {
     assert(_debugCheckCanBeUsedAsOldLayer(oldLayer, 'pushImageFilter'));
     final _ImageFilter nativeFilter = filter._toNativeImageFilter();
     assert(nativeFilter != null); // ignore: unnecessary_null_comparison
-    final EngineLayer engineLayer = EngineLayer._();
-    _pushImageFilter(engineLayer, nativeFilter);
-    final ImageFilterEngineLayer layer = ImageFilterEngineLayer._(engineLayer);
-    assert(_debugPushLayer(layer));
+    final ImageFilterEngineLayer layer = ImageFilterEngineLayer._(nativeFilter);
+    _pushLayer(layer);
     return layer;
   }
-
-  void _pushImageFilter(EngineLayer outEngineLayer, _ImageFilter filter) { throw UnimplementedError(); }
 
   /// Pushes a backdrop filter operation onto the operation stack.
   ///
@@ -486,14 +507,10 @@ class SceneBuilder extends NativeFieldWrapperClass2 {
     BackdropFilterEngineLayer? oldLayer,
   }) {
     assert(_debugCheckCanBeUsedAsOldLayer(oldLayer, 'pushBackdropFilter'));
-    final EngineLayer engineLayer = EngineLayer._();
-    _pushBackdropFilter(engineLayer, filter._toNativeImageFilter());
-    final BackdropFilterEngineLayer layer = BackdropFilterEngineLayer._(engineLayer);
-    assert(_debugPushLayer(layer));
+    final BackdropFilterEngineLayer layer = BackdropFilterEngineLayer._(filter._toNativeImageFilter());
+    _pushLayer(layer);
     return layer;
   }
-
-  void _pushBackdropFilter(EngineLayer outEngineLayer, _ImageFilter filter) { throw UnimplementedError(); }
 
   /// Pushes a shader mask operation onto the operation stack.
   ///
@@ -512,9 +529,7 @@ class SceneBuilder extends NativeFieldWrapperClass2 {
     ShaderMaskEngineLayer? oldLayer,
   }) {
     assert(_debugCheckCanBeUsedAsOldLayer(oldLayer, 'pushShaderMask'));
-    final EngineLayer engineLayer = EngineLayer._();
-    _pushShaderMask(
-      engineLayer,
+    final ShaderMaskEngineLayer layer = ShaderMaskEngineLayer._(
       shader,
       maskRect.left,
       maskRect.right,
@@ -522,19 +537,9 @@ class SceneBuilder extends NativeFieldWrapperClass2 {
       maskRect.bottom,
       blendMode.index,
     );
-    final ShaderMaskEngineLayer layer = ShaderMaskEngineLayer._(engineLayer);
-    assert(_debugPushLayer(layer));
+    _pushLayer(layer);
     return layer;
   }
-
-  void _pushShaderMask(
-      EngineLayer engineLayer,
-      Shader shader,
-      double maskRectLeft,
-      double maskRectRight,
-      double maskRectTop,
-      double maskRectBottom,
-      int blendMode) { throw UnimplementedError(); }
 
   /// Pushes a physical layer operation for an arbitrary shape onto the
   /// operation stack.
@@ -562,22 +567,16 @@ class SceneBuilder extends NativeFieldWrapperClass2 {
     PhysicalShapeEngineLayer? oldLayer,
   }) {
     assert(_debugCheckCanBeUsedAsOldLayer(oldLayer, 'pushPhysicalShape'));
-    final EngineLayer engineLayer = EngineLayer._();
-    _pushPhysicalShape(
-      engineLayer,
+    final PhysicalShapeEngineLayer layer = PhysicalShapeEngineLayer._(
       path,
       elevation,
       color.value,
       shadowColor?.value ?? 0xFF000000,
       clipBehavior.index,
     );
-    final PhysicalShapeEngineLayer layer = PhysicalShapeEngineLayer._(engineLayer);
-    assert(_debugPushLayer(layer));
+    _pushLayer(layer);
     return layer;
   }
-
-  void _pushPhysicalShape(EngineLayer outEngineLayer, Path path, double elevation, int color, int shadowColor,
-      int clipBehavior) { throw UnimplementedError(); }
 
   /// Ends the effect of the most recently pushed operation.
   ///
@@ -589,10 +588,7 @@ class SceneBuilder extends NativeFieldWrapperClass2 {
     if (_layerStack.isNotEmpty) {
       _layerStack.removeLast();
     }
-    _pop();
   }
-
-  void _pop() { throw UnimplementedError(); }
 
   /// Add a retained engine layer subtree from previous frames.
   ///
@@ -613,7 +609,7 @@ class SceneBuilder extends NativeFieldWrapperClass2 {
         _debugCheckUsedOnce(parentLayer, 'retained layer');
         parentLayer._debugCheckNotUsedAsOldLayer();
 
-        final List<_EngineLayerWrapper>? children = parentLayer._debugChildren;
+        final List<_EngineLayerWrapper>? children = parentLayer._children;
         if (children == null || children.isEmpty) {
           return;
         }
@@ -626,10 +622,9 @@ class SceneBuilder extends NativeFieldWrapperClass2 {
     }());
 
     final _EngineLayerWrapper wrapper = retainedLayer as _EngineLayerWrapper;
-    _addRetained(wrapper._nativeLayer);
+    _pushLayer(wrapper);
+    pop();
   }
-
-  void _addRetained(EngineLayer retainedLayer) { throw UnimplementedError(); }
 
   /// Adds an object to the scene that displays performance statistics.
   ///
@@ -677,11 +672,9 @@ class SceneBuilder extends NativeFieldWrapperClass2 {
     bool willChangeHint = false,
   }) {
     final int hints = (isComplexHint ? 1 : 0) | (willChangeHint ? 2 : 0);
-    _addPicture(offset.dx, offset.dy, picture, hints);
+    final _PictureLayer layer = _PictureLayer(offset.dx, offset.dy, picture, hints);
+    _pushLayer(layer);
   }
-
-  void _addPicture(double dx, double dy, Picture picture, int hints)
-      { throw UnimplementedError(); }
 
   /// Adds a backend texture to the scene.
   ///
@@ -797,15 +790,12 @@ class SceneBuilder extends NativeFieldWrapperClass2 {
   /// cannot be used further.
   Scene build() {
     final Scene scene = Scene._();
-    _build(scene);
     return scene;
   }
-
-  void _build(Scene outScene) { throw UnimplementedError(); }
 }
 
 /// (Fuchsia-only) Hosts content provided by another application.
-class SceneHost extends NativeFieldWrapperClass2 {
+class SceneHost {
   /// Creates a host for a child scene's content.
   ///
   /// The ViewHolder token is bound to a ViewHolder scene graph node which acts

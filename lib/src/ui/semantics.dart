@@ -627,11 +627,9 @@ class SemanticsFlag {
 /// Once created, the [SemanticsUpdate] objects can be passed to
 /// [PlatformDispatcher.updateSemantics] to update the semantics conveyed to the
 /// user.
-@pragma('vm:entry-point')
-class SemanticsUpdateBuilder extends NativeFieldWrapperClass2 {
+class SemanticsUpdateBuilder {
   /// Creates an empty [SemanticsUpdateBuilder] object.
-  @pragma('vm:entry-point')
-  SemanticsUpdateBuilder() { _constructor(); }
+    SemanticsUpdateBuilder() { _constructor(); }
   void _constructor() { throw UnimplementedError(); }
 
   /// Update the information associated with the node with the given `id`.
@@ -849,14 +847,12 @@ class SemanticsUpdateBuilder extends NativeFieldWrapperClass2 {
 ///
 /// Semantics updates can be applied to the system's retained semantics tree
 /// using the [PlatformDispatcher.updateSemantics] method.
-@pragma('vm:entry-point')
-class SemanticsUpdate extends NativeFieldWrapperClass2 {
+class SemanticsUpdate {
   /// This class is created by the engine, and should not be instantiated
   /// or extended directly.
   ///
   /// To create a SemanticsUpdate object, use a [SemanticsUpdateBuilder].
-  @pragma('vm:entry-point')
-  SemanticsUpdate._();
+    SemanticsUpdate._();
 
   /// Releases the resources used by this semantics update.
   ///

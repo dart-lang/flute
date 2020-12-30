@@ -8,7 +8,6 @@
 
 part of dart.ui;
 
-@pragma('vm:entry-point')
 // ignore: unused_element
 void _updateWindowMetrics(
   Object id,
@@ -50,71 +49,59 @@ void _updateWindowMetrics(
 
 typedef _LocaleClosure = String Function();
 
-@pragma('vm:entry-point')
 // ignore: unused_element
 _LocaleClosure? _getLocaleClosure() => PlatformDispatcher.instance._localeClosure;
 
-@pragma('vm:entry-point')
 // ignore: unused_element
 void _updateLocales(List<String> locales) {
   PlatformDispatcher.instance._updateLocales(locales);
 }
 
-@pragma('vm:entry-point')
 // ignore: unused_element
 void _updateUserSettingsData(String jsonData) {
   PlatformDispatcher.instance._updateUserSettingsData(jsonData);
 }
 
-@pragma('vm:entry-point')
 // ignore: unused_element
 void _updateLifecycleState(String state) {
   PlatformDispatcher.instance._updateLifecycleState(state);
 }
 
-@pragma('vm:entry-point')
 // ignore: unused_element
 void _updateSemanticsEnabled(bool enabled) {
   PlatformDispatcher.instance._updateSemanticsEnabled(enabled);
 }
 
-@pragma('vm:entry-point')
 // ignore: unused_element
 void _updateAccessibilityFeatures(int values) {
   PlatformDispatcher.instance._updateAccessibilityFeatures(values);
 }
 
-@pragma('vm:entry-point')
 // ignore: unused_element
 void _dispatchPlatformMessage(String name, ByteData? data, int responseId) {
   PlatformDispatcher.instance._dispatchPlatformMessage(name, data, responseId);
 }
 
-@pragma('vm:entry-point')
 // ignore: unused_element
 void _dispatchPointerDataPacket(ByteData packet) {
   PlatformDispatcher.instance._dispatchPointerDataPacket(packet);
 }
 
-@pragma('vm:entry-point')
 // ignore: unused_element
 void _dispatchSemanticsAction(int id, int action, ByteData? args) {
   PlatformDispatcher.instance._dispatchSemanticsAction(id, action, args);
 }
 
-@pragma('vm:entry-point')
 // ignore: unused_element
 void _beginFrame(int microseconds) {
   PlatformDispatcher.instance._beginFrame(microseconds);
 }
 
-@pragma('vm:entry-point')
 // ignore: unused_element
 void _reportTimings(List<int> timings) {
   PlatformDispatcher.instance._reportTimings(timings);
 }
 
-@pragma('vm:entry-point')
 // ignore: unused_element
 void _drawFrame() {
   PlatformDispatcher.instance._drawFrame();
@@ -123,7 +110,6 @@ void _drawFrame() {
 // ignore: always_declare_return_types, prefer_generic_function_type_aliases
 typedef _ListStringArgFunction(List<String> args);
 
-@pragma('vm:entry-point')
 // ignore: unused_element
 void _runMainZoned(Function startMainIsolateFunction,
                    Function userMainFunction,

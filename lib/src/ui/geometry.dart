@@ -630,8 +630,7 @@ class Size extends OffsetBase {
 /// ```
 class Rect {
   /// Construct a rectangle from its left, top, right, and bottom edges.
-  @pragma('vm:entry-point')
-  const Rect.fromLTRB(this.left, this.top, this.right, this.bottom)
+    const Rect.fromLTRB(this.left, this.top, this.right, this.bottom)
       : assert(left != null), // ignore: unnecessary_null_comparison
         assert(top != null), // ignore: unnecessary_null_comparison
         assert(right != null), // ignore: unnecessary_null_comparison

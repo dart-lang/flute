@@ -365,8 +365,8 @@ class PlatformDispatcher {
   }
 
   late _SetNeedsReportTimingsFunc _setNeedsReportTimings;
-  void _nativeSetNeedsReportTimings(bool value)
-      { throw UnimplementedError(); }
+
+  void _nativeSetNeedsReportTimings(bool value) {}
 
   // Called from the engine, via hooks.dart
   void _reportTimings(List<int> timings) {
@@ -394,8 +394,9 @@ class PlatformDispatcher {
       throw Exception(error);
   }
 
-  String? _sendPlatformMessage(String name, PlatformMessageResponseCallback? callback, ByteData? data)
-      { throw UnimplementedError(); }
+  String? _sendPlatformMessage(String name, PlatformMessageResponseCallback? callback, ByteData? data) {
+    return null;
+  }
 
   /// Called whenever this platform dispatcher receives a message from a
   /// platform-specific plugin.
@@ -492,6 +493,9 @@ class PlatformDispatcher {
   /// platform channel may be used.
   ByteData? getPersistentIsolateData() { throw UnimplementedError(); }
 
+  Timer? _frameTimer;
+  Duration _frameTime = Duration.zero;
+
   /// Requests that, at the next appropriate opportunity, the [onBeginFrame] and
   /// [onDrawFrame] callbacks be invoked.
   ///
@@ -499,7 +503,22 @@ class PlatformDispatcher {
   ///
   ///  * [SchedulerBinding], the Flutter framework class which manages the
   ///    scheduling of frames.
-  void scheduleFrame() { throw UnimplementedError(); }
+  void scheduleFrame() {
+    _frameTimer ??= new Timer(
+      const Duration(milliseconds: 16),
+      () {
+        _frameTimer = null;
+        int microseconds = _frameTime.inMicroseconds;
+        _frameTime += const Duration(milliseconds: 16);
+        Timer.run(() {
+          _beginFrame(microseconds);
+        });
+        Timer.run(() {
+          _drawFrame();
+        });
+      },
+    );
+  }
 
   /// Additional accessibility features that may be enabled by the platform.
   AccessibilityFeatures get accessibilityFeatures => configuration.accessibilityFeatures;
@@ -855,8 +874,7 @@ class PlatformDispatcher {
   ///  * [Navigator], a widget that handles routing.
   ///  * [SystemChannels.navigation], which handles subsequent navigation
   ///    requests from the embedder.
-  String get defaultRouteName => _defaultRouteName();
-  String _defaultRouteName() { throw UnimplementedError(); }
+  String get defaultRouteName => '/';
 }
 
 /// Configuration of the platform.

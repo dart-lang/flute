@@ -739,13 +739,20 @@ class TextStyle {
          shadows,
          fontFeatures,
        ),
-       _fontFamily = fontFamily ?? '',
+       _color = color,
+       _decoration = decoration,
+       _decorationColor = decorationColor,
+       _decorationStyle = decorationStyle,
+       _decorationThickness = decorationThickness,
+       _fontFamily = fontFamily,
        _fontFamilyFallback = fontFamilyFallback,
        _fontSize = fontSize,
+       _fontWeight = fontWeight,
+       _fontStyle = fontStyle,
+       _textBaseline = textBaseline,
        _letterSpacing = letterSpacing,
        _wordSpacing = wordSpacing,
        _height = height,
-       _decorationThickness = decorationThickness,
        _locale = locale,
        _background = background,
        _foreground = foreground,
@@ -753,7 +760,7 @@ class TextStyle {
        _fontFeatures = fontFeatures;
 
   final Int32List _encoded;
-  final String _fontFamily;
+  final String? _fontFamily;
   final List<String>? _fontFamilyFallback;
   final double? _fontSize;
   final double? _letterSpacing;
@@ -765,6 +772,50 @@ class TextStyle {
   final Paint? _foreground;
   final List<Shadow>? _shadows;
   final List<FontFeature>? _fontFeatures;
+  final Color? _color;
+  final TextDecoration? _decoration;
+  final Color? _decorationColor;
+  final TextDecorationStyle? _decorationStyle;
+  final FontWeight? _fontWeight;
+  final FontStyle? _fontStyle;
+  final TextBaseline? _textBaseline;
+
+
+  TextStyle _mergeInto(TextStyle other) {
+    return TextStyle(
+      color: _color ?? other._color,
+      decoration: _decoration ?? other._decoration,
+      decorationColor: _decorationColor ?? other._decorationColor,
+      decorationStyle: _decorationStyle ?? other._decorationStyle,
+      decorationThickness: _decorationThickness ?? other._decorationThickness,
+      fontWeight: _fontWeight ?? other._fontWeight,
+      fontStyle: _fontStyle ?? other._fontStyle,
+      textBaseline: _textBaseline ?? other._textBaseline,
+      fontFamily: _fontFamily ?? other._fontFamily,
+      fontFamilyFallback: _fontFamilyFallback ?? other._fontFamilyFallback,
+      fontSize: _fontSize ?? other._fontSize,
+      letterSpacing: _letterSpacing ?? other._letterSpacing,
+      wordSpacing: _wordSpacing ?? other._wordSpacing,
+      height: _height ?? other._height,
+      locale: _locale ?? other._locale,
+      background: _background ?? other._background,
+      foreground: _foreground ?? other._foreground,
+      shadows: _shadows == null
+        ? other._shadows == null
+          ? null
+          : other._shadows
+        : other._shadows == null
+          ? _shadows
+          : <Shadow>[..._shadows!, ...other._shadows!],
+      fontFeatures: _fontFeatures == null
+        ? other._fontFeatures == null
+          ? null
+          : other._fontFeatures
+        : other._fontFeatures == null
+          ? _fontFeatures
+          : <FontFeature>[..._fontFeatures!, ...other._fontFeatures!],
+    );
+  }
 
   @override
   bool operator ==(Object other) {
@@ -991,20 +1042,42 @@ class ParagraphStyle {
          ellipsis,
          locale,
        ),
+       _textAlign = textAlign ?? TextAlign.start,
+       _textDirection = textDirection ?? TextDirection.ltr,
+       _maxLines = maxLines,
        _fontFamily = fontFamily,
        _fontSize = fontSize,
        _height = height,
+       _textHeightBehavior = textHeightBehavior ?? const TextHeightBehavior(),
+       _fontWeight = fontWeight ?? FontWeight.normal,
+       _fontStyle = fontStyle ?? FontStyle.normal,
        _strutStyle = strutStyle,
        _ellipsis = ellipsis,
        _locale = locale;
 
   final Int32List _encoded;
+  final TextAlign _textAlign;
+  final TextDirection _textDirection;
+  final int? _maxLines;
   final String? _fontFamily;
   final double? _fontSize;
   final double? _height;
+  final TextHeightBehavior _textHeightBehavior;
+  final FontWeight _fontWeight;
+  final FontStyle _fontStyle;
   final StrutStyle? _strutStyle;
   final String? _ellipsis;
   final Locale? _locale;
+
+  TextStyle _toTextStyle() {
+    return TextStyle(
+      fontFamily: _fontFamily,
+      fontSize: _fontSize,
+      fontStyle: _fontStyle,
+      fontWeight: _fontWeight,
+      height: _height,
+    );
+  }
 
   @override
   bool operator ==(Object other) {
@@ -1298,7 +1371,6 @@ enum TextDirection {
 /// A rectangle enclosing a run of text.
 ///
 /// This is similar to [Rect] but includes an inherent [TextDirection].
-@pragma('vm:entry-point')
 class TextBox {
   /// Creates an object that describes a box containing text.
   const TextBox.fromLTRBD(
@@ -1866,50 +1938,59 @@ class LineMetrics {
 ///
 /// Paragraphs can be displayed on a [Canvas] using the [Canvas.drawParagraph]
 /// method.
-@pragma('vm:entry-point')
-class Paragraph extends NativeFieldWrapperClass2 {
+class Paragraph {
   /// This class is created by the engine, and should not be instantiated
   /// or extended directly.
   ///
   /// To create a [Paragraph] object, use a [ParagraphBuilder].
-  @pragma('vm:entry-point')
-  Paragraph._();
+  Paragraph._(this._paragraphStyle, this._spans);
+
+  final ParagraphStyle _paragraphStyle;
+  final List<_Span> _spans;
+  late List<List<_SpanBox>> _boxes;
 
   /// The amount of horizontal space this paragraph occupies.
   ///
   /// Valid only after [layout] has been called.
-  double get width { throw UnimplementedError(); }
+  double get width => _width;
+  double _width = 0;
 
   /// The amount of vertical space this paragraph occupies.
   ///
   /// Valid only after [layout] has been called.
-  double get height { throw UnimplementedError(); }
+  double get height => _height;
+  double _height = 0;
 
   /// The distance from the left edge of the leftmost glyph to the right edge of
   /// the rightmost glyph in the paragraph.
   ///
   /// Valid only after [layout] has been called.
-  double get longestLine { throw UnimplementedError(); }
+  double get longestLine => _longestLine;
+  double _longestLine = 0;
 
   /// The minimum width that this paragraph could be without failing to paint
   /// its contents within itself.
   ///
   /// Valid only after [layout] has been called.
-  double get minIntrinsicWidth { throw UnimplementedError(); }
+  double get minIntrinsicWidth => _minIntrinsicWidth;
+  double _minIntrinsicWidth = 0;
 
   /// Returns the smallest width beyond which increasing the width never
   /// decreases the height.
   ///
   /// Valid only after [layout] has been called.
-  double get maxIntrinsicWidth { throw UnimplementedError(); }
+  double get maxIntrinsicWidth => _maxIntrinsicWidth;
+  double _maxIntrinsicWidth = 0;
 
   /// The distance from the top of the paragraph to the alphabetic
   /// baseline of the first line, in logical pixels.
-  double get alphabeticBaseline { throw UnimplementedError(); }
+  double get alphabeticBaseline => _alphabeticBaseline;
+  double _alphabeticBaseline = 0;
 
   /// The distance from the top of the paragraph to the ideographic
   /// baseline of the first line, in logical pixels.
-  double get ideographicBaseline { throw UnimplementedError(); }
+  double get ideographicBaseline => _ideographicBaseline;
+  double _ideographicBaseline = 0;
 
   /// True if there is more vertical content, but the text was truncated, either
   /// because we reached `maxLines` lines of text or because the `maxLines` was
@@ -1918,28 +1999,59 @@ class Paragraph extends NativeFieldWrapperClass2 {
   ///
   /// See the discussion of the `maxLines` and `ellipsis` arguments at
   /// [new ParagraphStyle].
-  bool get didExceedMaxLines { throw UnimplementedError(); }
+  bool get didExceedMaxLines => _didExceedMaxLines;
+  bool _didExceedMaxLines = false;
 
   /// Computes the size and position of each glyph in the paragraph.
   ///
   /// The [ParagraphConstraints] control how wide the text is allowed to be.
-  void layout(ParagraphConstraints constraints) => _layout(constraints.width);
-  void _layout(double width) { throw UnimplementedError(); }
+  void layout(ParagraphConstraints constraints) {
+    _boxes = <List<_SpanBox>>[];
+    double paragraphRight = 0;
+    double minIntrinsicWidth = 0;
+    double maxIntrinsicWidth = 0;
 
-  List<TextBox> _decodeTextBoxes(Float32List encoded) {
-    final int count = encoded.length ~/ 5;
-    final List<TextBox> boxes = <TextBox>[];
-    int position = 0;
-    for (int index = 0; index < count; index += 1) {
-      boxes.add(TextBox.fromLTRBD(
-        encoded[position++],
-        encoded[position++],
-        encoded[position++],
-        encoded[position++],
-        TextDirection.values[encoded[position++].toInt()],
-      ));
+    double currentLineTop = 0;
+    double currentLineWidth = 0;
+    double currentLineHeight = 0;
+    List<_SpanBox>? currentLine;
+
+    for (_Span span in _spans) {
+      final double spanWidth = span.width;
+      minIntrinsicWidth = math.max(minIntrinsicWidth, spanWidth);
+      maxIntrinsicWidth += spanWidth;
+      final double availableWidth = constraints.width - currentLineWidth;
+
+      // First span in paragraph, or span doesn't fit? Start a new line.
+      if (currentLine == null || spanWidth > availableWidth) {
+        _boxes.add(currentLine = <_SpanBox>[]);
+        currentLineTop += currentLineHeight;
+        currentLineWidth = 0;
+        currentLineHeight = 0;
+      }
+
+      final _SpanBox _spanBox = _SpanBox.fromLTRBS(
+        currentLineWidth,
+        currentLineTop,
+        currentLineWidth + spanWidth,
+        currentLineTop + span.height,
+        span,
+      );
+      currentLine.add(_spanBox);
+
+      currentLineWidth += spanWidth;
+      currentLineHeight = math.max(currentLineHeight, span.height);
+      paragraphRight = math.max(paragraphRight, currentLineWidth);
     }
-    return boxes;
+
+    _minIntrinsicWidth = math.min(minIntrinsicWidth, maxIntrinsicWidth);
+    _maxIntrinsicWidth = maxIntrinsicWidth;
+    _width = paragraphRight;
+    _height = currentLineTop + currentLineHeight;
+    final int? maxLines = _paragraphStyle._maxLines;
+    _didExceedMaxLines = maxLines == null
+      ? false
+      : _boxes.length > maxLines;
   }
 
   /// Returns a list of text boxes that enclose the given text range.
@@ -1958,10 +2070,8 @@ class Paragraph extends NativeFieldWrapperClass2 {
   List<TextBox> getBoxesForRange(int start, int end, {BoxHeightStyle boxHeightStyle = BoxHeightStyle.tight, BoxWidthStyle boxWidthStyle = BoxWidthStyle.tight}) {
     assert(boxHeightStyle != null); // ignore: unnecessary_null_comparison
     assert(boxWidthStyle != null); // ignore: unnecessary_null_comparison
-    return _decodeTextBoxes(_getBoxesForRange(start, end, boxHeightStyle.index, boxWidthStyle.index));
+    throw UnimplementedError();
   }
-  // See paragraph.cc for the layout of this return value.
-  Float32List _getBoxesForRange(int start, int end, int boxHeightStyle, int boxWidthStyle) { throw UnimplementedError(); }
 
   /// Returns a list of text boxes that enclose all placeholders in the paragraph.
   ///
@@ -1971,16 +2081,27 @@ class Paragraph extends NativeFieldWrapperClass2 {
   /// Coordinates of the [TextBox] are relative to the upper-left corner of the paragraph,
   /// where positive y values indicate down.
   List<TextBox> getBoxesForPlaceholders() {
-    return _decodeTextBoxes(_getBoxesForPlaceholders());
+    final List<TextBox> result = <TextBox>[];
+    for (List<_SpanBox> line in _boxes) {
+      for (_SpanBox box in line) {
+        if (box.span is _Placeholder) {
+          result.add(TextBox.fromLTRBD(
+            box.left,
+            box.top,
+            box.right,
+            box.bottom,
+            _paragraphStyle._textDirection,
+          ));
+        }
+      }
+    }
+    return result;
   }
-  Float32List _getBoxesForPlaceholders() { throw UnimplementedError(); }
 
   /// Returns the text position closest to the given offset.
   TextPosition getPositionForOffset(Offset offset) {
-    final List<int> encoded = _getPositionForOffset(offset.dx, offset.dy);
-    return TextPosition(offset: encoded[0], affinity: TextAffinity.values[encoded[1]]);
+    throw UnimplementedError();
   }
-  List<int> _getPositionForOffset(double dx, double dy) { throw UnimplementedError(); }
 
   /// Returns the [TextRange] of the word at the given [TextPosition].
   ///
@@ -1989,10 +2110,8 @@ class Paragraph extends NativeFieldWrapperClass2 {
   /// [offset, offset+1]. Word boundaries are defined more precisely in Unicode
   /// Standard Annex #29 http://www.unicode.org/reports/tr29/#Word_Boundaries
   TextRange getWordBoundary(TextPosition position) {
-    final List<int> boundary = _getWordBoundary(position.offset);
-    return TextRange(start: boundary[0], end: boundary[1]);
+    throw UnimplementedError();
   }
-  List<int> _getWordBoundary(int offset) { throw UnimplementedError(); }
 
   /// Returns the [TextRange] of the line at the given [TextPosition].
   ///
@@ -2003,15 +2122,8 @@ class Paragraph extends NativeFieldWrapperClass2 {
   /// This can potentially be expensive, since it needs to compute the line
   /// metrics, so use it sparingly.
   TextRange getLineBoundary(TextPosition position) {
-    final List<int> boundary = _getLineBoundary(position.offset);
-    return TextRange(start: boundary[0], end: boundary[1]);
+    throw UnimplementedError();
   }
-  List<int> _getLineBoundary(int offset) { throw UnimplementedError(); }
-
-  // Redirecting the paint function in this way solves some dependency problems
-  // in the C++ code. If we straighten out the C++ dependencies, we can remove
-  // this indirection.
-  void _paint(Canvas canvas, double x, double y) { throw UnimplementedError(); }
 
   /// Returns the full list of [LineMetrics] that describe in detail the various
   /// metrics of each laid out line.
@@ -2043,6 +2155,48 @@ class Paragraph extends NativeFieldWrapperClass2 {
   Float64List _computeLineMetrics() { throw UnimplementedError(); }
 }
 
+abstract class _Span {
+  double get width;
+  double get height;
+}
+
+class _SpanBox {
+  _SpanBox.fromLTRBS(this.left, this.top, this.right, this.bottom, this.span);
+  final double left;
+  final double top;
+  final double right;
+  final double bottom;
+  final _Span span;
+}
+
+class _TextSpan extends _Span {
+  _TextSpan(this._style, this._text);
+  final TextStyle _style;
+  final String _text;
+
+  @override
+  double get width => _text.length * (_style._fontSize ?? 10.0);
+
+  @override
+  double get height => _style._height ?? _style._fontSize ?? 10.0;
+}
+
+class _Placeholder extends _Span {
+  _Placeholder(this._width, this._height, this._alignment, this._baselineOffset, this._baseline);
+
+  final double _width;
+  final double _height;
+  final int _alignment;
+  final double _baselineOffset;
+  final int? _baseline;
+
+  @override
+  double get width => _width;
+
+  @override
+  double get height => _height;
+}
+
 /// Builds a [Paragraph] containing text with the given styling information.
 ///
 /// To set the paragraph's alignment, truncation, and ellipsizing behavior, pass
@@ -2057,12 +2211,11 @@ class Paragraph extends NativeFieldWrapperClass2 {
 ///
 /// After constructing a [Paragraph], call [Paragraph.layout] on it and then
 /// paint it with [Canvas.drawParagraph].
-class ParagraphBuilder extends NativeFieldWrapperClass2 {
+class ParagraphBuilder {
 
   /// Creates a new [ParagraphBuilder] object, which is used to create a
   /// [Paragraph].
-  @pragma('vm:entry-point')
-  ParagraphBuilder(ParagraphStyle style) {
+  factory ParagraphBuilder(ParagraphStyle style) {
     List<String>? strutFontFamilies;
     final StrutStyle? strutStyle = style._strutStyle;
     if (strutStyle != null) {
@@ -2073,28 +2226,21 @@ class ParagraphBuilder extends NativeFieldWrapperClass2 {
       if (strutStyle._fontFamilyFallback != null)
         strutFontFamilies.addAll(strutStyle._fontFamilyFallback!);
     }
-    _constructor(
-      style._encoded,
-      strutStyle?._encoded,
-      style._fontFamily,
-      strutFontFamilies,
-      style._fontSize,
-      style._height,
-      style._ellipsis,
-      _encodeLocale(style._locale)
-    );
+    return ParagraphBuilder._(style, style._toTextStyle(), strutFontFamilies);
   }
 
-  void _constructor(
-    Int32List encoded,
-    ByteData? strutData,
-    String? fontFamily,
-    List<dynamic>? strutFontFamily,
-    double? fontSize,
-    double? height,
-    String? ellipsis,
-    String locale
-  ) { throw UnimplementedError(); }
+  ParagraphBuilder._(this._style, TextStyle textStyle, this._strutFontFamilies)
+      : _currentStyle = textStyle {
+    _styleStack.add(_currentStyle);
+  }
+
+  final ParagraphStyle _style;
+  final List<String>? _strutFontFamilies;
+
+  final List<TextStyle> _styleStack = <TextStyle>[];
+  TextStyle _currentStyle;
+
+  List<_Span> _spans = <_Span>[];
 
   /// The number of placeholders currently in the paragraph.
   int get placeholderCount => _placeholderCount;
@@ -2108,8 +2254,11 @@ class ParagraphBuilder extends NativeFieldWrapperClass2 {
   ///
   /// See [pop] for details.
   void pushStyle(TextStyle style) {
+    _currentStyle = style._mergeInto(_currentStyle);
+    _styleStack.add(_currentStyle);
+
     final List<String> fullFontFamilies = <String>[];
-    fullFontFamilies.add(style._fontFamily);
+    fullFontFamilies.add(style._fontFamily ?? '');
     if (style._fontFamilyFallback != null)
     fullFontFamilies.addAll(style._fontFamilyFallback!);
 
@@ -2123,43 +2272,7 @@ class ParagraphBuilder extends NativeFieldWrapperClass2 {
         byteOffset += FontFeature._kEncodedSize;
       }
     }
-
-    _pushStyle(
-      style._encoded,
-      fullFontFamilies,
-      style._fontSize,
-      style._letterSpacing,
-      style._wordSpacing,
-      style._height,
-      style._decorationThickness,
-      _encodeLocale(style._locale),
-      style._background?._objects,
-      style._background?._data,
-      style._foreground?._objects,
-      style._foreground?._data,
-      Shadow._encodeShadows(style._shadows),
-      encodedFontFeatures,
-    );
   }
-
-  void _pushStyle(
-    Int32List encoded,
-    List<dynamic> fontFamilies,
-    double? fontSize,
-    double? letterSpacing,
-    double? wordSpacing,
-    double? height,
-    double? decorationThickness,
-    String locale,
-    List<dynamic>? backgroundObjects,
-    ByteData? backgroundData,
-    List<dynamic>? foregroundObjects,
-    ByteData? foregroundData,
-    ByteData shadowsData,
-    ByteData? fontFeaturesData,
-  ) { throw UnimplementedError(); }
-
-  static String _encodeLocale(Locale? locale) => locale?.toString() ?? '';
 
   /// Ends the effect of the most recent call to [pushStyle].
   ///
@@ -2167,65 +2280,21 @@ class ParagraphBuilder extends NativeFieldWrapperClass2 {
   /// added to the paragraph is affected by all the styles in the stack. Calling
   /// [pop] removes the topmost style in the stack, leaving the remaining styles
   /// in effect.
-  void pop() { throw UnimplementedError(); }
+  void pop() {
+    _currentStyle = _styleStack.removeLast();
+  }
+
+  static final RegExp _whitespace = RegExp(r'\s+');
 
   /// Adds the given text to the paragraph.
   ///
   /// The text will be styled according to the current stack of text styles.
   void addText(String text) {
-    final String? error = _addText(text);
-    if (error != null)
-      throw ArgumentError(error);
+    for (String span in text.split(_whitespace)) {
+      _spans.add(_TextSpan(_currentStyle, span));
+    }
   }
-  String? _addText(String text) { throw UnimplementedError(); }
 
-  /// Adds an inline placeholder space to the paragraph.
-  ///
-  /// The paragraph will contain a rectangular space with no text of the dimensions
-  /// specified.
-  ///
-  /// The `width` and `height` parameters specify the size of the placeholder rectangle.
-  ///
-  /// The `alignment` parameter specifies how the placeholder rectangle will be vertically
-  /// aligned with the surrounding text. When [PlaceholderAlignment.baseline],
-  /// [PlaceholderAlignment.aboveBaseline], and [PlaceholderAlignment.belowBaseline]
-  /// alignment modes are used, the baseline needs to be set with the `baseline`.
-  /// When using [PlaceholderAlignment.baseline], `baselineOffset` indicates the distance
-  /// of the baseline down from the top of of the rectangle. The default `baselineOffset`
-  /// is the `height`.
-  ///
-  /// Examples:
-  ///
-  /// * For a 30x50 placeholder with the bottom edge aligned with the bottom of the text, use:
-  /// `addPlaceholder(30, 50, PlaceholderAlignment.bottom);`
-  /// * For a 30x50 placeholder that is vertically centered around the text, use:
-  /// `addPlaceholder(30, 50, PlaceholderAlignment.middle);`.
-  /// * For a 30x50 placeholder that sits completely on top of the alphabetic baseline, use:
-  /// `addPlaceholder(30, 50, PlaceholderAlignment.aboveBaseline, baseline: TextBaseline.alphabetic)`.
-  /// * For a 30x50 placeholder with 40 pixels above and 10 pixels below the alphabetic baseline, use:
-  /// `addPlaceholder(30, 50, PlaceholderAlignment.baseline, baseline: TextBaseline.alphabetic, baselineOffset: 40)`.
-  ///
-  /// Lines are permitted to break around each placeholder.
-  ///
-  /// Decorations will be drawn based on the font defined in the most recently
-  /// pushed [TextStyle]. The decorations are drawn as if unicode text were present
-  /// in the placeholder space, and will draw the same regardless of the height and
-  /// alignment of the placeholder. To hide or manually adjust decorations to fit,
-  /// a text style with the desired decoration behavior should be pushed before
-  /// adding a placeholder.
-  ///
-  /// Any decorations drawn through a placeholder will exist on the same canvas/layer
-  /// as the text. This means any content drawn on top of the space reserved by
-  /// the placeholder will be drawn over the decoration, possibly obscuring the
-  /// decoration.
-  ///
-  /// Placeholders are represented by a unicode 0xFFFC "object replacement character"
-  /// in the text buffer. For each placeholder, one object replacement character is
-  /// added on to the text buffer.
-  ///
-  /// The `scale` parameter will scale the `width` and `height` by the specified amount,
-  /// and keep track of the scale. The scales of placeholders added can be accessed
-  /// through [placeholderScales]. This is primarily used for accessibility scaling.
   void addPlaceholder(double width, double height, PlaceholderAlignment alignment, {
     double scale = 1.0,
     double? baselineOffset,
@@ -2238,23 +2307,22 @@ class ParagraphBuilder extends NativeFieldWrapperClass2 {
     // Default the baselineOffset to height if null. This will place the placeholder
     // fully above the baseline, similar to [PlaceholderAlignment.aboveBaseline].
     baselineOffset = baselineOffset ?? height;
-    _addPlaceholder(width * scale, height * scale, alignment.index, baselineOffset * scale, baseline == null ? null : baseline.index);
+    _spans.add(_Placeholder(
+      width * scale,
+      height * scale,
+      alignment.index,
+      baselineOffset * scale,
+      baseline?.index,
+    ));
     _placeholderCount++;
     _placeholderScales.add(scale);
   }
-  String? _addPlaceholder(double width, double height, int alignment, double baselineOffset, int? baseline) { throw UnimplementedError(); }
 
-  /// Applies the given paragraph style and returns a [Paragraph] containing the
-  /// added text and associated styling.
-  ///
-  /// After calling this function, the paragraph builder object is invalid and
-  /// cannot be used further.
   Paragraph build() {
-    final Paragraph paragraph = Paragraph._();
-    _build(paragraph);
+    final Paragraph paragraph = Paragraph._(_style, _spans);
+    _spans = <_Span>[];
     return paragraph;
   }
-  void _build(Paragraph outParagraph) { throw UnimplementedError(); }
 }
 
 /// Loads a font from a buffer and makes it available for rendering text.

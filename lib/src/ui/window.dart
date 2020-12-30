@@ -253,8 +253,9 @@ abstract class FlutterView {
   ///   scheduling of frames.
   /// * [RendererBinding], the Flutter framework class which manages layout and
   ///   painting.
-  void render(Scene scene) => _render(scene, this);
-  void _render(Scene scene, FlutterView view) { throw UnimplementedError(); }
+  void render(Scene scene) {
+    // TODO(yjbanov): implement a basic preroll for better benchmark realism.
+  }
 }
 
 /// A top-level platform window displaying a Flutter layer tree drawn from a
@@ -306,7 +307,27 @@ class FlutterWindow extends FlutterView {
 /// [PlatformDispatcher.instance] for more details about this recommendation.
 class SingletonFlutterWindow extends FlutterWindow {
   SingletonFlutterWindow._(Object windowId, PlatformDispatcher platformDispatcher)
-      : super._(windowId, platformDispatcher);
+      : super._(windowId, platformDispatcher) {
+    platformDispatcher._updateLifecycleState('resumed');
+    _updateWindowMetrics(
+      0, // id
+      1.0, // devicePixelRatio
+      1024, // width
+      768, // height
+      0, // viewPaddingTop
+      0, // viewPaddingRight
+      0, // viewPaddingBottom
+      0, // viewPaddingLeft
+      0, // viewInsetTop
+      0, // viewInsetRight
+      0, // viewInsetBottom
+      0, // viewInsetLeft
+      0, // systemGestureInsetTop
+      0, // systemGestureInsetRight
+      0, // systemGestureInsetBottom
+      0, // systemGestureInsetLeft
+    );
+  }
 
   /// A callback that is invoked whenever the [devicePixelRatio],
   /// [physicalSize], [padding], [viewInsets], [PlatformDispatcher.views], or
