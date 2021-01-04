@@ -7,7 +7,6 @@ import 'dart:developer' as developer;
 import 'package:flute/io.dart'; // ignore: unused_import
 import 'dart:isolate' show SendPort;
 import 'dart:math' as math;
-import 'dart:nativewrappers';
 import 'dart:typed_data';
 
 part 'src/ui/annotations.dart';
@@ -26,3 +25,11 @@ part 'src/ui/pointer.dart';
 part 'src/ui/semantics.dart';
 part 'src/ui/text.dart';
 part 'src/ui/window.dart';
+
+double _screenWidth = 1024;
+double _screenHeight = 1024;
+
+void setScreenSize(double width, double height) {
+  _screenWidth = width;
+  _screenHeight = height;
+}

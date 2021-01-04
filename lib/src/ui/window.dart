@@ -312,8 +312,9 @@ class SingletonFlutterWindow extends FlutterWindow {
     _updateWindowMetrics(
       0, // id
       1.0, // devicePixelRatio
-      1024, // width
-      768, // height
+      // 4k
+      _screenWidth, // width
+      _screenHeight, // height
       0, // viewPaddingTop
       0, // viewPaddingRight
       0, // viewPaddingBottom
