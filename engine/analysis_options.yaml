@@ -1,0 +1,11 @@
+# Web-specific analysis options.
+#
+# As of today the web code contains quite a few deviations from the repo-wide
+# analysis options due to having been migrated from google3. The ultimate goal
+# is to clean up our code and delete this file.
+
+include: ../../analysis_options.yaml
+
+linter:
+  rules:
+    public_member_api_docs: false
