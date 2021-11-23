@@ -7,7 +7,7 @@ import 'dart:html' as html;
 import 'package:test/test.dart';
 import 'package:ui/src/engine.dart';
 import 'package:ui/ui.dart' as ui;
-import 'package:web_engine_tester/golden_tester.dart';
+import '../golden_tester.dart';
 
 /// Commit a recording canvas to a bitmap, and compare with the expected.
 Future<void> canvasScreenshot(RecordingCanvas rc, String fileName,

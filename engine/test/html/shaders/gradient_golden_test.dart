@@ -11,9 +11,9 @@ import 'package:test/test.dart';
 import 'package:ui/src/engine.dart';
 import 'package:ui/ui.dart';
 
-import 'package:web_engine_tester/golden_tester.dart';
-
 import '../../common.dart';
+import '../../golden_tester.dart';
+
 import '../paragraph/text_scuba.dart';
 
 // TODO(yjbanov): unskip Firefox tests when Firefox implements WebGL in headless mode.

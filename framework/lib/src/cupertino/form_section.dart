@@ -289,7 +289,7 @@ class CupertinoFormSection extends StatelessWidget {
                 ),
                 child: Padding(
                   padding: _kDefaultHeaderMargin,
-                  child: header!,
+                  child: header,
                 ),
               ),
             ),
@@ -312,7 +312,7 @@ class CupertinoFormSection extends StatelessWidget {
                 ),
                 child: Padding(
                   padding: _kDefaultFooterMargin,
-                  child: footer!,
+                  child: footer,
                 ),
               ),
             ),

@@ -91,7 +91,7 @@ class _PictureLayer extends _EngineLayerWrapper {
 /// {@endtemplate}
 class TransformEngineLayer extends _EngineLayerWrapper {
   TransformEngineLayer._(Float64List matrix4)
-    : this.matrix4 = Float64List.fromList(matrix4), super._();
+    : matrix4 = Float64List.fromList(matrix4), super._();
 
   final Float64List matrix4;
 }

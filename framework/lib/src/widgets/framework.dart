@@ -3991,7 +3991,6 @@ abstract class Element extends DiagnosticableTree implements BuildContext {
     assert(_debugCheckStateIsActiveForAncestorLookup());
     final InheritedElement? ancestor = _inheritedWidgets == null ? null : _inheritedWidgets![targetType];
     if (ancestor != null) {
-      assert(ancestor is InheritedElement);
       return inheritFromElement(ancestor, aspect: aspect);
     }
     _hadUnsatisfiedDependencies = true;
@@ -4003,7 +4002,6 @@ abstract class Element extends DiagnosticableTree implements BuildContext {
     assert(_debugCheckStateIsActiveForAncestorLookup());
     final InheritedElement? ancestor = _inheritedWidgets == null ? null : _inheritedWidgets![T];
     if (ancestor != null) {
-      assert(ancestor is InheritedElement);
       return dependOnInheritedElement(ancestor, aspect: aspect) as T;
     }
     _hadUnsatisfiedDependencies = true;
@@ -6093,6 +6091,7 @@ abstract class RootRenderObjectElement extends RenderObjectElement {
   /// to [runApp]. The binding is responsible for driving the build pipeline by
   /// calling the build owner's [BuildOwner.buildScope] method. See
   /// [WidgetsBinding.drawFrame].
+  // ignore: use_setters_to_change_properties
   void assignOwner(BuildOwner owner) {
     _owner = owner;
   }

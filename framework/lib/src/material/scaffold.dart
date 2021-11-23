@@ -2274,7 +2274,7 @@ class ScaffoldState extends State<Scaffold> with TickerProviderStateMixin {
       assert(debugCheckHasScaffoldMessenger(context));
       assert(
         _scaffoldMessenger != null,
-        'A SnackBar was shown by the ScaffoldMessenger, but has been called upon'
+        'A SnackBar was shown by the ScaffoldMessenger, but has been called upon '
           'to be removed from a Scaffold that is not registered with a '
           'ScaffoldMessenger, this can happen if a Scaffold has been rebuilt '
           'without an ancestor ScaffoldMessenger.',
@@ -2319,7 +2319,7 @@ class ScaffoldState extends State<Scaffold> with TickerProviderStateMixin {
       assert(debugCheckHasScaffoldMessenger(context));
       assert(
       _scaffoldMessenger != null,
-      'A SnackBar was shown by the ScaffoldMessenger, but has been called upon'
+      'A SnackBar was shown by the ScaffoldMessenger, but has been called upon '
         'to be removed from a Scaffold that is not registered with a '
         'ScaffoldMessenger, this can happen if a Scaffold has been rebuilt '
         'without an ancestor ScaffoldMessenger.',

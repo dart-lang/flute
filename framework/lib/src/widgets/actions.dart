@@ -587,9 +587,9 @@ class Actions extends StatefulWidget {
     // concrete type of the intent at compile time.
     final Type type = intent?.runtimeType ?? T;
     assert(type != Intent,
-      'The type passed to "find" resolved to "Intent": either a non-Intent'
-      'generic type argument or an example intent derived from Intent must be'
-      'specified. Intent may be used as the generic type as long as the optional'
+      'The type passed to "find" resolved to "Intent": either a non-Intent '
+      'generic type argument or an example intent derived from Intent must be '
+      'specified. Intent may be used as the generic type as long as the optional '
       '"intent" argument is passed.');
 
     _visitActionsAncestors(context, (InheritedElement element) {

@@ -17,6 +17,7 @@ import 'framework.dart';
 /// plus the height of the system status bar.
 ///
 /// Use [PreferredSize] to give a preferred size to an arbitrary widget.
+// ignore: avoid_implementing_value_types
 abstract class PreferredSizeWidget implements Widget {
   /// The size this widget would prefer if it were otherwise unconstrained.
   ///

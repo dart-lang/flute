@@ -2607,7 +2607,7 @@ class _InspectorOverlayLayer extends Layer {
 
   ui.Picture _buildPicture(_InspectorOverlayRenderState state) {
     final ui.PictureRecorder recorder = ui.PictureRecorder();
-    final Canvas canvas = Canvas(recorder, state.overlayRect);
+    final Canvas canvas = Canvas(recorder);
     final Size size = state.overlayRect.size;
     // The overlay rect could have an offset if the widget inspector does
     // not take all the screen.

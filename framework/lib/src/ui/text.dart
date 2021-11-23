@@ -801,16 +801,12 @@ class TextStyle {
       background: _background ?? other._background,
       foreground: _foreground ?? other._foreground,
       shadows: _shadows == null
-        ? other._shadows == null
-          ? null
-          : other._shadows
+        ? other._shadows
         : other._shadows == null
           ? _shadows
           : <Shadow>[..._shadows!, ...other._shadows!],
       fontFeatures: _fontFeatures == null
-        ? other._fontFeatures == null
-          ? null
-          : other._fontFeatures
+        ? other._fontFeatures
         : other._fontFeatures == null
           ? _fontFeatures
           : <FontFeature>[..._fontFeatures!, ...other._fontFeatures!],
@@ -1042,13 +1038,11 @@ class ParagraphStyle {
          ellipsis,
          locale,
        ),
-       _textAlign = textAlign ?? TextAlign.start,
        _textDirection = textDirection ?? TextDirection.ltr,
        _maxLines = maxLines,
        _fontFamily = fontFamily,
        _fontSize = fontSize,
        _height = height,
-       _textHeightBehavior = textHeightBehavior ?? const TextHeightBehavior(),
        _fontWeight = fontWeight ?? FontWeight.normal,
        _fontStyle = fontStyle ?? FontStyle.normal,
        _strutStyle = strutStyle,
@@ -1056,13 +1050,11 @@ class ParagraphStyle {
        _locale = locale;
 
   final Int32List _encoded;
-  final TextAlign _textAlign;
   final TextDirection _textDirection;
   final int? _maxLines;
   final String? _fontFamily;
   final double? _fontSize;
   final double? _height;
-  final TextHeightBehavior _textHeightBehavior;
   final FontWeight _fontWeight;
   final FontStyle _fontStyle;
   final StrutStyle? _strutStyle;
@@ -2049,9 +2041,7 @@ class Paragraph {
     _width = paragraphRight;
     _height = currentLineTop + currentLineHeight;
     final int? maxLines = _paragraphStyle._maxLines;
-    _didExceedMaxLines = maxLines == null
-      ? false
-      : _boxes.length > maxLines;
+    _didExceedMaxLines = maxLines != null && _boxes.length > maxLines;
   }
 
   /// Returns a list of text boxes that enclose the given text range.
@@ -2186,8 +2176,11 @@ class _Placeholder extends _Span {
 
   final double _width;
   final double _height;
+  // ignore: unused_field
   final int _alignment;
+  // ignore: unused_field
   final double _baselineOffset;
+  // ignore: unused_field
   final int? _baseline;
 
   @override
@@ -2235,6 +2228,7 @@ class ParagraphBuilder {
   }
 
   final ParagraphStyle _style;
+  // ignore: unused_field
   final List<String>? _strutFontFamilies;
 
   final List<TextStyle> _styleStack = <TextStyle>[];
@@ -2301,9 +2295,9 @@ class ParagraphBuilder {
     TextBaseline? baseline,
   }) {
     // Require a baseline to be specified if using a baseline-based alignment.
-    assert((alignment == PlaceholderAlignment.aboveBaseline ||
+    assert(!(alignment == PlaceholderAlignment.aboveBaseline ||
             alignment == PlaceholderAlignment.belowBaseline ||
-            alignment == PlaceholderAlignment.baseline) ? baseline != null : true);
+            alignment == PlaceholderAlignment.baseline) || baseline != null);
     // Default the baselineOffset to height if null. This will place the placeholder
     // fully above the baseline, similar to [PlaceholderAlignment.aboveBaseline].
     baselineOffset = baselineOffset ?? height;

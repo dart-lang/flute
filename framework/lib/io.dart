@@ -7,6 +7,7 @@ void exit(int exitCode) {
   throw Exception('Exiting with exit code $exitCode');
 }
 
+// ignore: avoid_classes_with_only_static_members
 class Platform {
   static String get operatingSystem => 'Android';
   static bool get isAndroid => true;

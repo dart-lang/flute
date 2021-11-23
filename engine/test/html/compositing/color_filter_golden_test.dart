@@ -10,7 +10,7 @@ import 'package:test/test.dart';
 import 'package:ui/src/engine.dart' hide PhysicalShapeEngineLayer;
 import 'package:ui/ui.dart';
 
-import 'package:web_engine_tester/golden_tester.dart';
+import '../../golden_tester.dart';
 
 const Rect region = Rect.fromLTWH(0, 0, 500, 500);
 

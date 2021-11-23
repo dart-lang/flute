@@ -1,6 +1,4 @@
-import 'dart:async';
 import 'package:flute/material.dart';
-import 'package:flute/scheduler.dart';
 
 void main() {
   runApp(MyApp());

@@ -115,8 +115,6 @@ class ImageConfiguration {
     result.write('ImageConfiguration(');
     bool hasArguments = false;
     if (bundle != null) {
-      if (hasArguments)
-        result.write(', ');
       result.write('bundle: $bundle');
       hasArguments = true;
     }
@@ -675,7 +673,7 @@ abstract class AssetBundleImageProvider extends ImageProvider<AssetBundleImageKe
       PaintingBinding.instance!.imageCache!.evict(key);
       throw StateError('Unable to read data');
     }
-    return await decode(data.buffer.asUint8List());
+    return decode(data.buffer.asUint8List());
   }
 }
 

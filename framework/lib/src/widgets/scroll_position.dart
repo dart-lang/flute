@@ -318,6 +318,7 @@ abstract class ScrollPosition extends ViewportOffset with ScrollMetrics {
   ///    middle of layout and applying the new position immediately.
   ///  * [animateTo], which is like [jumpTo] but animating to the
   ///    destination offset.
+  // ignore: use_setters_to_change_properties
   void correctPixels(double value) {
     _pixels = value;
   }

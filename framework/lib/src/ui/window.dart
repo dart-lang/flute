@@ -2,6 +2,8 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
+// See: https://github.com/dart-lang/linter/issues/2921
+// ignore_for_file: use_late_for_private_fields_and_variables
 
 part of dart.ui;
 

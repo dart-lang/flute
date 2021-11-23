@@ -172,20 +172,20 @@ enum _WidgetKind {
 abstract class _Node {}
 
 class _LayoutNode extends _Node {
-  factory _LayoutNode.generate({int depth = 0}) {
-    final _LayoutNode node = _LayoutNode(
-      isColumn: depth % 2 == 0,
-      firstChild: depth >= maxDepth ? _LeafNode.generate() : _LayoutNode.generate(depth: depth + 1),
-      secondChild: depth >= maxDepth ? _LeafNode.generate() : _LayoutNode.generate(depth: depth + 1),
-    );
-    return node;
-  }
-
   _LayoutNode({
     required this.isColumn,
     required this.firstChild,
     required this.secondChild,
   });
+
+  factory _LayoutNode.generate({int depth = 0}) {
+    final _LayoutNode node = _LayoutNode(
+      isColumn: depth.isEven,
+      firstChild: depth >= maxDepth ? _LeafNode.generate() : _LayoutNode.generate(depth: depth + 1),
+      secondChild: depth >= maxDepth ? _LeafNode.generate() : _LayoutNode.generate(depth: depth + 1),
+    );
+    return node;
+  }
 
   final bool isColumn;
   final _Node firstChild;
@@ -193,15 +193,15 @@ class _LayoutNode extends _Node {
 }
 
 class _LeafNode extends _Node {
+  _LeafNode({
+    required this.kind,
+  });
+
   factory _LeafNode.generate() {
     return _LeafNode(
       kind: _WidgetKind.values[random.nextInt(_WidgetKind.values.length)],
     );
   }
-
-  _LeafNode({
-    required this.kind,
-  });
 
   final _WidgetKind kind;
 }

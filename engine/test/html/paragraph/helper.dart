@@ -6,7 +6,7 @@ import 'dart:html' as html;
 
 import 'package:ui/src/engine.dart';
 import 'package:ui/ui.dart';
-import 'package:web_engine_tester/golden_tester.dart';
+import '../../golden_tester.dart';
 
 const Color white = Color(0xFFFFFFFF);
 const Color black = Color(0xFF000000);

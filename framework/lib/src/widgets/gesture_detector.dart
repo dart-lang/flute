@@ -1322,7 +1322,6 @@ class _DefaultSemanticsGestureDelegate extends SemanticsGestureDelegate {
     final TapGestureRecognizer? tap = recognizers[TapGestureRecognizer] as TapGestureRecognizer?;
     if (tap == null)
       return null;
-    assert(tap is TapGestureRecognizer);
 
     return () {
       assert(tap != null);
@@ -1341,7 +1340,6 @@ class _DefaultSemanticsGestureDelegate extends SemanticsGestureDelegate {
       return null;
 
     return () {
-      assert(longPress is LongPressGestureRecognizer);
       if (longPress.onLongPressStart != null)
         longPress.onLongPressStart!(const LongPressStartDetails());
       if (longPress.onLongPress != null)
@@ -1360,7 +1358,6 @@ class _DefaultSemanticsGestureDelegate extends SemanticsGestureDelegate {
     final GestureDragUpdateCallback? horizontalHandler = horizontal == null ?
       null :
       (DragUpdateDetails details) {
-        assert(horizontal is HorizontalDragGestureRecognizer);
         if (horizontal.onDown != null)
           horizontal.onDown!(DragDownDetails());
         if (horizontal.onStart != null)
@@ -1374,7 +1371,6 @@ class _DefaultSemanticsGestureDelegate extends SemanticsGestureDelegate {
     final GestureDragUpdateCallback? panHandler = pan == null ?
       null :
       (DragUpdateDetails details) {
-        assert(pan is PanGestureRecognizer);
         if (pan.onDown != null)
           pan.onDown!(DragDownDetails());
         if (pan.onStart != null)
@@ -1402,7 +1398,6 @@ class _DefaultSemanticsGestureDelegate extends SemanticsGestureDelegate {
     final GestureDragUpdateCallback? verticalHandler = vertical == null ?
       null :
       (DragUpdateDetails details) {
-        assert(vertical is VerticalDragGestureRecognizer);
         if (vertical.onDown != null)
           vertical.onDown!(DragDownDetails());
         if (vertical.onStart != null)
@@ -1416,7 +1411,6 @@ class _DefaultSemanticsGestureDelegate extends SemanticsGestureDelegate {
     final GestureDragUpdateCallback? panHandler = pan == null ?
       null :
       (DragUpdateDetails details) {
-        assert(pan is PanGestureRecognizer);
         if (pan.onDown != null)
           pan.onDown!(DragDownDetails());
         if (pan.onStart != null)

@@ -17,7 +17,7 @@ void _printDebug(dynamic arg) {
   _Logger._printDebugString(arg.toString());
 }
 
-class _Logger {
+class _Logger { // ignore: avoid_classes_with_only_static_members
   static void _printString(String? s) { throw UnimplementedError(); }
   static void _printDebugString(String? s) { throw UnimplementedError(); }
 }

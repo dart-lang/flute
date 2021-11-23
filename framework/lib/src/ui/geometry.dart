@@ -671,8 +671,6 @@ class Rect {
     math.max(a.dy, b.dy),
   );
 
-  Float32List get _value32 => Float32List.fromList(<double>[left, top, right, bottom]);
-
   /// The offset of the left edge of this rectangle from the x axis.
   final double left;
 

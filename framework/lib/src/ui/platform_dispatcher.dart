@@ -504,11 +504,11 @@ class PlatformDispatcher {
   ///  * [SchedulerBinding], the Flutter framework class which manages the
   ///    scheduling of frames.
   void scheduleFrame() {
-    _frameTimer ??= new Timer(
+    _frameTimer ??= Timer(
       const Duration(milliseconds: 16),
       () {
         _frameTimer = null;
-        int microseconds = _frameTime.inMicroseconds;
+        final int microseconds = _frameTime.inMicroseconds;
         _frameTime += const Duration(milliseconds: 16);
         Timer.run(() {
           _beginFrame(microseconds);

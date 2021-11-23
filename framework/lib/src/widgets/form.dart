@@ -490,6 +490,7 @@ class FormFieldState<T> extends State<FormField<T>> {
   /// the value should be set by a call to [didChange], which ensures that
   /// `setState` is called.
   @protected
+  // ignore: use_setters_to_change_properties
   void setValue(T? value) {
     _value = value;
   }

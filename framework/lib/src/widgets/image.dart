@@ -3,7 +3,6 @@
 // found in the LICENSE file.
 
 import 'dart:async';
-import 'package:flute/io.dart' show File;
 import 'dart:typed_data';
 
 import 'package:flute/foundation.dart';

@@ -10,9 +10,8 @@ import 'package:ui/src/engine.dart'
     hide ClipRectEngineLayer, BackdropFilterEngineLayer;
 import 'package:ui/ui.dart';
 
-import 'package:web_engine_tester/golden_tester.dart';
-
 import '../../common.dart';
+import '../../golden_tester.dart';
 
 /// To debug compositing failures on browsers, set this flag to true and run
 /// flutter run -d chrome --web-renderer=html

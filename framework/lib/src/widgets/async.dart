@@ -253,8 +253,13 @@ class AsyncSnapshot<T> {
   T get requireData {
     if (hasData)
       return data!;
-    if (hasError)
-      throw error!;
+    if (hasError) {
+      if (error is Exception) {
+        throw error! as Exception;
+      } else {
+        throw Exception(error);
+      }
+    }
     throw StateError('Snapshot has neither data nor error');
   }
 

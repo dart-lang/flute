@@ -5,6 +5,7 @@
 import 'bitfield.dart' as bitfield;
 
 /// The dart:io implementation of [bitfield.kMaxUnsignedSMI].
+// ignore: avoid_js_rounded_ints
 const int kMaxUnsignedSMI = 0x3FFFFFFFFFFFFFFF;
 
 /// The dart:io implementation of [bitfield.Bitfield].

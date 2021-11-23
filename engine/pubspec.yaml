@@ -19,12 +19,3 @@ dev_dependencies:
   test: 1.17.7
   yaml: 3.0.0
   watcher: 1.0.0
-  web_test_utils:
-    path: ../../web_sdk/web_test_utils
-  web_engine_tester:
-    path: ../../web_sdk/web_engine_tester
-  simulators:
-    git:
-      url: https://github.com/flutter/web_installers.git
-      path: packages/simulators/
-      ref: 4a7b0a2c84b8993bf4d19030218de38c18838c26
