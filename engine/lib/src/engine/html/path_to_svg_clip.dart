@@ -18,8 +18,8 @@ int _clipIdCounter = 0;
 /// Position needs to be absolute since these svgs are sandwiched between
 /// canvas elements and can cause layout shifts otherwise.
 final svg.SvgSvgElement kSvgResourceHeader = svg.SvgSvgElement()
-  ..setAttribute('width', 0)
-  ..setAttribute('height', 0)
+  ..setAttribute('width', '0')
+  ..setAttribute('height', '0')
   ..style.position = 'absolute';
 
 /// Converts Path to svg element that contains a clip-path definition.

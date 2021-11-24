@@ -198,7 +198,7 @@ html.Element pathToSvgElement(Path path, Paint paint, bool enableFill) {
   if (paint.style == PaintingStyle.stroke ||
       paint.strokeWidth != 0.0) {
     pathElement.setAttribute('stroke', colorToCssString(paint.color)!);
-    pathElement.setAttribute('stroke-width', paint.strokeWidth);
+    pathElement.setAttribute('stroke-width', paint.strokeWidth.toString());
     if (!enableFill) {
       pathElement.setAttribute('fill', 'none');
     }
