@@ -88,7 +88,7 @@ class CkBrowserImageDecoder implements ui.Codec {
       // wait until the image is fully decoded.
       // package:js bindings don't work with getters that return a Promise, which
       // is why js_util is used instead.
-      await js_util.promiseToFuture<void>(js_util.getProperty(webDecoder, 'completed'));
+      await js_util.promiseToFuture<void>(js_util.getProperty(webDecoder, 'completed')!);
       return CkBrowserImageDecoder._(webDecoder, debugSource);
     } catch (error) {
       if (error is html.DomException) {
