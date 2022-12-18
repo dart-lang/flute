@@ -1,6 +1,7 @@
-name: engine
+name: flute_benchmarks
 publish_to: none
 environment:
   sdk: ">=2.17.0-0 <4.0.0"
 dependencies:
-  meta: 1.8.0
+  flute:
+    path: ../framework

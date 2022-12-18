@@ -1,0 +1,11 @@
+name: flute_script
+publish_to: none
+environment:
+  sdk: ">=2.17.0-0 <4.0.0"
+dependencies:
+  meta: 1.8.0
+  async: 2.10.0
+  file: 6.1.4
+  path: 1.8.3
+  platform: 3.1.0
+  process: 4.2.4
