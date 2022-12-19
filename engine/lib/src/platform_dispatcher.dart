@@ -941,14 +941,7 @@ class PlatformDispatcher {
   void registerBackgroundIsolate(RootIsolateToken token) {
   }
 
-  KeyDataCallback? get onKeyData => _onKeyData;
-  KeyDataCallback? _onKeyData;
-  Zone? _onKeyDataZone;
-  @override
-  set onKeyData(KeyDataCallback? callback) {
-    _onKeyData = callback;
-    _onKeyDataZone = Zone.current;
-  }
+  KeyDataCallback? onKeyData;
 
   bool get nativeSpellCheckServiceDefined => false;
   bool get brieflyShowPassword => false;

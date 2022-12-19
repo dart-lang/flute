@@ -3,8 +3,8 @@ import 'package:file/local.dart';
 import 'package:path/path.dart' as p;
 import 'package:process/process.dart';
 
-final FileSystem fs = LocalFileSystem();
-final ProcessManager pm = LocalProcessManager();
+const FileSystem fs = LocalFileSystem();
+const ProcessManager pm = LocalProcessManager();
 
 Future<void> main(List<String> args) async {
   final Directory flutterRepo = await _findFlutterRepo();
@@ -66,7 +66,7 @@ Future<void> _sync(Directory flutterLib, Directory fluteLib) async {
 }
 
 Future<Directory> _findFlutterRepo() async {
-  final String where = (await pm.run(['where', 'flutter'])).stdout as String;
+  final String where = (await pm.run(<String>['where', 'flutter'])).stdout as String;
   final String pathToFlutterBin = where.split('\n').first;
   final Directory bin = fs.directory(p.dirname(pathToFlutterBin));
   return bin.parent;
@@ -75,7 +75,7 @@ Future<Directory> _findFlutterRepo() async {
 Future<Directory> _findFlute() async {
   final List<String> fluteDirectories = fs.currentDirectory.listSync()
     .whereType<Directory>()
-    .map<String>((dir) => p.basename(dir.path))
+    .map<String>((Directory dir) => p.basename(dir.path))
     .toList();
   _expect(
     <String>['benchmarks', 'engine', 'framework', 'script'].every(fluteDirectories.contains),
