@@ -1,1 +1,1 @@
-Flutter Web engine extracted into a pub package for experimentation.
+Dummy Flutter engine that doesn't render anything. Only good for benchmarking.

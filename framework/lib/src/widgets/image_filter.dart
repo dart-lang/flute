@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-import 'package:flute/ui.dart';
+import 'package:engine/ui.dart';
 
 import 'package:flute/foundation.dart';
 import 'package:flute/rendering.dart';
@@ -10,6 +10,21 @@ import 'package:flute/rendering.dart';
 import 'framework.dart';
 
 /// Applies an [ImageFilter] to its child.
+///
+/// An image filter will always apply its filter operation to the child widget,
+/// even if said filter is conceptually a "no-op", such as an ImageFilter.blur
+/// with a radius of 0 or an ImageFilter.matrix with an identity matrix. Setting
+/// [ImageFiltered.enabled] to `false` is a more efficient manner of disabling
+/// an image filter.
+///
+/// The framework does not attempt to optimize out "no-op" filters because it
+/// cannot tell the difference between an intentional no-op and a filter that is
+/// only incidentally a no-op. Consider an ImageFilter.matrix that is animated
+/// and happens to pass through the identity matrix. If the framework identified it
+/// as a no-op it would drop and then recreate the layer during the animation which
+/// would be more expensive than keeping it around.
+///
+/// {@youtube 560 315 https://www.youtube.com/watch?v=7Lftorq4i2o}
 ///
 /// See also:
 ///
@@ -22,21 +37,30 @@ class ImageFiltered extends SingleChildRenderObjectWidget {
   ///
   /// The [imageFilter] must not be null.
   const ImageFiltered({
-    Key? key,
+    super.key,
     required this.imageFilter,
-    Widget? child,
-  }) : assert(imageFilter != null),
-       super(key: key, child: child);
+    super.child,
+    this.enabled = true,
+  }) : assert(imageFilter != null);
 
   /// The image filter to apply to the child of this widget.
   final ImageFilter imageFilter;
 
-  @override
-  RenderObject createRenderObject(BuildContext context) => _ImageFilterRenderObject(imageFilter);
+  /// Whether or not to apply the image filter operation to the child of this
+  /// widget.
+  ///
+  /// Prefer setting enabled to `false` instead of creating a "no-op" filter
+  /// type for performance reasons.
+  final bool enabled;
 
   @override
-  void updateRenderObject(BuildContext context, _ImageFilterRenderObject renderObject) {
-    renderObject.imageFilter = imageFilter;
+  RenderObject createRenderObject(BuildContext context) => _ImageFilterRenderObject(imageFilter, enabled);
+
+  @override
+  void updateRenderObject(BuildContext context, RenderObject renderObject) {
+    (renderObject as _ImageFilterRenderObject)
+      ..enabled = enabled
+      ..imageFilter = imageFilter;
   }
 
   @override
@@ -47,7 +71,21 @@ class ImageFiltered extends SingleChildRenderObjectWidget {
 }
 
 class _ImageFilterRenderObject extends RenderProxyBox {
-  _ImageFilterRenderObject(this._imageFilter);
+  _ImageFilterRenderObject(this._imageFilter, this._enabled);
+
+  bool get enabled => _enabled;
+  bool _enabled;
+  set enabled(bool value) {
+    if (enabled == value) {
+      return;
+    }
+    final bool wasRepaintBoundary = isRepaintBoundary;
+    _enabled = value;
+    if (isRepaintBoundary != wasRepaintBoundary) {
+      markNeedsCompositingBitsUpdate();
+    }
+    markNeedsPaint();
+  }
 
   ImageFilter get imageFilter => _imageFilter;
   ImageFilter _imageFilter;
@@ -55,23 +93,20 @@ class _ImageFilterRenderObject extends RenderProxyBox {
     assert(value != null);
     if (value != _imageFilter) {
       _imageFilter = value;
-      markNeedsPaint();
+      markNeedsCompositedLayerUpdate();
     }
   }
 
   @override
-  bool get alwaysNeedsCompositing => child != null;
+  bool get alwaysNeedsCompositing => child != null && enabled;
+
+   @override
+  bool get isRepaintBoundary => alwaysNeedsCompositing;
 
   @override
-  void paint(PaintingContext context, Offset offset) {
-    assert(imageFilter != null);
-    if (layer == null) {
-      layer = ImageFilterLayer(imageFilter: imageFilter);
-    } else {
-      final ImageFilterLayer filterLayer = layer! as ImageFilterLayer;
-      filterLayer.imageFilter = imageFilter;
-    }
-    context.pushLayer(layer!, super.paint, offset);
-    assert(layer != null);
+  OffsetLayer updateCompositedLayer({required covariant ImageFilterLayer? oldLayer}) {
+    final ImageFilterLayer layer = oldLayer ?? ImageFilterLayer();
+    layer.imageFilter = imageFilter;
+    return layer;
   }
 }

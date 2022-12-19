@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-import 'package:flute/ui.dart' show lerpDouble;
+import 'package:engine/ui.dart' show lerpDouble;
 
 import 'package:flute/foundation.dart';
 import 'package:flute/rendering.dart';
@@ -11,6 +11,9 @@ import 'package:flute/widgets.dart';
 import 'material_state.dart';
 import 'theme.dart';
 import 'theme_data.dart';
+
+// Examples can assume:
+// late BuildContext context;
 
 /// Defines default property values for descendant [Radio] widgets.
 ///
@@ -30,6 +33,8 @@ import 'theme_data.dart';
 ///
 ///  * [ThemeData], which describes the overall theme information for the
 ///    application.
+///  * [RadioTheme], which is used by descendants to obtain the
+///    [RadioThemeData].
 @immutable
 class RadioThemeData with Diagnosticable {
   /// Creates a theme that can be used for [ThemeData.radioTheme].
@@ -44,33 +49,43 @@ class RadioThemeData with Diagnosticable {
 
   /// {@macro flutter.material.radio.mouseCursor}
   ///
-  /// If specified, overrides the default value of [Radio.mouseCursor].
+  /// If specified, overrides the default value of [Radio.mouseCursor]. The
+  /// default value is [MaterialStateMouseCursor.clickable].
   final MaterialStateProperty<MouseCursor?>? mouseCursor;
 
   /// {@macro flutter.material.radio.fillColor}
   ///
-  /// If specified, overrides the default value of [Radio.fillColor].
+  /// If specified, overrides the default value of [Radio.fillColor]. The
+  /// default value is the value of [ThemeData.disabledColor] in the disabled
+  /// state, [ThemeData.toggleableActiveColor] in the selected state, and
+  /// [ThemeData.unselectedWidgetColor] in the default state.
   final MaterialStateProperty<Color?>? fillColor;
 
   /// {@macro flutter.material.radio.overlayColor}
   ///
-  /// If specified, overrides the default value of [Radio.overlayColor].
+  /// If specified, overrides the default value of [Radio.overlayColor]. The
+  /// default value is [ThemeData.toggleableActiveColor] with alpha
+  /// [kRadialReactionAlpha], [ThemeData.focusColor] and [ThemeData.hoverColor]
+  /// in the pressed, focused, and hovered state.
   final MaterialStateProperty<Color?>? overlayColor;
 
   /// {@macro flutter.material.radio.splashRadius}
   ///
-  /// If specified, overrides the default value of [Radio.splashRadius].
+  /// If specified, overrides the default value of [Radio.splashRadius]. The
+  /// default value is [kRadialReactionRadius].
   final double? splashRadius;
 
   /// {@macro flutter.material.radio.materialTapTargetSize}
   ///
   /// If specified, overrides the default value of
-  /// [Radio.materialTapTargetSize].
+  /// [Radio.materialTapTargetSize]. The default value is the value of
+  /// [ThemeData.materialTapTargetSize].
   final MaterialTapTargetSize? materialTapTargetSize;
 
   /// {@macro flutter.material.radio.visualDensity}
   ///
-  /// If specified, overrides the default value of [Radio.visualDensity].
+  /// If specified, overrides the default value of [Radio.visualDensity]. The
+  /// default value is the value of [ThemeData.visualDensity].
   final VisualDensity? visualDensity;
 
   /// Creates a copy of this object but with the given fields replaced with the
@@ -99,32 +114,32 @@ class RadioThemeData with Diagnosticable {
   static RadioThemeData lerp(RadioThemeData? a, RadioThemeData? b, double t) {
     return RadioThemeData(
       mouseCursor: t < 0.5 ? a?.mouseCursor : b?.mouseCursor,
-      fillColor: _lerpProperties<Color?>(a?.fillColor, b?.fillColor, t, Color.lerp),
+      fillColor: MaterialStateProperty.lerp<Color?>(a?.fillColor, b?.fillColor, t, Color.lerp),
       materialTapTargetSize: t < 0.5 ? a?.materialTapTargetSize : b?.materialTapTargetSize,
-      overlayColor: _lerpProperties<Color?>(a?.overlayColor, b?.overlayColor, t, Color.lerp),
+      overlayColor: MaterialStateProperty.lerp<Color?>(a?.overlayColor, b?.overlayColor, t, Color.lerp),
       splashRadius: lerpDouble(a?.splashRadius, b?.splashRadius, t),
       visualDensity: t < 0.5 ? a?.visualDensity : b?.visualDensity,
     );
   }
 
   @override
-  int get hashCode {
-    return hashValues(
-      mouseCursor,
-      fillColor,
-      overlayColor,
-      splashRadius,
-      materialTapTargetSize,
-      visualDensity,
-    );
-  }
+  int get hashCode => Object.hash(
+    mouseCursor,
+    fillColor,
+    overlayColor,
+    splashRadius,
+    materialTapTargetSize,
+    visualDensity,
+  );
 
   @override
   bool operator ==(Object other) {
-    if (identical(this, other))
+    if (identical(this, other)) {
       return true;
-    if (other.runtimeType != runtimeType)
+    }
+    if (other.runtimeType != runtimeType) {
       return false;
+    }
     return other is RadioThemeData
       && other.mouseCursor == mouseCursor
       && other.fillColor == fillColor
@@ -144,34 +159,6 @@ class RadioThemeData with Diagnosticable {
     properties.add(DiagnosticsProperty<MaterialTapTargetSize>('materialTapTargetSize', materialTapTargetSize, defaultValue: null));
     properties.add(DiagnosticsProperty<VisualDensity>('visualDensity', visualDensity, defaultValue: null));
   }
-
-  static MaterialStateProperty<T>? _lerpProperties<T>(
-    MaterialStateProperty<T>? a,
-    MaterialStateProperty<T>? b,
-    double t,
-    T Function(T?, T?, double) lerpFunction,
-  ) {
-    // Avoid creating a _LerpProperties object for a common case.
-    if (a == null && b == null)
-      return null;
-    return _LerpProperties<T>(a, b, t, lerpFunction);
-  }
-}
-
-class _LerpProperties<T> implements MaterialStateProperty<T> {
-  const _LerpProperties(this.a, this.b, this.t, this.lerpFunction);
-
-  final MaterialStateProperty<T>? a;
-  final MaterialStateProperty<T>? b;
-  final double t;
-  final T Function(T?, T?, double) lerpFunction;
-
-  @override
-  T resolve(Set<MaterialState> states) {
-    final T? resolvedA = a?.resolve(states);
-    final T? resolvedB = b?.resolve(states);
-    return lerpFunction(resolvedA, resolvedB, t);
-  }
 }
 
 /// Applies a radio theme to descendant [Radio] widgets.
@@ -190,10 +177,10 @@ class _LerpProperties<T> implements MaterialStateProperty<T> {
 class RadioTheme extends InheritedWidget {
   /// Constructs a radio theme that configures all descendant [Radio] widgets.
   const RadioTheme({
-    Key? key,
+    super.key,
     required this.data,
-    required Widget child,
-  }) : super(key: key, child: child);
+    required super.child,
+  });
 
   /// The properties used for all descendant [Radio] widgets.
   final RadioThemeData data;

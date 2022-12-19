@@ -4,86 +4,97 @@
 
 // TODO(ianh): These should be on the Set and List classes themselves.
 
-/// Compares two sets for deep equality.
+/// Compares two sets for element-by-element equality.
 ///
 /// Returns true if the sets are both null, or if they are both non-null, have
 /// the same length, and contain the same members. Returns false otherwise.
 /// Order is not compared.
 ///
-/// The term "deep" above refers to the first level of equality: if the elements
-/// are maps, lists, sets, or other collections/composite objects, then the
-/// values of those elements are not compared element by element unless their
+/// If the elements are maps, lists, sets, or other collections/composite objects,
+/// then the contents of those elements are not compared element by element unless their
 /// equality operators ([Object.==]) do so.
+/// For checking deep equality, consider using [DeepCollectionEquality] class.
 ///
 /// See also:
 ///
 ///  * [listEquals], which does something similar for lists.
 ///  * [mapEquals], which does something similar for maps.
 bool setEquals<T>(Set<T>? a, Set<T>? b) {
-  if (a == null)
+  if (a == null) {
     return b == null;
-  if (b == null || a.length != b.length)
+  }
+  if (b == null || a.length != b.length) {
     return false;
-  if (identical(a, b))
+  }
+  if (identical(a, b)) {
     return true;
+  }
   for (final T value in a) {
-    if (!b.contains(value))
+    if (!b.contains(value)) {
       return false;
+    }
   }
   return true;
 }
 
-/// Compares two lists for deep equality.
+/// Compares two lists for element-by-element equality.
 ///
 /// Returns true if the lists are both null, or if they are both non-null, have
 /// the same length, and contain the same members in the same order. Returns
 /// false otherwise.
 ///
-/// The term "deep" above refers to the first level of equality: if the elements
-/// are maps, lists, sets, or other collections/composite objects, then the
-/// values of those elements are not compared element by element unless their
+/// If the elements are maps, lists, sets, or other collections/composite objects,
+/// then the contents of those elements are not compared element by element unless their
 /// equality operators ([Object.==]) do so.
+/// For checking deep equality, consider using [DeepCollectionEquality] class.
 ///
 /// See also:
 ///
 ///  * [setEquals], which does something similar for sets.
 ///  * [mapEquals], which does something similar for maps.
 bool listEquals<T>(List<T>? a, List<T>? b) {
-  if (a == null)
+  if (a == null) {
     return b == null;
-  if (b == null || a.length != b.length)
+  }
+  if (b == null || a.length != b.length) {
     return false;
-  if (identical(a, b))
+  }
+  if (identical(a, b)) {
     return true;
+  }
   for (int index = 0; index < a.length; index += 1) {
-    if (a[index] != b[index])
+    if (a[index] != b[index]) {
       return false;
+    }
   }
   return true;
 }
 
-/// Compares two maps for deep equality.
+/// Compares two maps for element-by-element equality.
 ///
 /// Returns true if the maps are both null, or if they are both non-null, have
 /// the same length, and contain the same keys associated with the same values.
 /// Returns false otherwise.
 ///
-/// The term "deep" above refers to the first level of equality: if the elements
-/// are maps, lists, sets, or other collections/composite objects, then the
-/// values of those elements are not compared element by element unless their
+/// If the elements are maps, lists, sets, or other collections/composite objects,
+/// then the contents of those elements are not compared element by element unless their
 /// equality operators ([Object.==]) do so.
+/// For checking deep equality, consider using [DeepCollectionEquality] class.
 ///
 /// See also:
 ///
 ///  * [setEquals], which does something similar for sets.
 ///  * [listEquals], which does something similar for lists.
 bool mapEquals<T, U>(Map<T, U>? a, Map<T, U>? b) {
-  if (a == null)
+  if (a == null) {
     return b == null;
-  if (b == null || a.length != b.length)
+  }
+  if (b == null || a.length != b.length) {
     return false;
-  if (identical(a, b))
+  }
+  if (identical(a, b)) {
     return true;
+  }
   for (final T key in a.keys) {
     if (!b.containsKey(key) || b[key] != a[key]) {
       return false;
@@ -137,7 +148,7 @@ const int _kMergeSortLimit = 32;
 /// This merge sort is stable: Equal elements end up in the same order as they
 /// started in.
 ///
-/// For small lists (less than 32 elements), `mergeSort` automatically uses an
+/// For small lists (less than 32 elements), [mergeSort] automatically uses an
 /// insertion sort instead, as that is more efficient for small lists. The
 /// insertion sort is also stable.
 void mergeSort<T>(
@@ -236,7 +247,7 @@ void _movingInsertionSort<T>(
   int Function(T, T) compare,
   int start,
   int end,
-  List<T?> target,
+  List<T> target,
   int targetOffset,
 ) {
   final int length = end - start;
@@ -250,7 +261,7 @@ void _movingInsertionSort<T>(
     int max = targetOffset + i;
     while (min < max) {
       final int mid = min + ((max - min) >> 1);
-      if (compare(element, target[mid] as T) < 0) {
+      if (compare(element, target[mid]) < 0) {
         max = mid;
       } else {
         min = mid + 1;
@@ -269,13 +280,13 @@ void _movingInsertionSort<T>(
 /// Allows target to be the same list as `list`, as long as it's not overlapping
 /// the `start..end` range.
 void _mergeSort<T>(
-    List<T> list,
-    int Function(T, T) compare,
-    int start,
-    int end,
-    List<T> target,
-    int targetOffset,
-    ) {
+  List<T> list,
+  int Function(T, T) compare,
+  int start,
+  int end,
+  List<T> target,
+  int targetOffset,
+) {
   final int length = end - start;
   if (length < _kMergeSortLimit) {
     _movingInsertionSort<T>(list, compare, start, end, target, targetOffset);

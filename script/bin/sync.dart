@@ -27,6 +27,42 @@ Future<void> main(List<String> args) async {
   }
   fluteLib.createSync();
 
+  await _sync(flutterLib, fluteLib);
+}
+
+Future<void> _sync(Directory flutterLib, Directory fluteLib) async {
+  final Iterable<File> dartSources = flutterLib.listSync(recursive: true).whereType<File>().where((File f) => f.path.endsWith('.dart'));
+  for (final File file in dartSources) {
+    final String relPath = p.relative(file.path, from: flutterLib.path);
+    final File destFile = fs.file(p.join(fluteLib.path, relPath));
+
+    String source = file.readAsStringSync();
+    source = source.replaceAll("'package:flutter/", "'package:flute/");
+    if (relPath == r'src\material\dialog.dart' ||
+        relPath == r'src\material\navigation_rail.dart' ||
+        relPath == r'src\material\switch.dart' ||
+        relPath == r'src\widgets\icon.dart') {
+      source = source.replaceAll("'dart:ui'", "'package:engine/ui.dart' hide TextStyle");
+    } else {
+      source = source.replaceAll("'dart:ui'", "'package:engine/ui.dart'");
+    }
+
+    bool skip = false;
+    if (destFile.existsSync()) {
+      final String currentSrc = destFile.readAsStringSync();
+      if (source == currentSrc) {
+        skip = true;
+      }
+    }
+
+    if (skip) {
+      print('SKIP: $relPath');
+    } else {
+      print('SYNC: ${file.path} => ${destFile.path}');
+      destFile.createSync(recursive: true);
+      destFile.writeAsStringSync(source);
+    }
+  }
 }
 
 Future<Directory> _findFlutterRepo() async {

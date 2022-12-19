@@ -3,67 +3,47 @@
 // found in the LICENSE file.
 
 import 'package:flute/rendering.dart';
-import 'package:flute/scheduler.dart';
 
 import 'basic.dart';
 import 'framework.dart';
+import 'ticker_provider.dart';
 
 /// Animated widget that automatically transitions its size over a given
 /// duration whenever the given child's size changes.
 ///
-/// {@tool dartpad --template=stateful_widget_scaffold_center_freeform_state_no_null_safety}
+/// {@tool dartpad}
 /// This example makes a [Container] react to being touched, causing the child
 /// of the [AnimatedSize] widget, here a [FlutterLogo], to animate.
 ///
-/// ```dart
-/// class _MyStatefulWidgetState extends State<MyStatefulWidget> with SingleTickerProviderStateMixin {
-///   double _size = 50.0;
-///   bool _large = false;
-///
-///   void _updateSize() {
-///     setState(() {
-///       _size = _large ? 250.0 : 100.0;
-///       _large = !_large;
-///     });
-///   }
-///
-///   @override
-///   Widget build(BuildContext context) {
-///     return GestureDetector(
-///       onTap: () => _updateSize(),
-///       child: Container(
-///         color: Colors.amberAccent,
-///         child: AnimatedSize(
-///           curve: Curves.easeIn,
-///           vsync: this,
-///           duration: Duration(seconds: 1),
-///           child: FlutterLogo(size: _size),
-///         ),
-///       ),
-///     );
-///   }
-/// }
-/// ```
+/// ** See code in examples/api/lib/widgets/animated_size/animated_size.0.dart **
 /// {@end-tool}
 ///
 /// See also:
 ///
 ///  * [SizeTransition], which changes its size based on an [Animation].
-class AnimatedSize extends SingleChildRenderObjectWidget {
+class AnimatedSize extends StatefulWidget {
   /// Creates a widget that animates its size to match that of its child.
   ///
   /// The [curve] and [duration] arguments must not be null.
   const AnimatedSize({
-    Key? key,
-    Widget? child,
+    super.key,
+    this.child,
     this.alignment = Alignment.center,
     this.curve = Curves.linear,
     required this.duration,
     this.reverseDuration,
-    required this.vsync,
+    @Deprecated(
+      'This field is now ignored. '
+      'This feature was deprecated after v2.2.0-10.1.pre.'
+    )
+    TickerProvider? vsync,
     this.clipBehavior = Clip.hardEdge,
-  }) : assert(clipBehavior != null),
-       super(key: key, child: child);
+  }) : assert(clipBehavior != null);
+
+  /// The widget below this widget in the tree.
+  ///
+  /// {@macro flutter.widgets.ProxyWidget.child}
+  final Widget? child;
 
   /// The alignment of the child within the parent when the parent is not yet
   /// the same size as the child.
@@ -100,12 +80,50 @@ class AnimatedSize extends SingleChildRenderObjectWidget {
   /// If not specified, defaults to [duration].
   final Duration? reverseDuration;
 
-  /// The [TickerProvider] for this widget.
-  final TickerProvider vsync;
-
   /// {@macro flutter.material.Material.clipBehavior}
   ///
   /// Defaults to [Clip.hardEdge], and must not be null.
+  final Clip clipBehavior;
+
+  @override
+  State<AnimatedSize> createState() => _AnimatedSizeState();
+}
+
+class _AnimatedSizeState
+    extends State<AnimatedSize> with SingleTickerProviderStateMixin {
+  @override
+  Widget build(BuildContext context) {
+    return _AnimatedSize(
+      alignment: widget.alignment,
+      curve: widget.curve,
+      duration: widget.duration,
+      reverseDuration: widget.reverseDuration,
+      vsync: this,
+      clipBehavior: widget.clipBehavior,
+      child: widget.child,
+    );
+  }
+}
+
+class _AnimatedSize extends SingleChildRenderObjectWidget {
+  const _AnimatedSize({
+    super.child,
+    this.alignment = Alignment.center,
+    this.curve = Curves.linear,
+    required this.duration,
+    this.reverseDuration,
+    required this.vsync,
+    this.clipBehavior = Clip.hardEdge,
+  }) : assert(clipBehavior != null);
+
+  final AlignmentGeometry alignment;
+  final Curve curve;
+  final Duration duration;
+  final Duration? reverseDuration;
+
+  /// The [TickerProvider] for this widget.
+  final TickerProvider vsync;
+
   final Clip clipBehavior;
 
   @override

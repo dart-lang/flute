@@ -2,10 +2,8 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-
 import 'dart:math' as math;
-import 'dart:typed_data';
-import 'package:flute/ui.dart' as ui show Gradient, TextBox, lerpDouble;
+import 'package:engine/ui.dart' as ui show Gradient, TextBox, lerpDouble;
 
 import 'package:flute/foundation.dart';
 
@@ -79,14 +77,16 @@ class FlutterLogoDecoration extends Decoration {
 
   @override
   bool debugAssertIsValid() {
-    assert(textColor != null
+    assert(
+      textColor != null
         && style != null
         && margin != null
         && _position != null
         && _position.isFinite
         && _opacity != null
         && _opacity >= 0.0
-        && _opacity <= 1.0);
+        && _opacity <= 1.0,
+    );
     return true;
   }
 
@@ -110,15 +110,16 @@ class FlutterLogoDecoration extends Decoration {
     assert(t != null);
     assert(a == null || a.debugAssertIsValid());
     assert(b == null || b.debugAssertIsValid());
-    if (a == null && b == null)
+    if (a == null && b == null) {
       return null;
+    }
     if (a == null) {
       return FlutterLogoDecoration._(
         b!.textColor,
         b.style,
         b.margin * t,
         b._position,
-        b._opacity * t.clamp(0.0, 1.0),
+        b._opacity * clampDouble(t, 0.0, 1.0),
       );
     }
     if (b == null) {
@@ -127,19 +128,21 @@ class FlutterLogoDecoration extends Decoration {
         a.style,
         a.margin * t,
         a._position,
-        a._opacity * (1.0 - t).clamp(0.0, 1.0),
+        a._opacity * clampDouble(1.0 - t, 0.0, 1.0),
       );
     }
-    if (t == 0.0)
+    if (t == 0.0) {
       return a;
-    if (t == 1.0)
+    }
+    if (t == 1.0) {
       return b;
+    }
     return FlutterLogoDecoration._(
       Color.lerp(a.textColor, b.textColor, t)!,
       t < 0.5 ? a.style : b.style,
       EdgeInsets.lerp(a.margin, b.margin, t)!,
       a._position + (b._position - a._position) * t,
-      (a._opacity + (b._opacity - a._opacity) * t).clamp(0.0, 1.0),
+      clampDouble(a._opacity + (b._opacity - a._opacity) * t, 0.0, 1.0),
     );
   }
 
@@ -181,8 +184,9 @@ class FlutterLogoDecoration extends Decoration {
   @override
   bool operator ==(Object other) {
     assert(debugAssertIsValid());
-    if (identical(this, other))
+    if (identical(this, other)) {
       return true;
+    }
     return other is FlutterLogoDecoration
         && other.textColor == textColor
         && other._position == _position
@@ -192,7 +196,7 @@ class FlutterLogoDecoration extends Decoration {
   @override
   int get hashCode {
     assert(debugAssertIsValid());
-    return hashValues(
+    return Object.hash(
       textColor,
       _position,
       _opacity,
@@ -204,8 +208,9 @@ class FlutterLogoDecoration extends Decoration {
     super.debugFillProperties(properties);
     properties.add(ColorProperty('textColor', textColor));
     properties.add(EnumProperty<FlutterLogoStyle>('style', style));
-    if (_inTransition)
+    if (_inTransition) {
       properties.add(DiagnosticsNode.message('transition ${debugFormatDouble(_position)}:${debugFormatDouble(_opacity)}'));
+    }
   }
 }
 
@@ -222,6 +227,7 @@ class _FlutterLogoPainter extends BoxPainter {
   final FlutterLogoDecoration _config;
 
   // these are configured assuming a font size of 100.0.
+  // TODO(dnfield): Figure out how to dispose this https://github.com/flutter/flutter/issues/110601
   late TextPainter _textPainter;
   late Rect _textBoundingRect;
 
@@ -328,8 +334,9 @@ class _FlutterLogoPainter extends BoxPainter {
   void paint(Canvas canvas, Offset offset, ImageConfiguration configuration) {
     offset += _config.margin.topLeft;
     final Size canvasSize = _config.margin.deflateSize(configuration.size!);
-    if (canvasSize.isEmpty)
+    if (canvasSize.isEmpty) {
       return;
+    }
     final Size logoSize;
     if (_config._position > 0.0) {
       // horizontal style
@@ -440,7 +447,8 @@ class _FlutterLogoPainter extends BoxPainter {
       }
     }
     _paintLogo(canvas, logoSquare);
-    if (_config._opacity < 1.0)
+    if (_config._opacity < 1.0) {
       canvas.restore();
+    }
   }
 }

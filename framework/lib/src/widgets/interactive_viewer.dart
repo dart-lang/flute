@@ -4,60 +4,60 @@
 
 import 'dart:math' as math;
 
+import 'package:flute/foundation.dart' show clampDouble;
 import 'package:flute/gestures.dart';
 import 'package:flute/physics.dart';
-import 'package:vector_math/vector_math_64.dart' show Quad, Vector3, Matrix4;
+import 'package:vector_math/vector_math_64.dart' show Matrix4, Quad, Vector3;
 
 import 'basic.dart';
 import 'framework.dart';
 import 'gesture_detector.dart';
+import 'layout_builder.dart';
 import 'ticker_provider.dart';
+
+// Examples can assume:
+// late BuildContext context;
+// late Offset? _childWasTappedAt;
+// late TransformationController _transformationController;
+// Widget child = const Placeholder();
+
+/// A signature for widget builders that take a [Quad] of the current viewport.
+///
+/// See also:
+///
+///   * [InteractiveViewer.builder], whose builder is of this type.
+///   * [WidgetBuilder], which is similar, but takes no viewport.
+typedef InteractiveViewerWidgetBuilder = Widget Function(BuildContext context, Quad viewport);
 
 /// A widget that enables pan and zoom interactions with its child.
 ///
+/// {@youtube 560 315 https://www.youtube.com/watch?v=zrn7V3bMJvg}
+///
 /// The user can transform the child by dragging to pan or pinching to zoom.
 ///
-/// By default, InteractiveViewer may draw outside of its original area of the
-/// screen, such as when a child is zoomed in and increases in size. However, it
-/// will not receive gestures outside of its original area. To prevent
-/// InteractiveViewer from drawing outside of its original size, wrap it in a
-/// [ClipRect]. Or, to prevent dead areas where InteractiveViewer does not
-/// receive gestures, be sure that the InteractiveViewer widget is the size of
-/// the area that should be interactive. See
-/// [flutter-go](https://github.com/justinmc/flutter-go) for an example of
-/// robust positioning of an InteractiveViewer child that works for all screen
-/// sizes and child sizes.
+/// By default, InteractiveViewer clips its child using [Clip.hardEdge].
+/// To prevent this behavior, consider setting [clipBehavior] to [Clip.none].
+/// When [clipBehavior] is [Clip.none], InteractiveViewer may draw outside of
+/// its original area of the screen, such as when a child is zoomed in and
+/// increases in size. However, it will not receive gestures outside of its original area.
+/// To prevent dead areas where InteractiveViewer does not receive gestures,
+/// don't set [clipBehavior] or be sure that the InteractiveViewer widget is the
+/// size of the area that should be interactive.
 ///
 /// The [child] must not be null.
 ///
 /// See also:
 ///   * The [Flutter Gallery's transformations demo](https://github.com/flutter/gallery/blob/master/lib/demos/reference/transformations_demo.dart),
 ///     which includes the use of InteractiveViewer.
+///   * The [flutter-go demo](https://github.com/justinmc/flutter-go), which includes robust positioning of an InteractiveViewer child
+///     that works for all screen sizes and child sizes.
+///   * The [Lazy Flutter Performance Session](https://www.youtube.com/watch?v=qax_nOpgz7E), which includes the use of an InteractiveViewer to
+///     performantly view subsets of a large set of widgets using the builder constructor.
 ///
-/// {@tool dartpad --template=stateless_widget_scaffold}
+/// {@tool dartpad}
 /// This example shows a simple Container that can be panned and zoomed.
 ///
-/// ```dart
-/// Widget build(BuildContext context) {
-///   return Center(
-///     child: InteractiveViewer(
-///       boundaryMargin: EdgeInsets.all(20.0),
-///       minScale: 0.1,
-///       maxScale: 1.6,
-///       child: Container(
-///         decoration: BoxDecoration(
-///           gradient: LinearGradient(
-///             begin: Alignment.topCenter,
-///             end: Alignment.bottomCenter,
-///             colors: <Color>[Colors.orange, Colors.red],
-///             stops: <double>[0.0, 1.0],
-///           ),
-///         ),
-///       ),
-///     ),
-///   );
-/// }
-/// ```
+/// ** See code in examples/api/lib/widgets/interactive_viewer/interactive_viewer.0.dart **
 /// {@end-tool}
 @immutable
 class InteractiveViewer extends StatefulWidget {
@@ -65,26 +65,37 @@ class InteractiveViewer extends StatefulWidget {
   ///
   /// The [child] parameter must not be null.
   InteractiveViewer({
-    Key? key,
+    super.key,
+    this.clipBehavior = Clip.hardEdge,
+    @Deprecated(
+      'Use panAxis instead. '
+      'This feature was deprecated after v3.3.0-0.5.pre.',
+    )
     this.alignPanAxis = false,
+    this.panAxis = PanAxis.free,
     this.boundaryMargin = EdgeInsets.zero,
     this.constrained = true,
     // These default scale values were eyeballed as reasonable limits for common
     // use cases.
     this.maxScale = 2.5,
     this.minScale = 0.8,
+    this.interactionEndFrictionCoefficient = _kDrag,
     this.onInteractionEnd,
     this.onInteractionStart,
     this.onInteractionUpdate,
     this.panEnabled = true,
     this.scaleEnabled = true,
+    this.scaleFactor = 200.0,
     this.transformationController,
-    required this.child,
+    this.alignment,
+    required Widget this.child,
   }) : assert(alignPanAxis != null),
+       assert(panAxis != null),
        assert(child != null),
        assert(constrained != null),
        assert(minScale != null),
        assert(minScale > 0),
+       assert(interactionEndFrictionCoefficient > 0),
        assert(minScale.isFinite),
        assert(maxScale != null),
        assert(maxScale > 0),
@@ -94,12 +105,81 @@ class InteractiveViewer extends StatefulWidget {
        assert(scaleEnabled != null),
        // boundaryMargin must be either fully infinite or fully finite, but not
        // a mix of both.
-       assert((boundaryMargin.horizontal.isInfinite
+       assert(
+         (boundaryMargin.horizontal.isInfinite
            && boundaryMargin.vertical.isInfinite) || (boundaryMargin.top.isFinite
            && boundaryMargin.right.isFinite && boundaryMargin.bottom.isFinite
-           && boundaryMargin.left.isFinite)),
-       super(key: key);
+           && boundaryMargin.left.isFinite),
+       ),
+       builder = null;
 
+  /// Creates an InteractiveViewer for a child that is created on demand.
+  ///
+  /// Can be used to render a child that changes in response to the current
+  /// transformation.
+  ///
+  /// The [builder] parameter must not be null. See its docs for an example of
+  /// using it to optimize a large child.
+  InteractiveViewer.builder({
+    super.key,
+    this.clipBehavior = Clip.hardEdge,
+    @Deprecated(
+      'Use panAxis instead. '
+      'This feature was deprecated after v3.3.0-0.5.pre.',
+    )
+    this.alignPanAxis = false,
+    this.panAxis = PanAxis.free,
+    this.boundaryMargin = EdgeInsets.zero,
+    // These default scale values were eyeballed as reasonable limits for common
+    // use cases.
+    this.maxScale = 2.5,
+    this.minScale = 0.8,
+    this.interactionEndFrictionCoefficient = _kDrag,
+    this.onInteractionEnd,
+    this.onInteractionStart,
+    this.onInteractionUpdate,
+    this.panEnabled = true,
+    this.scaleEnabled = true,
+    this.scaleFactor = 200.0,
+    this.transformationController,
+    this.alignment,
+    required InteractiveViewerWidgetBuilder this.builder,
+  }) : assert(panAxis != null),
+       assert(builder != null),
+       assert(minScale != null),
+       assert(minScale > 0),
+       assert(interactionEndFrictionCoefficient > 0),
+       assert(minScale.isFinite),
+       assert(maxScale != null),
+       assert(maxScale > 0),
+       assert(!maxScale.isNaN),
+       assert(maxScale >= minScale),
+       assert(panEnabled != null),
+       assert(scaleEnabled != null),
+       // boundaryMargin must be either fully infinite or fully finite, but not
+       // a mix of both.
+       assert(
+         (boundaryMargin.horizontal.isInfinite && boundaryMargin.vertical.isInfinite) ||
+             (boundaryMargin.top.isFinite &&
+                 boundaryMargin.right.isFinite &&
+                 boundaryMargin.bottom.isFinite &&
+                 boundaryMargin.left.isFinite),
+       ),
+       constrained = false,
+       child = null;
+
+  /// The alignment of the child's origin, relative to the size of the box.
+  final Alignment? alignment;
+
+  /// If set to [Clip.none], the child may extend beyond the size of the InteractiveViewer,
+  /// but it will not receive gestures in these areas.
+  /// Be sure that the InteractiveViewer is the desired size when using [Clip.none].
+  ///
+  /// Defaults to [Clip.hardEdge].
+  final Clip clipBehavior;
+
+  /// This property is deprecated, please use [panAxis] instead.
+  ///
   /// If true, panning is only allowed in the direction of the horizontal axis
   /// or the vertical axis.
   ///
@@ -111,7 +191,24 @@ class InteractiveViewer extends StatefulWidget {
   /// See also:
   ///  * [constrained], which has an example of creating a table that uses
   ///    alignPanAxis.
+  @Deprecated(
+    'Use panAxis instead. '
+    'This feature was deprecated after v3.3.0-0.5.pre.',
+  )
   final bool alignPanAxis;
+
+  /// When set to [PanAxis.aligned], panning is only allowed in the horizontal
+  /// axis or the vertical axis, diagonal panning is not allowed.
+  ///
+  /// When set to [PanAxis.vertical] or [PanAxis.horizontal] panning is only
+  /// allowed in the specified axis. For example, if set to [PanAxis.vertical],
+  /// panning will only be allowed in the vertical axis. And if set to [PanAxis.horizontal],
+  /// panning will only be allowed in the horizontal axis.
+  ///
+  /// When set to [PanAxis.free] panning is allowed in all directions.
+  ///
+  /// Defaults to [PanAxis.free].
+  final PanAxis panAxis;
 
   /// A margin for the visible boundaries of the child.
   ///
@@ -129,10 +226,29 @@ class InteractiveViewer extends StatefulWidget {
   /// exact same size and position as the [child].
   final EdgeInsets boundaryMargin;
 
-  /// The Widget to perform the transformations on.
+  /// Builds the child of this widget.
   ///
-  /// Cannot be null.
-  final Widget child;
+  /// Passed with the [InteractiveViewer.builder] constructor. Otherwise, the
+  /// [child] parameter must be passed directly, and this is null.
+  ///
+  /// {@tool dartpad}
+  /// This example shows how to use builder to create a [Table] whose cell
+  /// contents are only built when they are visible. Built and remove cells are
+  /// logged in the console for illustration.
+  ///
+  /// ** See code in examples/api/lib/widgets/interactive_viewer/interactive_viewer.builder.0.dart **
+  /// {@end-tool}
+  ///
+  /// See also:
+  ///
+  ///   * [ListView.builder], which follows a similar pattern.
+  final InteractiveViewerWidgetBuilder? builder;
+
+  /// The child [Widget] that is transformed by InteractiveViewer.
+  ///
+  /// If the [InteractiveViewer.builder] constructor is used, then this will be
+  /// null, otherwise it is required.
+  final Widget? child;
 
   /// Whether the normal size constraints at this point in the widget tree are
   /// applied to the child.
@@ -151,48 +267,13 @@ class InteractiveViewer extends StatefulWidget {
   ///
   /// Defaults to true.
   ///
-  /// {@tool dartpad --template=stateless_widget_scaffold}
+  /// {@tool dartpad}
   /// This example shows how to create a pannable table. Because the table is
-  /// larger than the entire screen, setting `constrained` to false is necessary
+  /// larger than the entire screen, setting [constrained] to false is necessary
   /// to allow it to be drawn to its full size. The parts of the table that
   /// exceed the screen size can then be panned into view.
   ///
-  /// ```dart
-  ///   Widget build(BuildContext context) {
-  ///     const int _rowCount = 48;
-  ///     const int _columnCount = 6;
-  ///
-  ///     return InteractiveViewer(
-  ///       alignPanAxis: true,
-  ///       constrained: false,
-  ///       scaleEnabled: false,
-  ///       child: Table(
-  ///         columnWidths: <int, TableColumnWidth>{
-  ///           for (int column = 0; column < _columnCount; column += 1)
-  ///             column: const FixedColumnWidth(200.0),
-  ///         },
-  ///         children: <TableRow>[
-  ///           for (int row = 0; row < _rowCount; row += 1)
-  ///             TableRow(
-  ///               children: <Widget>[
-  ///                 for (int column = 0; column < _columnCount; column += 1)
-  ///                   Container(
-  ///                     height: 26,
-  ///                     color: row % 2 + column % 2 == 1
-  ///                         ? Colors.white
-  ///                         : Colors.grey.withOpacity(0.1),
-  ///                     child: Align(
-  ///                       alignment: Alignment.centerLeft,
-  ///                       child: Text('$row x $column'),
-  ///                     ),
-  ///                   ),
-  ///               ],
-  ///             ),
-  ///         ],
-  ///       ),
-  ///     );
-  ///   }
-  /// ```
+  /// ** See code in examples/api/lib/widgets/interactive_viewer/interactive_viewer.constrained.0.dart **
   /// {@end-tool}
   final bool constrained;
 
@@ -213,6 +294,22 @@ class InteractiveViewer extends StatefulWidget {
   ///
   ///   * [panEnabled], which is similar but for panning.
   final bool scaleEnabled;
+
+  /// Determines the amount of scale to be performed per pointer scroll.
+  ///
+  /// Defaults to 200.0, which was arbitrarily chosen to feel natural for most
+  /// trackpads and mousewheels on all supported platforms.
+  ///
+  /// Increasing this value above the default causes scaling to feel slower,
+  /// while decreasing it causes scaling to feel faster.
+  ///
+  /// The amount of scale is calculated as the exponential function of the
+  /// [PointerScrollEvent.scrollDelta] to [scaleFactor] ratio. In the Flutter
+  /// engine, the mousewheel [PointerScrollEvent.scrollDelta] is hardcoded to 20
+  /// per scroll, while a trackpad scroll can be any amount.
+  ///
+  /// Affects only pointer device scrolling, not pinch to zoom.
+  final double scaleFactor;
 
   /// The maximum allowed scale.
   ///
@@ -238,14 +335,22 @@ class InteractiveViewer extends StatefulWidget {
   /// than maxScale.
   final double minScale;
 
+  /// Changes the deceleration behavior after a gesture.
+  ///
+  /// Defaults to 0.0000135.
+  ///
+  /// Cannot be null, and must be a finite number greater than zero.
+  final double interactionEndFrictionCoefficient;
+
   /// Called when the user ends a pan or scale gesture on the widget.
   ///
   /// At the time this is called, the [TransformationController] will have
-  /// already been updated to reflect the change caused by the interaction.
+  /// already been updated to reflect the change caused by the interaction,
+  /// though a pan may cause an inertia animation after this is called as well.
   ///
   /// {@template flutter.widgets.InteractiveViewer.onInteractionEnd}
-  /// Will be called even if the interaction is disabled with
-  /// [panEnabled] or [scaleEnabled].
+  /// Will be called even if the interaction is disabled with [panEnabled] or
+  /// [scaleEnabled] for both touch gestures and mouse interactions.
   ///
   /// A [GestureDetector] wrapping the InteractiveViewer will not respond to
   /// [GestureDetector.onScaleStart], [GestureDetector.onScaleUpdate], and
@@ -282,7 +387,8 @@ class InteractiveViewer extends StatefulWidget {
   /// Called when the user updates a pan or scale gesture on the widget.
   ///
   /// At the time this is called, the [TransformationController] will have
-  /// already been updated to reflect the change caused by the interaction.
+  /// already been updated to reflect the change caused by the interaction, if
+  /// the interaction caused the matrix to change.
   ///
   /// {@macro flutter.widgets.InteractiveViewer.onInteractionEnd}
   ///
@@ -305,103 +411,11 @@ class InteractiveViewer extends StatefulWidget {
   /// listeners are notified. If the value is set, InteractiveViewer will update
   /// to respect the new value.
   ///
-  /// {@tool dartpad --template=stateful_widget_material_ticker}
+  /// {@tool dartpad}
   /// This example shows how transformationController can be used to animate the
   /// transformation back to its starting position.
   ///
-  /// ```dart
-  /// final TransformationController _transformationController = TransformationController();
-  /// Animation<Matrix4>? _animationReset;
-  /// late final AnimationController _controllerReset;
-  ///
-  /// void _onAnimateReset() {
-  ///   _transformationController.value = _animationReset!.value;
-  ///   if (!_controllerReset.isAnimating) {
-  ///     _animationReset!.removeListener(_onAnimateReset);
-  ///     _animationReset = null;
-  ///     _controllerReset.reset();
-  ///   }
-  /// }
-  ///
-  /// void _animateResetInitialize() {
-  ///   _controllerReset.reset();
-  ///   _animationReset = Matrix4Tween(
-  ///     begin: _transformationController.value,
-  ///     end: Matrix4.identity(),
-  ///   ).animate(_controllerReset);
-  ///   _animationReset!.addListener(_onAnimateReset);
-  ///   _controllerReset.forward();
-  /// }
-  ///
-  /// // Stop a running reset to home transform animation.
-  /// void _animateResetStop() {
-  ///   _controllerReset.stop();
-  ///   _animationReset?.removeListener(_onAnimateReset);
-  ///   _animationReset = null;
-  ///   _controllerReset.reset();
-  /// }
-  ///
-  /// void _onInteractionStart(ScaleStartDetails details) {
-  ///   // If the user tries to cause a transformation while the reset animation is
-  ///   // running, cancel the reset animation.
-  ///   if (_controllerReset.status == AnimationStatus.forward) {
-  ///     _animateResetStop();
-  ///   }
-  /// }
-  ///
-  /// @override
-  /// void initState() {
-  ///   super.initState();
-  ///   _controllerReset = AnimationController(
-  ///     vsync: this,
-  ///     duration: const Duration(milliseconds: 400),
-  ///   );
-  /// }
-  ///
-  /// @override
-  /// void dispose() {
-  ///   _controllerReset.dispose();
-  ///   super.dispose();
-  /// }
-  ///
-  /// @override
-  /// Widget build(BuildContext context) {
-  ///   return Scaffold(
-  ///     backgroundColor: Theme.of(context).colorScheme.primary,
-  ///     appBar: AppBar(
-  ///       automaticallyImplyLeading: false,
-  ///       title: const Text('Controller demo'),
-  ///     ),
-  ///     body: Center(
-  ///       child: InteractiveViewer(
-  ///         boundaryMargin: EdgeInsets.all(double.infinity),
-  ///         transformationController: _transformationController,
-  ///         minScale: 0.1,
-  ///         maxScale: 1.0,
-  ///         onInteractionStart: _onInteractionStart,
-  ///         child: Container(
-  ///           decoration: BoxDecoration(
-  ///             gradient: LinearGradient(
-  ///               begin: Alignment.topCenter,
-  ///               end: Alignment.bottomCenter,
-  ///               colors: <Color>[Colors.orange, Colors.red],
-  ///               stops: <double>[0.0, 1.0],
-  ///             ),
-  ///           ),
-  ///         ),
-  ///       ),
-  ///     ),
-  ///     persistentFooterButtons: [
-  ///       IconButton(
-  ///         onPressed: _animateResetInitialize,
-  ///         tooltip: 'Reset',
-  ///         color: Theme.of(context).colorScheme.surface,
-  ///         icon: const Icon(Icons.replay),
-  ///       ),
-  ///     ],
-  ///   );
-  /// }
-  /// ```
+  /// ** See code in examples/api/lib/widgets/interactive_viewer/interactive_viewer.transformation_controller.0.dart **
   /// {@end-tool}
   ///
   /// See also:
@@ -409,6 +423,10 @@ class InteractiveViewer extends StatefulWidget {
   ///  * [ValueNotifier], the parent class of TransformationController.
   ///  * [TextEditingController] for an example of another similar pattern.
   final TransformationController? transformationController;
+
+  // Used as the coefficient of friction in the inertial translation animation.
+  // This value was eyeballed to give a feel similar to Google Photos.
+  static const double _kDrag = 0.0000135;
 
   /// Returns the closest point to the given point on the given line segment.
   @visibleForTesting
@@ -425,7 +443,7 @@ class InteractiveViewer extends StatefulWidget {
     // the point.
     final Vector3 l1P = point - l1;
     final Vector3 l1L2 = l2 - l1;
-    final double fraction = (l1P.dot(l1L2) / lengthSquared).clamp(0.0, 1.0).toDouble();
+    final double fraction = clampDouble(l1P.dot(l1L2) / lengthSquared, 0.0, 1.0);
     return l1 + l1L2 * fraction;
   }
 
@@ -528,7 +546,8 @@ class InteractiveViewer extends StatefulWidget {
     return closestOverall;
   }
 
-  @override _InteractiveViewerState createState() => _InteractiveViewerState();
+  @override
+  State<InteractiveViewer> createState() => _InteractiveViewerState();
 }
 
 class _InteractiveViewerState extends State<InteractiveViewer> with TickerProviderStateMixin {
@@ -538,7 +557,7 @@ class _InteractiveViewerState extends State<InteractiveViewer> with TickerProvid
   final GlobalKey _parentKey = GlobalKey();
   Animation<Offset>? _animation;
   late AnimationController _controller;
-  Axis? _panAxis; // Used with alignPanAxis.
+  Axis? _currentAxis; // Used with panAxis.
   Offset? _referenceFocalPoint; // Point where the current gesture began.
   double? _scaleStart; // Scale value at start of scaling gesture.
   double? _rotationStart = 0.0; // Rotation at start of rotation gesture.
@@ -549,10 +568,6 @@ class _InteractiveViewerState extends State<InteractiveViewer> with TickerProvid
   // hardcoded value when the rotation feature is implemented.
   // https://github.com/flutter/flutter/issues/57698
   final bool _rotateEnabled = false;
-
-  // Used as the coefficient of friction in the inertial translation animation.
-  // This value was eyeballed to give a feel similar to Google Photos.
-  static const double _kDrag = 0.0000135;
 
   // The _boundaryRect is calculated by adding the boundaryMargin to the size of
   // the child.
@@ -566,13 +581,20 @@ class _InteractiveViewerState extends State<InteractiveViewer> with TickerProvid
     final RenderBox childRenderBox = _childKey.currentContext!.findRenderObject()! as RenderBox;
     final Size childSize = childRenderBox.size;
     final Rect boundaryRect = widget.boundaryMargin.inflateRect(Offset.zero & childSize);
+    assert(
+      !boundaryRect.isEmpty,
+      "InteractiveViewer's child must have nonzero dimensions.",
+    );
     // Boundaries that are partially infinite are not allowed because Matrix4's
     // rotation and translation methods don't handle infinites well.
-    assert(boundaryRect.isFinite ||
+    assert(
+      boundaryRect.isFinite ||
         (boundaryRect.left.isInfinite
         && boundaryRect.top.isInfinite
         && boundaryRect.right.isInfinite
-        && boundaryRect.bottom.isInfinite), 'boundaryRect must either be infinite in all directions or finite in all directions.');
+        && boundaryRect.bottom.isInfinite),
+      'boundaryRect must either be infinite in all directions or finite in all directions.',
+    );
     return boundaryRect;
   }
 
@@ -590,9 +612,26 @@ class _InteractiveViewerState extends State<InteractiveViewer> with TickerProvid
       return matrix.clone();
     }
 
-    final Offset alignedTranslation = widget.alignPanAxis && _panAxis != null
-      ? _alignAxis(translation, _panAxis!)
-      : translation;
+    late final Offset alignedTranslation;
+
+    if (_currentAxis != null) {
+      switch(widget.panAxis){
+        case PanAxis.horizontal:
+          alignedTranslation = _alignAxis(translation, Axis.horizontal);
+          break;
+        case PanAxis.vertical:
+          alignedTranslation = _alignAxis(translation, Axis.vertical);
+          break;
+        case PanAxis.aligned:
+          alignedTranslation = _alignAxis(translation, _currentAxis!);
+          break;
+        case PanAxis.free:
+          alignedTranslation = translation;
+          break;
+      }
+    } else {
+      alignedTranslation = translation;
+    }
 
     final Matrix4 nextMatrix = matrix.clone()..translate(
       alignedTranslation.dx,
@@ -690,7 +729,7 @@ class _InteractiveViewerState extends State<InteractiveViewer> with TickerProvid
         _viewport.height / _boundaryRect.height,
       ),
     );
-    final double clampedTotalScale = totalScale.clamp(
+    final double clampedTotalScale = clampDouble(totalScale,
       widget.minScale,
       widget.maxScale,
     );
@@ -758,7 +797,7 @@ class _InteractiveViewerState extends State<InteractiveViewer> with TickerProvid
     }
 
     _gestureType = null;
-    _panAxis = null;
+    _currentAxis = null;
     _scaleStart = _transformationController!.value.getMaxScaleOnAxis();
     _referenceFocalPoint = _transformationController!.toScene(
       details.localFocalPoint,
@@ -784,6 +823,7 @@ class _InteractiveViewerState extends State<InteractiveViewer> with TickerProvid
       _gestureType ??= _getGestureType(details);
     }
     if (!_gestureIsSupported(_gestureType)) {
+      widget.onInteractionUpdate?.call(details);
       return;
     }
 
@@ -827,6 +867,7 @@ class _InteractiveViewerState extends State<InteractiveViewer> with TickerProvid
 
       case _GestureType.rotate:
         if (details.rotation == 0.0) {
+          widget.onInteractionUpdate?.call(details);
           return;
         }
         final double desiredRotation = _rotationStart! + details.rotation;
@@ -844,9 +885,10 @@ class _InteractiveViewerState extends State<InteractiveViewer> with TickerProvid
         // In an effort to keep the behavior similar whether or not scaleEnabled
         // is true, these gestures are thrown away.
         if (details.scale != 1.0) {
+          widget.onInteractionUpdate?.call(details);
           return;
         }
-        _panAxis ??= _getPanAxis(_referenceFocalPoint!, focalPointScene);
+        _currentAxis ??= _getPanAxis(_referenceFocalPoint!, focalPointScene);
         // Translate so that the same point in the scene is underneath the
         // focal point before and after the movement.
         final Offset translationChange = focalPointScene - _referenceFocalPoint!;
@@ -859,12 +901,7 @@ class _InteractiveViewerState extends State<InteractiveViewer> with TickerProvid
         );
         break;
     }
-    widget.onInteractionUpdate?.call(ScaleUpdateDetails(
-      focalPoint: details.focalPoint,
-      localFocalPoint: details.localFocalPoint,
-      scale: details.scale,
-      rotation: details.rotation,
-    ));
+    widget.onInteractionUpdate?.call(details);
   }
 
   // Handle the end of a gesture of _GestureType. All of pan, scale, and rotate
@@ -879,31 +916,31 @@ class _InteractiveViewerState extends State<InteractiveViewer> with TickerProvid
     _controller.reset();
 
     if (!_gestureIsSupported(_gestureType)) {
-      _panAxis = null;
+      _currentAxis = null;
       return;
     }
 
     // If the scale ended with enough velocity, animate inertial movement.
     if (_gestureType != _GestureType.pan || details.velocity.pixelsPerSecond.distance < kMinFlingVelocity) {
-      _panAxis = null;
+      _currentAxis = null;
       return;
     }
 
     final Vector3 translationVector = _transformationController!.value.getTranslation();
     final Offset translation = Offset(translationVector.x, translationVector.y);
     final FrictionSimulation frictionSimulationX = FrictionSimulation(
-      _kDrag,
+      widget.interactionEndFrictionCoefficient,
       translation.dx,
       details.velocity.pixelsPerSecond.dx,
     );
     final FrictionSimulation frictionSimulationY = FrictionSimulation(
-      _kDrag,
+      widget.interactionEndFrictionCoefficient,
       translation.dy,
       details.velocity.pixelsPerSecond.dy,
     );
     final double tFinal = _getFinalTime(
       details.velocity.pixelsPerSecond.distance,
-      _kDrag,
+      widget.interactionEndFrictionCoefficient,
     );
     _animation = Tween<Offset>(
       begin: translation,
@@ -919,58 +956,68 @@ class _InteractiveViewerState extends State<InteractiveViewer> with TickerProvid
 
   // Handle mousewheel scroll events.
   void _receivedPointerSignal(PointerSignalEvent event) {
+    final double scaleChange;
     if (event is PointerScrollEvent) {
-      widget.onInteractionStart?.call(
-        ScaleStartDetails(
-          focalPoint: event.position,
-          localFocalPoint: event.localPosition,
-        ),
-      );
-      if (!_gestureIsSupported(_GestureType.scale)) {
-        widget.onInteractionEnd?.call(ScaleEndDetails());
+      // Ignore left and right scroll.
+      if (event.scrollDelta.dy == 0.0) {
         return;
       }
-      final RenderBox childRenderBox = _childKey.currentContext!.findRenderObject()! as RenderBox;
-      final Size childSize = childRenderBox.size;
-      final double scaleChange = 1.0 - event.scrollDelta.dy / childSize.height;
-      if (scaleChange == 0.0) {
-        return;
-      }
-      final Offset focalPointScene = _transformationController!.toScene(
-        event.localPosition,
-      );
+      scaleChange = math.exp(-event.scrollDelta.dy / widget.scaleFactor);
+    }
+    else if (event is PointerScaleEvent) {
+      scaleChange = event.scale;
+    }
+    else {
+      return;
+    }
+    widget.onInteractionStart?.call(
+      ScaleStartDetails(
+        focalPoint: event.position,
+        localFocalPoint: event.localPosition,
+      ),
+    );
 
-      _transformationController!.value = _matrixScale(
-        _transformationController!.value,
-        scaleChange,
-      );
-
-      // After scaling, translate such that the event's position is at the
-      // same scene point before and after the scale.
-      final Offset focalPointSceneScaled = _transformationController!.toScene(
-        event.localPosition,
-      );
-      _transformationController!.value = _matrixTranslate(
-        _transformationController!.value,
-        focalPointSceneScaled - focalPointScene,
-      );
-
+    if (!_gestureIsSupported(_GestureType.scale)) {
       widget.onInteractionUpdate?.call(ScaleUpdateDetails(
         focalPoint: event.position,
         localFocalPoint: event.localPosition,
-        rotation: 0.0,
         scale: scaleChange,
-        horizontalScale: 1.0,
-        verticalScale: 1.0,
       ));
       widget.onInteractionEnd?.call(ScaleEndDetails());
+      return;
     }
+
+    final Offset focalPointScene = _transformationController!.toScene(
+      event.localPosition,
+    );
+
+    _transformationController!.value = _matrixScale(
+      _transformationController!.value,
+      scaleChange,
+    );
+
+    // After scaling, translate such that the event's position is at the
+    // same scene point before and after the scale.
+    final Offset focalPointSceneScaled = _transformationController!.toScene(
+      event.localPosition,
+    );
+    _transformationController!.value = _matrixTranslate(
+      _transformationController!.value,
+      focalPointSceneScaled - focalPointScene,
+    );
+
+    widget.onInteractionUpdate?.call(ScaleUpdateDetails(
+      focalPoint: event.position,
+      localFocalPoint: event.localPosition,
+      scale: scaleChange,
+    ));
+    widget.onInteractionEnd?.call(ScaleEndDetails());
   }
 
   // Handle inertia drag animation.
   void _onAnimate() {
     if (!_controller.isAnimating) {
-      _panAxis = null;
+      _currentAxis = null;
       _animation?.removeListener(_onAnimate);
       _animation = null;
       _controller.reset();
@@ -1047,29 +1094,39 @@ class _InteractiveViewerState extends State<InteractiveViewer> with TickerProvid
 
   @override
   Widget build(BuildContext context) {
-    Widget child = Transform(
-      transform: _transformationController!.value,
-      child: KeyedSubtree(
-        key: _childKey,
-        child: widget.child,
-      ),
-    );
-
-    if (!widget.constrained) {
-      child = ClipRect(
-        child: OverflowBox(
-          alignment: Alignment.topLeft,
-          minWidth: 0.0,
-          minHeight: 0.0,
-          maxWidth: double.infinity,
-          maxHeight: double.infinity,
-          child: child,
-        ),
+    Widget child;
+    if (widget.child != null) {
+      child = _InteractiveViewerBuilt(
+        childKey: _childKey,
+        clipBehavior: widget.clipBehavior,
+        constrained: widget.constrained,
+        matrix: _transformationController!.value,
+        alignment: widget.alignment,
+        child: widget.child!,
+      );
+    } else {
+      // When using InteractiveViewer.builder, then constrained is false and the
+      // viewport is the size of the constraints.
+      assert(widget.builder != null);
+      assert(!widget.constrained);
+      child = LayoutBuilder(
+        builder: (BuildContext context, BoxConstraints constraints) {
+          final Matrix4 matrix = _transformationController!.value;
+          return _InteractiveViewerBuilt(
+            childKey: _childKey,
+            clipBehavior: widget.clipBehavior,
+            constrained: widget.constrained,
+            alignment: widget.alignment,
+            matrix: matrix,
+            child: widget.builder!(
+              context,
+              _transformViewport(matrix, Offset.zero & constraints.biggest),
+            ),
+          );
+        },
       );
     }
 
-    // A GestureDetector allows the detection of panning and zooming gestures on
-    // the child.
     return Listener(
       key: _parentKey,
       onPointerSignal: _receivedPointerSignal,
@@ -1080,6 +1137,54 @@ class _InteractiveViewerState extends State<InteractiveViewer> with TickerProvid
         onScaleUpdate: _onScaleUpdate,
         child: child,
       ),
+    );
+  }
+}
+
+// This widget simply allows us to easily swap in and out the LayoutBuilder in
+// InteractiveViewer's depending on if it's using a builder or a child.
+class _InteractiveViewerBuilt extends StatelessWidget {
+  const _InteractiveViewerBuilt({
+    required this.child,
+    required this.childKey,
+    required this.clipBehavior,
+    required this.constrained,
+    required this.matrix,
+    required this.alignment,
+  });
+
+  final Widget child;
+  final GlobalKey childKey;
+  final Clip clipBehavior;
+  final bool constrained;
+  final Matrix4 matrix;
+  final Alignment? alignment;
+
+  @override
+  Widget build(BuildContext context) {
+    Widget child = Transform(
+      transform: matrix,
+      alignment: alignment,
+      child: KeyedSubtree(
+        key: childKey,
+        child: this.child,
+      ),
+    );
+
+    if (!constrained) {
+      child = OverflowBox(
+        alignment: Alignment.topLeft,
+        minWidth: 0.0,
+        minHeight: 0.0,
+        maxWidth: double.infinity,
+        maxHeight: double.infinity,
+        child: child,
+      );
+    }
+
+    return ClipRect(
+      clipBehavior: clipBehavior,
+      child: child,
     );
   }
 }
@@ -1117,7 +1222,7 @@ class TransformationController extends ValueNotifier<Matrix4> {
   ///
   /// ```dart
   /// @override
-  /// void build(BuildContext context) {
+  /// Widget build(BuildContext context) {
   ///   return GestureDetector(
   ///     onTapUp: (TapUpDetails details) {
   ///       _childWasTappedAt = _transformationController.toScene(
@@ -1265,4 +1370,21 @@ Axis? _getPanAxis(Offset point1, Offset point2) {
   final double x = point2.dx - point1.dx;
   final double y = point2.dy - point1.dy;
   return x.abs() > y.abs() ? Axis.horizontal : Axis.vertical;
+}
+
+/// This enum is used to specify the behavior of the [InteractiveViewer] when
+/// the user drags the viewport.
+enum PanAxis{
+  /// The user can only pan the viewport along the horizontal axis.
+  horizontal,
+
+  /// The user can only pan the viewport along the vertical axis.
+  vertical,
+
+  /// The user can pan the viewport along the horizontal and vertical axes
+  /// but not diagonally.
+  aligned,
+
+  /// The user can pan the viewport freely in any direction.
+  free,
 }

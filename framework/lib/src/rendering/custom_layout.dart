@@ -144,13 +144,13 @@ abstract class MultiChildLayoutDelegate {
       if (child == null) {
         throw FlutterError(
           'The $this custom multichild layout delegate tried to lay out a non-existent child.\n'
-          'There is no child with the id "$childId".'
+          'There is no child with the id "$childId".',
         );
       }
       if (!_debugChildrenNeedingLayout!.remove(child)) {
         throw FlutterError(
           'The $this custom multichild layout delegate tried to lay out the child with id "$childId" more than once.\n'
-          'Each child must be laid out exactly once.'
+          'Each child must be laid out exactly once.',
         );
       }
       try {
@@ -162,8 +162,8 @@ abstract class MultiChildLayoutDelegate {
           ErrorDescription(
             'The minimum width and height must be greater than or equal to zero.\n'
             'The maximum width must be greater than or equal to the minimum width.\n'
-            'The maximum height must be greater than or equal to the minimum height.'
-          )
+            'The maximum height must be greater than or equal to the minimum height.',
+          ),
         ]);
       }
       return true;
@@ -184,15 +184,12 @@ abstract class MultiChildLayoutDelegate {
       if (child == null) {
         throw FlutterError(
           'The $this custom multichild layout delegate tried to position out a non-existent child:\n'
-          'There is no child with the id "$childId".'
+          'There is no child with the id "$childId".',
         );
       }
-      // `offset` has a non-nullable return type, but might be null when
-      // running with weak checking, so we need to null check it anyway (and
-      // ignore the warning that the null-handling logic is dead code).
-      if (offset == null) { // ignore: dead_code
+      if (offset == null) {
         throw FlutterError(
-          'The $this custom multichild layout delegate provided a null position for the child with id "$childId".'
+          'The $this custom multichild layout delegate provided a null position for the child with id "$childId".',
         );
       }
       return true;
@@ -251,7 +248,6 @@ abstract class MultiChildLayoutDelegate {
                 'to lay out the following '
                 '${_debugChildrenNeedingLayout!.length > 1 ? 'children' : 'child'}',
               properties: _debugChildrenNeedingLayout!.map<DiagnosticsNode>(_debugDescribeChild).toList(),
-              style: DiagnosticsTreeStyle.whitespace,
             ),
           ]);
         }
@@ -322,8 +318,9 @@ class RenderCustomMultiChildLayoutBox extends RenderBox
 
   @override
   void setupParentData(RenderBox child) {
-    if (child.parentData is! MultiChildLayoutParentData)
+    if (child.parentData is! MultiChildLayoutParentData) {
       child.parentData = MultiChildLayoutParentData();
+    }
   }
 
   /// The delegate that controls the layout of the children.
@@ -331,11 +328,13 @@ class RenderCustomMultiChildLayoutBox extends RenderBox
   MultiChildLayoutDelegate _delegate;
   set delegate(MultiChildLayoutDelegate newDelegate) {
     assert(newDelegate != null);
-    if (_delegate == newDelegate)
+    if (_delegate == newDelegate) {
       return;
+    }
     final MultiChildLayoutDelegate oldDelegate = _delegate;
-    if (newDelegate.runtimeType != oldDelegate.runtimeType || newDelegate.shouldRelayout(oldDelegate))
+    if (newDelegate.runtimeType != oldDelegate.runtimeType || newDelegate.shouldRelayout(oldDelegate)) {
       markNeedsLayout();
+    }
     _delegate = newDelegate;
     if (attached) {
       oldDelegate._relayout?.removeListener(markNeedsLayout);
@@ -367,32 +366,36 @@ class RenderCustomMultiChildLayoutBox extends RenderBox
   @override
   double computeMinIntrinsicWidth(double height) {
     final double width = _getSize(BoxConstraints.tightForFinite(height: height)).width;
-    if (width.isFinite)
+    if (width.isFinite) {
       return width;
+    }
     return 0.0;
   }
 
   @override
   double computeMaxIntrinsicWidth(double height) {
     final double width = _getSize(BoxConstraints.tightForFinite(height: height)).width;
-    if (width.isFinite)
+    if (width.isFinite) {
       return width;
+    }
     return 0.0;
   }
 
   @override
   double computeMinIntrinsicHeight(double width) {
     final double height = _getSize(BoxConstraints.tightForFinite(width: width)).height;
-    if (height.isFinite)
+    if (height.isFinite) {
       return height;
+    }
     return 0.0;
   }
 
   @override
   double computeMaxIntrinsicHeight(double width) {
     final double height = _getSize(BoxConstraints.tightForFinite(width: width)).height;
-    if (height.isFinite)
+    if (height.isFinite) {
       return height;
+    }
     return 0.0;
   }
 

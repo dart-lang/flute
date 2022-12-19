@@ -2,12 +2,13 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-
-import 'package:flute/ui.dart' show Offset, PointerDeviceKind;
-
 import 'package:flute/foundation.dart';
 
 import 'velocity_tracker.dart';
+
+export 'package:engine/ui.dart' show Offset, PointerDeviceKind;
+
+export 'velocity_tracker.dart' show Velocity;
 
 /// Details object for callbacks that use [GestureDragDownCallback].
 ///
@@ -140,9 +141,11 @@ class DragUpdateDetails {
     required this.globalPosition,
     Offset? localPosition,
   }) : assert(delta != null),
-       assert(primaryDelta == null
+       assert(
+         primaryDelta == null
            || (primaryDelta == delta.dx && delta.dy == 0.0)
-           || (primaryDelta == delta.dy && delta.dx == 0.0)),
+           || (primaryDelta == delta.dy && delta.dx == 0.0),
+       ),
        localPosition = localPosition ?? globalPosition;
 
   /// Recorded timestamp of the source pointer event that triggered the drag
@@ -217,9 +220,11 @@ class DragEndDetails {
     this.velocity = Velocity.zero,
     this.primaryVelocity,
   }) : assert(velocity != null),
-       assert(primaryVelocity == null
+       assert(
+         primaryVelocity == null
            || primaryVelocity == velocity.pixelsPerSecond.dx
-           || primaryVelocity == velocity.pixelsPerSecond.dy);
+           || primaryVelocity == velocity.pixelsPerSecond.dy,
+       );
 
   /// The velocity the pointer was moving when it stopped contacting the screen.
   ///

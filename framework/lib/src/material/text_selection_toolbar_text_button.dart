@@ -27,23 +27,27 @@ enum _TextSelectionToolbarItemPosition {
 class TextSelectionToolbarTextButton extends StatelessWidget {
   /// Creates an instance of TextSelectionToolbarTextButton.
   const TextSelectionToolbarTextButton({
-    Key? key,
+    super.key,
     required this.child,
     required this.padding,
     this.onPressed,
-  }) : super(key: key);
+  });
 
   // These values were eyeballed to match the native text selection menu on a
   // Pixel 2 running Android 10.
   static const double _kMiddlePadding = 9.5;
   static const double _kEndPadding = 14.5;
 
+  /// {@template flutter.material.TextSelectionToolbarTextButton.child}
   /// The child of this button.
   ///
   /// Usually a [Text].
+  /// {@endtemplate}
   final Widget child;
 
+  /// {@template flutter.material.TextSelectionToolbarTextButton.onPressed}
   /// Called when this button is pressed.
+  /// {@endtemplate}
   final VoidCallback? onPressed;
 
   /// The padding between the button's edge and its child.
@@ -105,11 +109,11 @@ class TextSelectionToolbarTextButton extends StatelessWidget {
     // TODO(hansmuller): Should be colorScheme.onSurface
     final ThemeData theme = Theme.of(context);
     final bool isDark = theme.colorScheme.brightness == Brightness.dark;
-    final Color primary = isDark ? Colors.white : Colors.black87;
+    final Color foregroundColor = isDark ? Colors.white : Colors.black87;
 
     return TextButton(
       style: TextButton.styleFrom(
-        primary: primary,
+        foregroundColor: foregroundColor,
         shape: const RoundedRectangleBorder(),
         minimumSize: const Size(kMinInteractiveDimension, kMinInteractiveDimension),
         padding: padding,

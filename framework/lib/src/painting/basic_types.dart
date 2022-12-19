@@ -2,10 +2,9 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
+import 'package:engine/ui.dart' show TextDirection;
 
-import 'package:flute/ui.dart' show TextDirection;
-
-export 'package:flute/ui.dart' show
+export 'package:engine/ui.dart' show
   BlendMode,
   BlurStyle,
   Canvas,
@@ -24,9 +23,9 @@ export 'package:flute/ui.dart' show
   Path,
   PathFillType,
   PathOperation,
-  Radius,
   RRect,
   RSTransform,
+  Radius,
   Rect,
   Shader,
   Size,
@@ -42,8 +41,10 @@ export 'package:flute/ui.dart' show
   TextPosition,
   TileMode,
   VertexMode,
-  hashValues,
-  hashList;
+  // TODO(werainkhatri): remove these after their deprecation period in engine
+  // https://github.com/flutter/flutter/pull/99505
+  hashList, // ignore: deprecated_member_use
+  hashValues; // ignore: deprecated_member_use
 
 export 'package:flute/foundation.dart' show VoidCallback;
 

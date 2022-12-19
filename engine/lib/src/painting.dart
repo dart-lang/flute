@@ -137,7 +137,7 @@ class Color {
   }
   static int getAlphaFromOpacity(double opacity) {
     assert(opacity != null); // ignore: unnecessary_null_comparison
-    return (opacity.clamp(0.0, 1.0) * 255).round();
+    return (_clampDouble(opacity, 0.0, 1.0) * 255).round();
   }
 
   @override
@@ -523,6 +523,9 @@ enum PixelFormat {
   rgba8888,
   bgra8888,
 }
+
+typedef ImageEventCallback = void Function(Image image);
+
 class Image {
   Image._(this._image) {
     assert(() {
@@ -532,8 +535,11 @@ class Image {
     _image._handles.add(this);
   }
 
+  static ImageEventCallback? onCreate;
+  static ImageEventCallback? onDispose;
+
   // C++ unit tests access this.
-    final _Image _image;
+  final _Image _image;
 
   StackTrace? _debugStack;
   int get width {
@@ -768,6 +774,8 @@ enum PathOperation {
 }
 
 abstract class EngineLayer {
+  void dispose();
+  bool get debugDisposed;
 }
 
 class _PathMethods {
@@ -1731,8 +1739,28 @@ class _ImageFilter {
   final ImageFilter creator;
 }
 class Shader {
-    Shader._();
+  Shader._();
+
+  bool _debugDisposed = false;
+
+  bool get debugDisposed {
+    late bool disposed;
+    assert(() {
+      disposed = _debugDisposed;
+      return true;
+    }());
+    return disposed;
+  }
+
+  void dispose() {
+    assert(() {
+      assert(!_debugDisposed);
+      _debugDisposed = true;
+      return true;
+    }());
+  }
 }
+
 // These enum values must be kept in sync with SkTileMode.
 enum TileMode {
   clamp,
@@ -1986,7 +2014,8 @@ class _CanvasMethods {
   static const int drawShadow = 29;
 }
 class Canvas {
-  Canvas(PictureRecorder this._recorder) : assert(_recorder != null) { // ignore: unnecessary_null_comparison
+  Canvas(PictureRecorder this._recorder, [Rect? cullRect]) : assert(_recorder != null) { // ignore: unnecessary_null_comparison
+    cullRect?.inflate(10);
     if (_recorder!.isRecording)
       throw ArgumentError('"recorder" must not already be associated with another Canvas.');
     _recorder!._canvas = this;
@@ -2521,8 +2550,14 @@ class Canvas {
   }
 }
 
+typedef PictureEventCallback = void Function(Picture picture);
+
 class Picture {
-    Picture._();
+  Picture._();
+
+  static PictureEventCallback? onCreate;
+  static PictureEventCallback? onDispose;
+
   Future<Image> toImage(int width, int height) async {
     if (width <= 0 || height <= 0)
       throw Exception('Invalid image dimensions.');
@@ -2637,8 +2672,18 @@ class ImmutableBuffer {
     final ImmutableBuffer instance = ImmutableBuffer._(list.length);
     return _futurize((_Callback<void> callback) {
       instance._init(list, callback);
+      return null;
     }).then((_) => instance);
   }
+
+  static Future<ImmutableBuffer> fromAsset(String assetKey) async {
+    throw UnsupportedError('ImmutableBuffer.fromAsset is not supported in flute.');
+  }
+
+  static Future<ImmutableBuffer> fromFilePath(String path) async {
+    throw UnsupportedError('ImmutableBuffer.fromFilePath is not supported in flute.');
+  }
+
   void _init(Uint8List list, _Callback<void> callback) { throw UnimplementedError(); }
   final int length;
   void dispose() { throw UnimplementedError(); }
@@ -2721,4 +2766,84 @@ Future<T> _futurize<T>(_Callbacker<T> callbacker) {
   if (error != null)
     throw Exception(error);
   return completer.future;
+}
+
+class FragmentShader extends Shader {
+  FragmentShader._(FragmentProgram program, { String? debugName }) : _program = program, _debugName = debugName, super._();
+
+  final FragmentProgram _program;
+  final String? _debugName;
+
+  static final Float32List _kEmptyFloat32List = Float32List(0);
+  Float32List _floats = _kEmptyFloat32List;
+
+  void setFloat(int index, double value) {
+    assert(!debugDisposed, 'Tried to accesss uniforms on a disposed Shader: $this');
+    _floats[index] = value;
+  }
+
+  void setImageSampler(int index, Image image) {
+    assert(!debugDisposed, 'Tried to access uniforms on a disposed Shader: $this');
+  }
+
+  @override
+  void dispose() {
+    super.dispose();
+    _floats = _kEmptyFloat32List;
+  }
+
+  @override
+  String toString() => 'FragmentShader(name: $_debugName, program: $_program)';
+}
+
+class FragmentProgram {
+  FragmentProgram._fromAsset(String assetKey) {
+    assert(() {
+      _debugName = assetKey;
+      return true;
+    }());
+  }
+
+  String? _debugName;
+
+  static Future<FragmentProgram> fromAsset(String assetKey) {
+    final String encodedKey = Uri(path: Uri.encodeFull(assetKey)).path;
+    final FragmentProgram? program = _shaderRegistry[encodedKey]?.target;
+    if (program != null) {
+      return Future<FragmentProgram>.value(program);
+    }
+    return Future<FragmentProgram>.microtask(() {
+      final FragmentProgram program = FragmentProgram._fromAsset(encodedKey);
+      _shaderRegistry[encodedKey] = WeakReference<FragmentProgram>(program);
+      return program;
+    });
+  }
+
+  static final Map<String, WeakReference<FragmentProgram>> _shaderRegistry =
+      <String, WeakReference<FragmentProgram>>{};
+
+  /// Returns a fresh instance of [FragmentShader].
+  FragmentShader fragmentShader() => FragmentShader._(this, debugName: _debugName);
+}
+
+Future<Codec> instantiateImageCodecFromBuffer(
+  ImmutableBuffer buffer, {
+  int? targetWidth,
+  int? targetHeight,
+  bool allowUpscaling = true,
+}) async {
+  final ImageDescriptor descriptor = await ImageDescriptor.encoded(buffer);
+  if (!allowUpscaling) {
+    if (targetWidth != null && targetWidth > descriptor.width) {
+      targetWidth = descriptor.width;
+    }
+    if (targetHeight != null && targetHeight > descriptor.height) {
+      targetHeight = descriptor.height;
+    }
+  }
+  buffer.dispose();
+  return descriptor.instantiateCodec(
+    targetWidth: targetWidth,
+    targetHeight: targetHeight,
+  );
 }

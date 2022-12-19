@@ -2,7 +2,6 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-import 'package:flute/rendering.dart';
 import 'package:flute/widgets.dart';
 
 import 'ink_well.dart' show InteractiveInkFeature;
@@ -38,16 +37,16 @@ class InkHighlight extends InteractiveInkFeature {
   ///
   /// When the highlight is removed, `onRemoved` will be called.
   InkHighlight({
-    required MaterialInkController controller,
-    required RenderBox referenceBox,
-    required Color color,
+    required super.controller,
+    required super.referenceBox,
+    required super.color,
     required TextDirection textDirection,
     BoxShape shape = BoxShape.rectangle,
     double? radius,
     BorderRadius? borderRadius,
     ShapeBorder? customBorder,
     RectCallback? rectCallback,
-    VoidCallback? onRemoved,
+    super.onRemoved,
     Duration fadeDuration = _kDefaultHighlightFadeDuration,
   }) : assert(color != null),
        assert(shape != null),
@@ -58,8 +57,7 @@ class InkHighlight extends InteractiveInkFeature {
        _borderRadius = borderRadius ?? BorderRadius.zero,
        _customBorder = customBorder,
        _textDirection = textDirection,
-       _rectCallback = rectCallback,
-       super(controller: controller, referenceBox: referenceBox, color: color, onRemoved: onRemoved) {
+       _rectCallback = rectCallback {
     _alphaController = AnimationController(duration: fadeDuration, vsync: controller.vsync)
       ..addListener(controller.markNeedsPaint)
       ..addStatusListener(_handleAlphaStatusChanged)
@@ -99,8 +97,9 @@ class InkHighlight extends InteractiveInkFeature {
   }
 
   void _handleAlphaStatusChanged(AnimationStatus status) {
-    if (status == AnimationStatus.dismissed && !_active)
+    if (status == AnimationStatus.dismissed && !_active) {
       dispose();
+    }
   }
 
   @override

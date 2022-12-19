@@ -2,10 +2,12 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-import 'package:flute/ui.dart' show lerpDouble;
+import 'package:engine/ui.dart' show lerpDouble;
 
 import 'package:flute/foundation.dart';
 import 'package:flute/rendering.dart';
+
+import 'material_state.dart';
 
 /// Defines default property values for descendant [FloatingActionButton]
 /// widgets.
@@ -42,6 +44,16 @@ class FloatingActionButtonThemeData with Diagnosticable {
     this.disabledElevation,
     this.highlightElevation,
     this.shape,
+    this.enableFeedback,
+    this.iconSize,
+    this.sizeConstraints,
+    this.smallSizeConstraints,
+    this.largeSizeConstraints,
+    this.extendedSizeConstraints,
+    this.extendedIconLabelSpacing,
+    this.extendedPadding,
+    this.extendedTextStyle,
+    this.mouseCursor,
   });
 
   /// Color to be used for the unselected, enabled [FloatingActionButton]'s
@@ -89,6 +101,42 @@ class FloatingActionButtonThemeData with Diagnosticable {
   /// The shape to be used for the floating action button's [Material].
   final ShapeBorder? shape;
 
+  /// If specified, defines the feedback property for [FloatingActionButton].
+  ///
+  /// If [FloatingActionButton.enableFeedback] is provided, [enableFeedback] is
+  /// ignored.
+  final bool? enableFeedback;
+
+  /// Overrides the default icon size for the [FloatingActionButton];
+  final double? iconSize;
+
+  /// Overrides the default size constraints for the [FloatingActionButton].
+  final BoxConstraints? sizeConstraints;
+
+  /// Overrides the default size constraints for [FloatingActionButton.small].
+  final BoxConstraints? smallSizeConstraints;
+
+  /// Overrides the default size constraints for [FloatingActionButton.large].
+  final BoxConstraints? largeSizeConstraints;
+
+  /// Overrides the default size constraints for [FloatingActionButton.extended].
+  final BoxConstraints? extendedSizeConstraints;
+
+  /// The spacing between the icon and the label for an extended
+  /// [FloatingActionButton].
+  final double? extendedIconLabelSpacing;
+
+  /// The padding for an extended [FloatingActionButton]'s content.
+  final EdgeInsetsGeometry? extendedPadding;
+
+  /// The text style for an extended [FloatingActionButton]'s label.
+  final TextStyle? extendedTextStyle;
+
+  /// {@macro flutter.material.RawMaterialButton.mouseCursor}
+  ///
+  /// If specified, overrides the default value of [FloatingActionButton.mouseCursor].
+  final MaterialStateProperty<MouseCursor?>? mouseCursor;
+
   /// Creates a copy of this object with the given fields replaced with the
   /// new values.
   FloatingActionButtonThemeData copyWith({
@@ -103,6 +151,16 @@ class FloatingActionButtonThemeData with Diagnosticable {
     double? disabledElevation,
     double? highlightElevation,
     ShapeBorder? shape,
+    bool? enableFeedback,
+    double? iconSize,
+    BoxConstraints? sizeConstraints,
+    BoxConstraints? smallSizeConstraints,
+    BoxConstraints? largeSizeConstraints,
+    BoxConstraints? extendedSizeConstraints,
+    double? extendedIconLabelSpacing,
+    EdgeInsetsGeometry? extendedPadding,
+    TextStyle? extendedTextStyle,
+    MaterialStateProperty<MouseCursor?>? mouseCursor,
   }) {
     return FloatingActionButtonThemeData(
       foregroundColor: foregroundColor ?? this.foregroundColor,
@@ -116,6 +174,16 @@ class FloatingActionButtonThemeData with Diagnosticable {
       disabledElevation: disabledElevation ?? this.disabledElevation,
       highlightElevation: highlightElevation ?? this.highlightElevation,
       shape: shape ?? this.shape,
+      enableFeedback: enableFeedback ?? this.enableFeedback,
+      iconSize: iconSize ?? this.iconSize,
+      sizeConstraints: sizeConstraints ?? this.sizeConstraints,
+      smallSizeConstraints: smallSizeConstraints ?? this.smallSizeConstraints,
+      largeSizeConstraints: largeSizeConstraints ?? this.largeSizeConstraints,
+      extendedSizeConstraints: extendedSizeConstraints ?? this.extendedSizeConstraints,
+      extendedIconLabelSpacing: extendedIconLabelSpacing ?? this.extendedIconLabelSpacing,
+      extendedPadding: extendedPadding ?? this.extendedPadding,
+      extendedTextStyle: extendedTextStyle ?? this.extendedTextStyle,
+      mouseCursor: mouseCursor ?? this.mouseCursor,
     );
   }
 
@@ -126,8 +194,9 @@ class FloatingActionButtonThemeData with Diagnosticable {
   /// {@macro dart.ui.shadow.lerp}
   static FloatingActionButtonThemeData? lerp(FloatingActionButtonThemeData? a, FloatingActionButtonThemeData? b, double t) {
     assert(t != null);
-    if (a == null && b == null)
+    if (a == null && b == null) {
       return null;
+    }
     return FloatingActionButtonThemeData(
       foregroundColor: Color.lerp(a?.foregroundColor, b?.foregroundColor, t),
       backgroundColor: Color.lerp(a?.backgroundColor, b?.backgroundColor, t),
@@ -140,32 +209,54 @@ class FloatingActionButtonThemeData with Diagnosticable {
       disabledElevation: lerpDouble(a?.disabledElevation, b?.disabledElevation, t),
       highlightElevation: lerpDouble(a?.highlightElevation, b?.highlightElevation, t),
       shape: ShapeBorder.lerp(a?.shape, b?.shape, t),
+      enableFeedback: t < 0.5 ? a?.enableFeedback : b?.enableFeedback,
+      iconSize: lerpDouble(a?.iconSize, b?.iconSize, t),
+      sizeConstraints: BoxConstraints.lerp(a?.sizeConstraints, b?.sizeConstraints, t),
+      smallSizeConstraints: BoxConstraints.lerp(a?.smallSizeConstraints, b?.smallSizeConstraints, t),
+      largeSizeConstraints: BoxConstraints.lerp(a?.largeSizeConstraints, b?.largeSizeConstraints, t),
+      extendedSizeConstraints: BoxConstraints.lerp(a?.extendedSizeConstraints, b?.extendedSizeConstraints, t),
+      extendedIconLabelSpacing: lerpDouble(a?.extendedIconLabelSpacing, b?.extendedIconLabelSpacing, t),
+      extendedPadding: EdgeInsetsGeometry.lerp(a?.extendedPadding, b?.extendedPadding, t),
+      extendedTextStyle: TextStyle.lerp(a?.extendedTextStyle, b?.extendedTextStyle, t),
+      mouseCursor: t < 0.5 ? a?.mouseCursor : b?.mouseCursor,
     );
   }
 
   @override
-  int get hashCode {
-    return hashValues(
-      foregroundColor,
-      backgroundColor,
-      focusColor,
-      hoverColor,
-      splashColor,
-      elevation,
-      focusElevation,
-      hoverElevation,
-      disabledElevation,
-      highlightElevation,
-      shape,
-    );
-  }
+  int get hashCode => Object.hash(
+    foregroundColor,
+    backgroundColor,
+    focusColor,
+    hoverColor,
+    splashColor,
+    elevation,
+    focusElevation,
+    hoverElevation,
+    disabledElevation,
+    highlightElevation,
+    shape,
+    enableFeedback,
+    iconSize,
+    sizeConstraints,
+    smallSizeConstraints,
+    largeSizeConstraints,
+    extendedSizeConstraints,
+    extendedIconLabelSpacing,
+    extendedPadding,
+    Object.hash(
+      extendedTextStyle,
+      mouseCursor,
+    ),
+  );
 
   @override
   bool operator ==(Object other) {
-    if (identical(this, other))
+    if (identical(this, other)) {
       return true;
-    if (other.runtimeType != runtimeType)
+    }
+    if (other.runtimeType != runtimeType) {
       return false;
+    }
     return other is FloatingActionButtonThemeData
         && other.foregroundColor == foregroundColor
         && other.backgroundColor == backgroundColor
@@ -177,24 +268,43 @@ class FloatingActionButtonThemeData with Diagnosticable {
         && other.hoverElevation == hoverElevation
         && other.disabledElevation == disabledElevation
         && other.highlightElevation == highlightElevation
-        && other.shape == shape;
+        && other.shape == shape
+        && other.enableFeedback == enableFeedback
+        && other.iconSize == iconSize
+        && other.sizeConstraints == sizeConstraints
+        && other.smallSizeConstraints == smallSizeConstraints
+        && other.largeSizeConstraints == largeSizeConstraints
+        && other.extendedSizeConstraints == extendedSizeConstraints
+        && other.extendedIconLabelSpacing == extendedIconLabelSpacing
+        && other.extendedPadding == extendedPadding
+        && other.extendedTextStyle == extendedTextStyle
+        && other.mouseCursor == mouseCursor;
   }
 
   @override
   void debugFillProperties(DiagnosticPropertiesBuilder properties) {
     super.debugFillProperties(properties);
-    const FloatingActionButtonThemeData defaultData = FloatingActionButtonThemeData();
 
-    properties.add(ColorProperty('foregroundColor', foregroundColor, defaultValue: defaultData.foregroundColor));
-    properties.add(ColorProperty('backgroundColor', backgroundColor, defaultValue: defaultData.backgroundColor));
-    properties.add(ColorProperty('focusColor', focusColor, defaultValue: defaultData.focusColor));
-    properties.add(ColorProperty('hoverColor', hoverColor, defaultValue: defaultData.hoverColor));
-    properties.add(ColorProperty('splashColor', splashColor, defaultValue: defaultData.splashColor));
-    properties.add(DoubleProperty('elevation', elevation, defaultValue: defaultData.elevation));
-    properties.add(DoubleProperty('focusElevation', focusElevation, defaultValue: defaultData.focusElevation));
-    properties.add(DoubleProperty('hoverElevation', hoverElevation, defaultValue: defaultData.hoverElevation));
-    properties.add(DoubleProperty('disabledElevation', disabledElevation, defaultValue: defaultData.disabledElevation));
-    properties.add(DoubleProperty('highlightElevation', highlightElevation, defaultValue: defaultData.highlightElevation));
-    properties.add(DiagnosticsProperty<ShapeBorder>('shape', shape, defaultValue: defaultData.shape));
+    properties.add(ColorProperty('foregroundColor', foregroundColor, defaultValue: null));
+    properties.add(ColorProperty('backgroundColor', backgroundColor, defaultValue: null));
+    properties.add(ColorProperty('focusColor', focusColor, defaultValue: null));
+    properties.add(ColorProperty('hoverColor', hoverColor, defaultValue: null));
+    properties.add(ColorProperty('splashColor', splashColor, defaultValue: null));
+    properties.add(DoubleProperty('elevation', elevation, defaultValue: null));
+    properties.add(DoubleProperty('focusElevation', focusElevation, defaultValue: null));
+    properties.add(DoubleProperty('hoverElevation', hoverElevation, defaultValue: null));
+    properties.add(DoubleProperty('disabledElevation', disabledElevation, defaultValue: null));
+    properties.add(DoubleProperty('highlightElevation', highlightElevation, defaultValue: null));
+    properties.add(DiagnosticsProperty<ShapeBorder>('shape', shape, defaultValue: null));
+    properties.add(DiagnosticsProperty<bool>('enableFeedback', enableFeedback, defaultValue: null));
+    properties.add(DoubleProperty('iconSize', iconSize, defaultValue: null));
+    properties.add(DiagnosticsProperty<BoxConstraints>('sizeConstraints', sizeConstraints, defaultValue: null));
+    properties.add(DiagnosticsProperty<BoxConstraints>('smallSizeConstraints', smallSizeConstraints, defaultValue: null));
+    properties.add(DiagnosticsProperty<BoxConstraints>('largeSizeConstraints', largeSizeConstraints, defaultValue: null));
+    properties.add(DiagnosticsProperty<BoxConstraints>('extendedSizeConstraints', extendedSizeConstraints, defaultValue: null));
+    properties.add(DoubleProperty('extendedIconLabelSpacing', extendedIconLabelSpacing, defaultValue: null));
+    properties.add(DiagnosticsProperty<EdgeInsetsGeometry>('extendedPadding', extendedPadding, defaultValue: null));
+    properties.add(DiagnosticsProperty<TextStyle>('extendedTextStyle', extendedTextStyle, defaultValue: null));
+    properties.add(DiagnosticsProperty<MaterialStateProperty<MouseCursor?>>('mouseCursor', mouseCursor, defaultValue: null));
   }
 }

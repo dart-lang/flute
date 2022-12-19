@@ -26,13 +26,20 @@ const EdgeInsets _kBackgroundButtonPadding = EdgeInsets.symmetric(
 /// [EdgeInsets.zero], should be used to prevent clipping larger [child]
 /// widgets.
 ///
+/// {@tool dartpad}
+/// This sample shows produces an enabled and disabled [CupertinoButton] and
+/// [CupertinoButton.filled].
+///
+/// ** See code in examples/api/lib/cupertino/button/cupertino_button.0.dart **
+/// {@end-tool}
+///
 /// See also:
 ///
 ///  * <https://developer.apple.com/ios/human-interface-guidelines/controls/buttons/>
 class CupertinoButton extends StatefulWidget {
   /// Creates an iOS-style button.
   const CupertinoButton({
-    Key? key,
+    super.key,
     required this.child,
     this.padding,
     this.color,
@@ -40,11 +47,12 @@ class CupertinoButton extends StatefulWidget {
     this.minSize = kMinInteractiveDimensionCupertino,
     this.pressedOpacity = 0.4,
     this.borderRadius = const BorderRadius.all(Radius.circular(8.0)),
+    this.alignment = Alignment.center,
     required this.onPressed,
   }) : assert(pressedOpacity == null || (pressedOpacity >= 0.0 && pressedOpacity <= 1.0)),
        assert(disabledColor != null),
-       _filled = false,
-       super(key: key);
+       assert(alignment != null),
+       _filled = false;
 
   /// Creates an iOS-style button with a filled background.
   ///
@@ -53,19 +61,20 @@ class CupertinoButton extends StatefulWidget {
   /// To specify a custom background color, use the [color] argument of the
   /// default constructor.
   const CupertinoButton.filled({
-    Key? key,
+    super.key,
     required this.child,
     this.padding,
     this.disabledColor = CupertinoColors.quaternarySystemFill,
     this.minSize = kMinInteractiveDimensionCupertino,
     this.pressedOpacity = 0.4,
     this.borderRadius = const BorderRadius.all(Radius.circular(8.0)),
+    this.alignment = Alignment.center,
     required this.onPressed,
   }) : assert(pressedOpacity == null || (pressedOpacity >= 0.0 && pressedOpacity <= 1.0)),
        assert(disabledColor != null),
+       assert(alignment != null),
        color = null,
-       _filled = true,
-       super(key: key);
+       _filled = true;
 
   /// The widget below this widget in the tree.
   ///
@@ -116,6 +125,16 @@ class CupertinoButton extends StatefulWidget {
   /// Defaults to round corners of 8 logical pixels.
   final BorderRadius? borderRadius;
 
+  /// The alignment of the button's [child].
+  ///
+  /// Typically buttons are sized to be just big enough to contain the child and its
+  /// [padding]. If the button's size is constrained to a fixed size, for example by
+  /// enclosing it with a [SizedBox], this property defines how the child is aligned
+  /// within the available space.
+  ///
+  /// Always defaults to [Alignment.center].
+  final AlignmentGeometry alignment;
+
   final bool _filled;
 
   /// Whether the button is enabled or disabled. Buttons are disabled by default. To
@@ -123,7 +142,7 @@ class CupertinoButton extends StatefulWidget {
   bool get enabled => onPressed != null;
 
   @override
-  _CupertinoButtonState createState() => _CupertinoButtonState();
+  State<CupertinoButton> createState() => _CupertinoButtonState();
 
   @override
   void debugFillProperties(DiagnosticPropertiesBuilder properties) {
@@ -134,8 +153,8 @@ class CupertinoButton extends StatefulWidget {
 
 class _CupertinoButtonState extends State<CupertinoButton> with SingleTickerProviderStateMixin {
   // Eyeballed values. Feel free to tweak.
-  static const Duration kFadeOutDuration = Duration(milliseconds: 10);
-  static const Duration kFadeInDuration = Duration(milliseconds: 100);
+  static const Duration kFadeOutDuration = Duration(milliseconds: 120);
+  static const Duration kFadeInDuration = Duration(milliseconds: 180);
   final Tween<double> _opacityTween = Tween<double>(begin: 1.0);
 
   late AnimationController _animationController;
@@ -195,15 +214,17 @@ class _CupertinoButtonState extends State<CupertinoButton> with SingleTickerProv
   }
 
   void _animate() {
-    if (_animationController.isAnimating)
+    if (_animationController.isAnimating) {
       return;
+    }
     final bool wasHeldDown = _buttonHeldDown;
     final TickerFuture ticker = _buttonHeldDown
-        ? _animationController.animateTo(1.0, duration: kFadeOutDuration)
-        : _animationController.animateTo(0.0, duration: kFadeInDuration);
+        ? _animationController.animateTo(1.0, duration: kFadeOutDuration, curve: Curves.easeInOutCubicEmphasized)
+        : _animationController.animateTo(0.0, duration: kFadeInDuration, curve: Curves.easeOutCubic);
     ticker.then<void>((void value) {
-      if (mounted && wasHeldDown != _buttonHeldDown)
+      if (mounted && wasHeldDown != _buttonHeldDown) {
         _animate();
+      }
     });
   }
 
@@ -224,42 +245,46 @@ class _CupertinoButtonState extends State<CupertinoButton> with SingleTickerProv
 
     final TextStyle textStyle = themeData.textTheme.textStyle.copyWith(color: foregroundColor);
 
-    return GestureDetector(
-      behavior: HitTestBehavior.opaque,
-      onTapDown: enabled ? _handleTapDown : null,
-      onTapUp: enabled ? _handleTapUp : null,
-      onTapCancel: enabled ? _handleTapCancel : null,
-      onTap: widget.onPressed,
-      child: Semantics(
-        button: true,
-        child: ConstrainedBox(
-          constraints: widget.minSize == null
-            ? const BoxConstraints()
-            : BoxConstraints(
-                minWidth: widget.minSize!,
-                minHeight: widget.minSize!,
-              ),
-          child: FadeTransition(
-            opacity: _opacityAnimation,
-            child: DecoratedBox(
-              decoration: BoxDecoration(
-                borderRadius: widget.borderRadius,
-                color: backgroundColor != null && !enabled
-                  ? CupertinoDynamicColor.resolve(widget.disabledColor, context)
-                  : backgroundColor,
-              ),
-              child: Padding(
-                padding: widget.padding ?? (backgroundColor != null
-                  ? _kBackgroundButtonPadding
-                  : _kButtonPadding),
-                child: Center(
-                  widthFactor: 1.0,
-                  heightFactor: 1.0,
-                  child: DefaultTextStyle(
-                    style: textStyle,
-                    child: IconTheme(
-                      data: IconThemeData(color: foregroundColor),
-                      child: widget.child,
+    return MouseRegion(
+      cursor: enabled && kIsWeb ? SystemMouseCursors.click : MouseCursor.defer,
+      child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTapDown: enabled ? _handleTapDown : null,
+        onTapUp: enabled ? _handleTapUp : null,
+        onTapCancel: enabled ? _handleTapCancel : null,
+        onTap: widget.onPressed,
+        child: Semantics(
+          button: true,
+          child: ConstrainedBox(
+            constraints: widget.minSize == null
+              ? const BoxConstraints()
+              : BoxConstraints(
+                  minWidth: widget.minSize!,
+                  minHeight: widget.minSize!,
+                ),
+            child: FadeTransition(
+              opacity: _opacityAnimation,
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                  borderRadius: widget.borderRadius,
+                  color: backgroundColor != null && !enabled
+                    ? CupertinoDynamicColor.resolve(widget.disabledColor, context)
+                    : backgroundColor,
+                ),
+                child: Padding(
+                  padding: widget.padding ?? (backgroundColor != null
+                    ? _kBackgroundButtonPadding
+                    : _kButtonPadding),
+                  child: Align(
+                    alignment: widget.alignment,
+                    widthFactor: 1.0,
+                    heightFactor: 1.0,
+                    child: DefaultTextStyle(
+                      style: textStyle,
+                      child: IconTheme(
+                        data: IconThemeData(color: foregroundColor),
+                        child: widget.child,
+                      ),
                     ),
                   ),
                 ),

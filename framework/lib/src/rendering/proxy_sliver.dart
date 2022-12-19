@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-import 'package:flute/ui.dart' as ui show Color;
+import 'package:engine/ui.dart' as ui show Color;
 
 import 'package:flute/animation.dart';
 import 'package:flute/foundation.dart';
@@ -42,8 +42,9 @@ abstract class RenderProxySliver extends RenderSliver with RenderObjectWithChild
 
   @override
   void setupParentData(RenderObject child) {
-    if (child.parentData is! SliverPhysicalParentData)
+    if (child.parentData is! SliverPhysicalParentData) {
       child.parentData = SliverPhysicalParentData();
+    }
   }
 
   @override
@@ -55,8 +56,9 @@ abstract class RenderProxySliver extends RenderSliver with RenderObjectWithChild
 
   @override
   void paint(PaintingContext context, Offset offset) {
-    if (child != null)
+    if (child != null) {
       context.paintChild(child!, offset);
+    }
   }
 
   @override
@@ -112,7 +114,7 @@ class RenderSliverOpacity extends RenderProxySliver {
   }
 
   @override
-  bool get alwaysNeedsCompositing => child != null && (_alpha != 0 && _alpha != 255);
+  bool get alwaysNeedsCompositing => child != null && (_alpha > 0);
 
   int _alpha;
 
@@ -131,17 +133,20 @@ class RenderSliverOpacity extends RenderProxySliver {
   set opacity(double value) {
     assert(value != null);
     assert(value >= 0.0 && value <= 1.0);
-    if (_opacity == value)
+    if (_opacity == value) {
       return;
+    }
     final bool didNeedCompositing = alwaysNeedsCompositing;
     final bool wasVisible = _alpha != 0;
     _opacity = value;
     _alpha = ui.Color.getAlphaFromOpacity(_opacity);
-    if (didNeedCompositing != alwaysNeedsCompositing)
+    if (didNeedCompositing != alwaysNeedsCompositing) {
       markNeedsCompositingBitsUpdate();
+    }
     markNeedsPaint();
-    if (wasVisible != (_alpha != 0) && !alwaysIncludeSemantics)
+    if (wasVisible != (_alpha != 0) && !alwaysIncludeSemantics) {
       markNeedsSemanticsUpdate();
+    }
   }
 
   /// Whether child semantics are included regardless of the opacity.
@@ -152,8 +157,9 @@ class RenderSliverOpacity extends RenderProxySliver {
   bool get alwaysIncludeSemantics => _alwaysIncludeSemantics;
   bool _alwaysIncludeSemantics;
   set alwaysIncludeSemantics(bool value) {
-    if (value == _alwaysIncludeSemantics)
+    if (value == _alwaysIncludeSemantics) {
       return;
+    }
     _alwaysIncludeSemantics = value;
     markNeedsSemanticsUpdate();
   }
@@ -166,12 +172,6 @@ class RenderSliverOpacity extends RenderProxySliver {
         layer = null;
         return;
       }
-      if (_alpha == 255) {
-        // No need to keep the layer. We'll create a new one if necessary.
-        layer = null;
-        context.paintChild(child!, offset);
-        return;
-      }
       assert(needsCompositing);
       layer = context.pushOpacity(
         offset,
@@ -179,13 +179,18 @@ class RenderSliverOpacity extends RenderProxySliver {
         super.paint,
         oldLayer: layer as OpacityLayer?,
       );
+      assert(() {
+        layer!.debugCreator = debugCreator;
+        return true;
+      }());
     }
   }
 
   @override
   void visitChildrenForSemantics(RenderObjectVisitor visitor) {
-    if (child != null && (_alpha != 0 || alwaysIncludeSemantics))
+    if (child != null && (_alpha != 0 || alwaysIncludeSemantics)) {
       visitor(child!);
+    }
   }
 
   @override
@@ -229,11 +234,13 @@ class RenderSliverIgnorePointer extends RenderProxySliver {
   bool _ignoring;
   set ignoring(bool value) {
     assert(value != null);
-    if (value == _ignoring)
+    if (value == _ignoring) {
       return;
+    }
     _ignoring = value;
-    if (_ignoringSemantics == null || !_ignoringSemantics!)
+    if (_ignoringSemantics == null || !_ignoringSemantics!) {
       markNeedsSemanticsUpdate();
+    }
   }
 
   /// Whether the semantics of this render object is ignored when compiling the
@@ -245,12 +252,14 @@ class RenderSliverIgnorePointer extends RenderProxySliver {
   bool? get ignoringSemantics => _ignoringSemantics;
   bool? _ignoringSemantics;
   set ignoringSemantics(bool? value) {
-    if (value == _ignoringSemantics)
+    if (value == _ignoringSemantics) {
       return;
+    }
     final bool oldEffectiveValue = _effectiveIgnoringSemantics;
     _ignoringSemantics = value;
-    if (oldEffectiveValue != _effectiveIgnoringSemantics)
+    if (oldEffectiveValue != _effectiveIgnoringSemantics) {
       markNeedsSemanticsUpdate();
+    }
   }
 
   bool get _effectiveIgnoringSemantics => ignoringSemantics ?? ignoring;
@@ -267,8 +276,9 @@ class RenderSliverIgnorePointer extends RenderProxySliver {
 
   @override
   void visitChildrenForSemantics(RenderObjectVisitor visitor) {
-    if (child != null && !_effectiveIgnoringSemantics)
+    if (child != null && !_effectiveIgnoringSemantics) {
       visitor(child!);
+    }
   }
 
   @override
@@ -304,8 +314,9 @@ class RenderSliverOffstage extends RenderProxySliver {
 
   set offstage(bool value) {
     assert(value != null);
-    if (value == _offstage)
+    if (value == _offstage) {
       return;
+    }
     _offstage = value;
     markNeedsLayoutForSizedByParentChange();
   }
@@ -314,14 +325,11 @@ class RenderSliverOffstage extends RenderProxySliver {
   void performLayout() {
     assert(child != null);
     child!.layout(constraints, parentUsesSize: true);
-    if (!offstage)
+    if (!offstage) {
       geometry = child!.geometry;
-    else
-      geometry = const SliverGeometry(
-        scrollExtent: 0.0,
-        visible: false,
-        maxPaintExtent: 0.0,
-      );
+    } else {
+      geometry = SliverGeometry.zero;
+    }
   }
 
   @override
@@ -347,15 +355,17 @@ class RenderSliverOffstage extends RenderProxySliver {
 
   @override
   void paint(PaintingContext context, Offset offset) {
-    if (offstage)
+    if (offstage) {
       return;
+    }
     context.paintChild(child!, offset);
   }
 
   @override
   void visitChildrenForSemantics(RenderObjectVisitor visitor) {
-    if (offstage)
+    if (offstage) {
       return;
+    }
     super.visitChildrenForSemantics(visitor);
   }
 
@@ -367,8 +377,9 @@ class RenderSliverOffstage extends RenderProxySliver {
 
   @override
   List<DiagnosticsNode> debugDescribeChildren() {
-    if (child == null)
+    if (child == null) {
       return <DiagnosticsNode>[];
+    }
     return <DiagnosticsNode>[
       child!.toDiagnosticsNode(
         name: 'child',
@@ -382,7 +393,7 @@ class RenderSliverOffstage extends RenderProxySliver {
 ///
 /// This is a variant of [RenderSliverOpacity] that uses an [Animation<double>]
 /// rather than a [double] to control the opacity.
-class RenderSliverAnimatedOpacity extends RenderProxySliver with RenderAnimatedOpacityMixin<RenderSliver>{
+class RenderSliverAnimatedOpacity extends RenderProxySliver with RenderAnimatedOpacityMixin<RenderSliver> {
   /// Creates a partially transparent render object.
   ///
   /// The [opacity] argument must not be null.

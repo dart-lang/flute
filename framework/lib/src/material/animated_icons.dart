@@ -6,9 +6,10 @@
 library material_animated_icons;
 
 import 'dart:math' as math show pi;
-import 'package:flute/ui.dart' as ui show Paint, Path, Canvas;
-import 'package:flute/ui.dart' show lerpDouble;
+import 'package:engine/ui.dart' as ui show Canvas, Paint, Path;
+import 'package:engine/ui.dart' show lerpDouble;
 
+import 'package:flute/foundation.dart' show clampDouble;
 import 'package:flute/widgets.dart';
 
 // This package is split into multiple parts to enable a private API that is

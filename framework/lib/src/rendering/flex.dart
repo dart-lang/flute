@@ -483,10 +483,10 @@ class RenderFlex extends RenderBox with ContainerRenderObjectMixin<RenderBox, Fl
   }
 
   // Set during layout if overflow occurred on the main axis.
-  double? _overflow;
+  double _overflow = 0;
   // Check whether any meaningful overflow is present. Values below an epsilon
   // are treated as not overflowing.
-  bool get _hasOverflow => _overflow! > precisionErrorTolerance;
+  bool get _hasOverflow => _overflow > precisionErrorTolerance;
 
   /// {@macro flutter.material.Material.clipBehavior}
   ///
@@ -504,8 +504,9 @@ class RenderFlex extends RenderBox with ContainerRenderObjectMixin<RenderBox, Fl
 
   @override
   void setupParentData(RenderBox child) {
-    if (child.parentData is! FlexParentData)
+    if (child.parentData is! FlexParentData) {
       child.parentData = FlexParentData();
+    }
   }
 
   bool get _canComputeIntrinsics => crossAxisAlignment != CrossAxisAlignment.baseline;
@@ -521,7 +522,7 @@ class RenderFlex extends RenderBox with ContainerRenderObjectMixin<RenderBox, Fl
       // on [RenderBox.computeMinIntrinsicWidth].
       assert(
         RenderObject.debugCheckingIntrinsics,
-        'Intrinsics are not available for CrossAxisAlignment.baseline.'
+        'Intrinsics are not available for CrossAxisAlignment.baseline.',
       );
       return 0.0;
     }
@@ -583,15 +584,15 @@ class RenderFlex extends RenderBox with ContainerRenderObjectMixin<RenderBox, Fl
 
       // Determine the spacePerFlex by allocating the remaining available space.
       // When you're overconstrained spacePerFlex can be negative.
-      final double spacePerFlex = math.max(0.0,
-          (availableMainSpace - inflexibleSpace) / totalFlex);
+      final double spacePerFlex = math.max(0.0, (availableMainSpace - inflexibleSpace) / totalFlex);
 
       // Size remaining (flexible) items, find the maximum cross size.
       child = firstChild;
       while (child != null) {
         final int flex = _getFlex(child);
-        if (flex > 0)
+        if (flex > 0) {
           maxCrossSize = math.max(maxCrossSize, childSize(child, spacePerFlex * flex));
+        }
         final FlexParentData childParentData = child.parentData! as FlexParentData;
         child = childParentData.nextSibling;
       }
@@ -638,8 +639,9 @@ class RenderFlex extends RenderBox with ContainerRenderObjectMixin<RenderBox, Fl
 
   @override
   double? computeDistanceToActualBaseline(TextBaseline baseline) {
-    if (_direction == Axis.horizontal)
+    if (_direction == Axis.horizontal) {
       return defaultComputeDistanceToHighestActualBaseline(baseline);
+    }
     return defaultComputeDistanceToFirstActualBaseline(baseline);
   }
 
@@ -675,9 +677,9 @@ class RenderFlex extends RenderBox with ContainerRenderObjectMixin<RenderBox, Fl
   Size computeDryLayout(BoxConstraints constraints) {
     if (!_canComputeIntrinsics) {
       assert(debugCannotComputeDryLayout(
-        reason: 'Dry layout cannot be computed for CrossAxisAlignment.baseline, which requires a full layout.'
+        reason: 'Dry layout cannot be computed for CrossAxisAlignment.baseline, which requires a full layout.',
       ));
-      return const Size(0, 0);
+      return Size.zero;
     }
     FlutterError? constraintsError;
     assert(() {
@@ -689,7 +691,7 @@ class RenderFlex extends RenderBox with ContainerRenderObjectMixin<RenderBox, Fl
     }());
     if (constraintsError != null) {
       assert(debugCannotComputeDryLayout(error: constraintsError));
-      return const Size(0, 0);
+      return Size.zero;
     }
 
     final _LayoutSizes sizes = _computeSizes(
@@ -725,22 +727,26 @@ class RenderFlex extends RenderBox with ContainerRenderObjectMixin<RenderBox, Fl
               'When a $identity is in a parent that does not provide a finite $dimension constraint, for example '
               'if it is in a $axis scrollable, it will try to shrink-wrap its children along the $axis '
               'axis. Setting a flex on a child (e.g. using Expanded) indicates that the child is to '
-              'expand to fill the remaining space in the $axis direction.'
+              'expand to fill the remaining space in the $axis direction.',
             );
             if (reportParentConstraints) { // Constraints of parents are unavailable in dry layout.
               RenderBox? node = this;
               switch (_direction) {
                 case Axis.horizontal:
-                  while (!node!.constraints.hasBoundedWidth && node.parent is RenderBox)
+                  while (!node!.constraints.hasBoundedWidth && node.parent is RenderBox) {
                     node = node.parent! as RenderBox;
-                  if (!node.constraints.hasBoundedWidth)
+                  }
+                  if (!node.constraints.hasBoundedWidth) {
                     node = null;
+                  }
                   break;
                 case Axis.vertical:
-                  while (!node!.constraints.hasBoundedHeight && node.parent is RenderBox)
+                  while (!node!.constraints.hasBoundedHeight && node.parent is RenderBox) {
                     node = node.parent! as RenderBox;
-                  if (!node.constraints.hasBoundedHeight)
+                  }
+                  if (!node.constraints.hasBoundedHeight) {
                     node = null;
+                  }
                   break;
               }
               if (node != null) {
@@ -756,26 +762,26 @@ class RenderFlex extends RenderBox with ContainerRenderObjectMixin<RenderBox, Fl
             message,
             ErrorDescription(
               'These two directives are mutually exclusive. If a parent is to shrink-wrap its child, the child '
-              'cannot simultaneously expand to fit its parent.'
+              'cannot simultaneously expand to fit its parent.',
             ),
             ErrorHint(
               'Consider setting mainAxisSize to MainAxisSize.min and using FlexFit.loose fits for the flexible '
               'children (using Flexible rather than Expanded). This will allow the flexible children '
               'to size themselves to less than the infinite remaining space they would otherwise be '
               'forced to take, and then will cause the RenderFlex to shrink-wrap the children '
-              'rather than expanding to fit the maximum constraints provided by the parent.'
+              'rather than expanding to fit the maximum constraints provided by the parent.',
             ),
             ErrorDescription(
               'If this message did not help you determine the problem, consider using debugDumpRenderTree():\n'
               '  https://flutter.dev/debugging/#rendering-layer\n'
-              '  http://api.flutter.dev/flutter/rendering/debugDumpRenderTree.html'
+              '  http://api.flutter.dev/flutter/rendering/debugDumpRenderTree.html',
             ),
             describeForError('The affected RenderFlex is', style: DiagnosticsTreeStyle.errorProperty),
             DiagnosticsProperty<dynamic>('The creator information is set to', debugCreator, style: DiagnosticsTreeStyle.errorProperty),
             ...addendum,
             ErrorDescription(
               "If none of the above helps enough to fix this problem, please don't hesitate to file a bug:\n"
-              '  https://github.com/flutter/flutter/issues/new?template=2_bug.md'
+              '  https://github.com/flutter/flutter/issues/new?template=2_bug.md',
             ),
           ]);
           return true;
@@ -944,8 +950,9 @@ class RenderFlex extends RenderBox with ContainerRenderObjectMixin<RenderBox, Fl
       double maxSizeBelowBaseline = 0;
       while (child != null) {
         assert(() {
-          if (textBaseline == null)
+          if (textBaseline == null) {
             throw FlutterError('To use FlexAlignItems.baseline, you must also specify which baseline to use using the "baseline" argument.');
+          }
           return true;
         }());
         final double? distance = child.getDistanceToBaseline(textBaseline!, onlyReal: true);
@@ -984,10 +991,11 @@ class RenderFlex extends RenderBox with ContainerRenderObjectMixin<RenderBox, Fl
     final double remainingSpace = math.max(0.0, actualSizeDelta);
     late final double leadingSpace;
     late final double betweenSpace;
-    // flipMainAxis is used to decide whether to lay out left-to-right/top-to-bottom (false), or
-    // right-to-left/bottom-to-top (true). The _startIsTopLeft will return null if there's only
-    // one child and the relevant direction is null, in which case we arbitrarily decide not to
-    // flip, but that doesn't have any detectable effect.
+    // flipMainAxis is used to decide whether to lay out
+    // left-to-right/top-to-bottom (false), or right-to-left/bottom-to-top
+    // (true). The _startIsTopLeft will return null if there's only one child
+    // and the relevant direction is null, in which case we arbitrarily decide
+    // to flip, but that doesn't have any detectable effect.
     final bool flipMainAxis = !(_startIsTopLeft(direction, textDirection, verticalDirection) ?? true);
     switch (_mainAxisAlignment) {
       case MainAxisAlignment.start:
@@ -1040,17 +1048,19 @@ class RenderFlex extends RenderBox with ContainerRenderObjectMixin<RenderBox, Fl
           if (_direction == Axis.horizontal) {
             assert(textBaseline != null);
             final double? distance = child.getDistanceToBaseline(textBaseline!, onlyReal: true);
-            if (distance != null)
+            if (distance != null) {
               childCrossPosition = maxBaselineDistance - distance;
-            else
+            } else {
               childCrossPosition = 0.0;
+            }
           } else {
             childCrossPosition = 0.0;
           }
           break;
       }
-      if (flipMainAxis)
+      if (flipMainAxis) {
         childMainPosition -= _getMainSize(child.size);
+      }
       switch (_direction) {
         case Axis.horizontal:
           childParentData.offset = Offset(childMainPosition, childCrossPosition);
@@ -1081,41 +1091,40 @@ class RenderFlex extends RenderBox with ContainerRenderObjectMixin<RenderBox, Fl
     }
 
     // There's no point in drawing the children if we're empty.
-    if (size.isEmpty)
+    if (size.isEmpty) {
       return;
-
-    if (clipBehavior == Clip.none) {
-      _clipRectLayer = null;
-      defaultPaint(context, offset);
-    } else {
-      // We have overflow and the clipBehavior isn't none. Clip it.
-      _clipRectLayer = context.pushClipRect(needsCompositing, offset, Offset.zero & size, defaultPaint,
-          clipBehavior: clipBehavior, oldLayer: _clipRectLayer);
     }
 
+    _clipRectLayer.layer = context.pushClipRect(
+      needsCompositing,
+      offset,
+      Offset.zero & size,
+      defaultPaint,
+      clipBehavior: clipBehavior,
+      oldLayer: _clipRectLayer.layer,
+    );
+
     assert(() {
-      // Only set this if it's null to save work. It gets reset to null if the
-      // _direction changes.
       final List<DiagnosticsNode> debugOverflowHints = <DiagnosticsNode>[
         ErrorDescription(
-          'The overflowing $runtimeType has an orientation of $_direction.'
+          'The overflowing $runtimeType has an orientation of $_direction.',
         ),
         ErrorDescription(
           'The edge of the $runtimeType that is overflowing has been marked '
           'in the rendering with a yellow and black striped pattern. This is '
-          'usually caused by the contents being too big for the $runtimeType.'
+          'usually caused by the contents being too big for the $runtimeType.',
         ),
         ErrorHint(
           'Consider applying a flex factor (e.g. using an Expanded widget) to '
           'force the children of the $runtimeType to fit within the available '
-          'space instead of being sized to their natural size.'
+          'space instead of being sized to their natural size.',
         ),
         ErrorHint(
           'This is considered an error condition because it indicates that there '
           'is content that cannot be seen. If the content is legitimately bigger '
           'than the available space, consider clipping it with a ClipRect widget '
           'before putting it in the flex, or using a scrollable container rather '
-          'than a Flex, like a ListView.'
+          'than a Flex, like a ListView.',
         ),
       ];
 
@@ -1125,10 +1134,10 @@ class RenderFlex extends RenderBox with ContainerRenderObjectMixin<RenderBox, Fl
       final Rect overflowChildRect;
       switch (_direction) {
         case Axis.horizontal:
-          overflowChildRect = Rect.fromLTWH(0.0, 0.0, size.width + _overflow!, 0.0);
+          overflowChildRect = Rect.fromLTWH(0.0, 0.0, size.width + _overflow, 0.0);
           break;
         case Axis.vertical:
-          overflowChildRect = Rect.fromLTWH(0.0, 0.0, 0.0, size.height + _overflow!);
+          overflowChildRect = Rect.fromLTWH(0.0, 0.0, 0.0, size.height + _overflow);
           break;
       }
       paintOverflowIndicator(context, offset, Offset.zero & size, overflowChildRect, overflowHints: debugOverflowHints);
@@ -1136,16 +1145,35 @@ class RenderFlex extends RenderBox with ContainerRenderObjectMixin<RenderBox, Fl
     }());
   }
 
-  ClipRectLayer? _clipRectLayer;
+  final LayerHandle<ClipRectLayer> _clipRectLayer = LayerHandle<ClipRectLayer>();
 
   @override
-  Rect? describeApproximatePaintClip(RenderObject child) => _hasOverflow ? Offset.zero & size : null;
+  void dispose() {
+    _clipRectLayer.layer = null;
+    super.dispose();
+  }
+
+  @override
+  Rect? describeApproximatePaintClip(RenderObject child) {
+    switch (clipBehavior) {
+      case Clip.none:
+        return null;
+      case Clip.hardEdge:
+      case Clip.antiAlias:
+      case Clip.antiAliasWithSaveLayer:
+        return _hasOverflow ? Offset.zero & size : null;
+    }
+  }
+
 
   @override
   String toStringShort() {
     String header = super.toStringShort();
-    if (_overflow != null && _hasOverflow)
-      header += ' OVERFLOWING';
+    if (!kReleaseMode) {
+      if (_hasOverflow) {
+        header += ' OVERFLOWING';
+      }
+    }
     return header;
   }
 

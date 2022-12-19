@@ -21,11 +21,40 @@ import 'package:flute/widgets.dart';
 ///   cupertino_icons: ^1.0.0
 /// ```
 ///
-/// [![icon gallery preview](https://raw.githubusercontent.com/flutter/cupertino_icons/master/gallery_preview_1.0.0.png)](https://flutter.github.io/cupertino_icons)
+/// {@tool snippet}
 ///
-/// For versions 1.0.0 and above (available only on Flutter SDK versions 1.22+), see the [Cupertino Icons Gallery](https://flutter.github.io/cupertino_icons).
+/// This example shows how to create a [Row] of Cupertino [Icon]s in different colors and
+/// sizes. The first [Icon] uses a [Icon.semanticLabel] to announce in accessibility
+/// modes like VoiceOver.
 ///
-/// For versions 0.1.3 and below, see this [glyph map](https://raw.githubusercontent.com/flutter/cupertino_icons/master/map.png).
+/// ![The following code snippet would generate a row of icons consisting of a pink heart, a green bell, and a blue umbrella, each progressively bigger than the last.](https://flutter.github.io/assets-for-api-docs/assets/cupertino/cupertino_icon.png)
+///
+/// ```dart
+/// Row(
+///   mainAxisAlignment: MainAxisAlignment.spaceAround,
+///   children: const <Widget>[
+///     Icon(
+///       CupertinoIcons.heart_fill,
+///       color: Colors.pink,
+///       size: 24.0,
+///       semanticLabel: 'Text to announce in accessibility modes',
+///     ),
+///     Icon(
+///       CupertinoIcons.bell_fill,
+///       color: Colors.green,
+///       size: 30.0,
+///     ),
+///     Icon(
+///       CupertinoIcons.umbrella_fill,
+///       color: Colors.blue,
+///       size: 36.0,
+///     ),
+///   ],
+/// )
+/// ```
+/// {@end-tool}
+///
+/// For versions 0.1.3 and below, see this [glyph map](https://raw.githubusercontent.com/flutter/packages/master/third_party/packages/cupertino_icons/map.png).
 ///
 /// See also:
 ///
@@ -33,7 +62,6 @@ import 'package:flute/widgets.dart';
 class CupertinoIcons {
   // This class is not meant to be instantiated or extended; this constructor
   // prevents instantiation and extension.
-  // ignore: unused_element
   CupertinoIcons._();
 
   /// The icon font used for Cupertino icons.
@@ -159,14 +187,14 @@ class CupertinoIcons {
   ///  * [check_mark_circled], which is similar, but not filled in.
   static const IconData check_mark_circled_solid = IconData(0xf3ff, fontFamily: iconFont, fontPackage: iconFontPackage);
 
-  /// <i class='cupertino-icons md-36'>circle</i> &#x2014; Cupertino icon for an empty circle (a ring).  An un-selected radio button.
+  /// <i class='cupertino-icons md-36'>circle</i> &#x2014; Cupertino icon for an empty circle (a ring). An un-selected radio button.
   ///
   /// See also:
   ///
   ///  * [circle_filled], which is similar but filled in.
   static const IconData circle = IconData(0xf401, fontFamily: iconFont, fontPackage: iconFontPackage);
 
-  /// <i class='cupertino-icons md-36'>circle_fill</i> &#x2014; Cupertino icon for a filled circle.  The circle is surrounded by a ring.  A selected radio button.
+  /// <i class='cupertino-icons md-36'>circle_fill</i> &#x2014; Cupertino icon for a filled circle. The circle is surrounded by a ring. A selected radio button.
   /// This is the same icon as [circle_fill] in cupertino_icons 1.0.0+.
   ///
   /// See also:
@@ -767,7 +795,7 @@ class CupertinoIcons {
   ///  * [time_solid], which is similar, but without dots on the clock face.
   static const IconData clock_solid = IconData(0xf4bf, fontFamily: iconFont, fontPackage: iconFontPackage);
 
-  /// <i class='cupertino-icons md-36'>clock</i> &#x2014; Cupertino icon for a circle with with a 90 degree angle shape in the center, resembling a clock with hands showing 09:00.
+  /// <i class='cupertino-icons md-36'>clock</i> &#x2014; Cupertino icon for a circle with a 90 degree angle shape in the center, resembling a clock with hands showing 09:00.
   /// This is the same icon as [clock] in cupertino_icons 1.0.0+.
   ///
   /// See also:
@@ -777,7 +805,7 @@ class CupertinoIcons {
   ///  * [clock_solid], which is similar, but filled in and with dots on the clock face.
   static const IconData time = IconData(0xf402, fontFamily: iconFont, fontPackage: iconFontPackage);
 
-  /// <i class='cupertino-icons md-36'>clock_fill</i> &#x2014; Cupertino icon for a filled in circle with with a 90 degree angle shape in the center, resembling a clock with hands showing 09:00.
+  /// <i class='cupertino-icons md-36'>clock_fill</i> &#x2014; Cupertino icon for a filled in circle with a 90 degree angle shape in the center, resembling a clock with hands showing 09:00.
   /// This is the same icon as [clock_fill] and [clock_solid] in cupertino_icons 1.0.0+.
   ///
   /// See also:
@@ -884,7 +912,7 @@ class CupertinoIcons {
   static const IconData mail_solid = IconData(0xf423, fontFamily: iconFont, fontPackage: iconFontPackage);
 
   /// <i class='cupertino-icons md-36'>location</i> &#x2014; Cupertino icon for a location pin.
-  static const IconData location = IconData(0xf455, fontFamily: iconFont, fontPackage: iconFontPackage);
+  static const IconData location = IconData(0xf6ee, fontFamily: iconFont, fontPackage: iconFontPackage);
 
   /// <i class='cupertino-icons md-36'>placemark_fill</i> &#x2014; Cupertino icon for a location pin. This icon is filled in.
   /// This is the same icon as [placemark_fill] in cupertino_icons 1.0.0+.

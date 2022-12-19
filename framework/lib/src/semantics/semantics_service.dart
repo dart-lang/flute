@@ -2,13 +2,13 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-
-import 'package:flute/ui.dart' show TextDirection;
+import 'package:engine/ui.dart' show TextDirection;
 
 import 'package:flute/services.dart' show SystemChannels;
 
-import 'semantics_event.dart' show AnnounceSemanticsEvent, TooltipSemanticsEvent;
+import 'semantics_event.dart' show AnnounceSemanticsEvent, Assertiveness, TooltipSemanticsEvent;
 
+export 'package:engine/ui.dart' show TextDirection;
 
 /// Allows access to the platform's accessibility services.
 ///
@@ -20,7 +20,6 @@ import 'semantics_event.dart' show AnnounceSemanticsEvent, TooltipSemanticsEvent
 class SemanticsService {
   // This class is not meant to be instantiated or extended; this constructor
   // prevents instantiation and extension.
-  // ignore: unused_element
   SemanticsService._();
 
   /// Sends a semantic announcement.
@@ -30,8 +29,12 @@ class SemanticsService {
   ///
   /// For example a camera application can use this method to make accessibility
   /// announcements regarding objects in the viewfinder.
-  static Future<void> announce(String message, TextDirection textDirection) async {
-    final AnnounceSemanticsEvent event = AnnounceSemanticsEvent(message, textDirection);
+  ///
+  /// The assertiveness level of the announcement is determined by [assertiveness].
+  /// Currently, this is only supported by the web engine and has no effect on
+  /// other platforms. The default mode is [Assertiveness.polite].
+  static Future<void> announce(String message, TextDirection textDirection, {Assertiveness assertiveness = Assertiveness.polite}) async {
+    final AnnounceSemanticsEvent event = AnnounceSemanticsEvent(message, textDirection, assertiveness: assertiveness);
     await SystemChannels.accessibility.send(event.toMap());
   }
 

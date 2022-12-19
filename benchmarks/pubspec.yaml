@@ -5,3 +5,5 @@ environment:
 dependencies:
   flute:
     path: ../framework
+  engine:
+    path: ../engine

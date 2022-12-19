@@ -77,7 +77,7 @@ List<int> saveCompilationTrace() {
 
 dynamic _saveCompilationTrace() { throw UnimplementedError(); }
 
-void _scheduleMicrotask(void callback()) { throw UnimplementedError(); }
+void _scheduleMicrotask(void Function() callback) { throw UnimplementedError(); }
 
 int? _getCallbackHandle(Function closure) { throw UnimplementedError(); }
 Function? _getCallbackFromHandle(int handle) { throw UnimplementedError(); }

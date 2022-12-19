@@ -21,15 +21,18 @@ enum CupertinoUserInterfaceLevelData {
 }
 
 /// Establishes a subtree in which [CupertinoUserInterfaceLevel.of] resolves to
-/// the given data.
+/// the given visual elevation from the [CupertinoUserInterfaceLevelData]. This
+/// can be used to apply style differences based on a widget's elevation.
 ///
 /// Querying the current elevation status using [CupertinoUserInterfaceLevel.of]
-/// will cause your widget to rebuild automatically whenever the [CupertinoUserInterfaceLevelData]
-/// changes.
+/// will cause your widget to rebuild automatically whenever the
+/// [CupertinoUserInterfaceLevelData] changes.
 ///
-/// If no [CupertinoUserInterfaceLevel] is in scope then the [CupertinoUserInterfaceLevel.of]
-/// method will throw an exception, unless the `nullOk` argument is set to true,
-/// in which case it returns null.
+/// If no [CupertinoUserInterfaceLevel] is in scope then the
+/// [CupertinoUserInterfaceLevel.of] method will throw an exception.
+/// Alternatively, [CupertinoUserInterfaceLevel.maybeOf] can be used, which
+/// returns null instead of throwing if no [CupertinoUserInterfaceLevel] is in
+/// scope.
 ///
 /// See also:
 ///
@@ -39,12 +42,11 @@ class CupertinoUserInterfaceLevel extends InheritedWidget {
   /// Creates a [CupertinoUserInterfaceLevel] to change descendant Cupertino widget's
   /// visual level.
   const CupertinoUserInterfaceLevel({
-    Key? key,
+    super.key,
     required CupertinoUserInterfaceLevelData data,
-    required Widget child,
+    required super.child,
   }) : assert(data != null),
-      _data = data,
-      super(key: key, child: child);
+      _data = data;
 
   final CupertinoUserInterfaceLevelData _data;
 
@@ -65,8 +67,9 @@ class CupertinoUserInterfaceLevel extends InheritedWidget {
   static CupertinoUserInterfaceLevelData of(BuildContext context) {
     assert(context != null);
     final CupertinoUserInterfaceLevel? query = context.dependOnInheritedWidgetOfExactType<CupertinoUserInterfaceLevel>();
-    if (query != null)
+    if (query != null) {
       return query._data;
+    }
     throw FlutterError(
       'CupertinoUserInterfaceLevel.of() called with a context that does not contain a CupertinoUserInterfaceLevel.\n'
       'No CupertinoUserInterfaceLevel ancestor could be found starting from the context that was passed '
@@ -74,7 +77,7 @@ class CupertinoUserInterfaceLevel extends InheritedWidget {
       'MaterialApp widget (those widgets introduce a CupertinoUserInterfaceLevel), or it can happen '
       'if the context you use comes from a widget above those widgets.\n'
       'The context used was:\n'
-      '  $context'
+      '  $context',
     );
   }
 
@@ -94,8 +97,9 @@ class CupertinoUserInterfaceLevel extends InheritedWidget {
   static CupertinoUserInterfaceLevelData? maybeOf(BuildContext context) {
     assert(context != null);
     final CupertinoUserInterfaceLevel? query = context.dependOnInheritedWidgetOfExactType<CupertinoUserInterfaceLevel>();
-    if (query != null)
+    if (query != null) {
       return query._data;
+    }
     return null;
   }
 

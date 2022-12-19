@@ -18,18 +18,18 @@ import 'image.dart';
 ///  * [IconButton], for interactive icons.
 ///  * [IconTheme], which provides ambient configuration for icons.
 ///  * [Icon], for icons based on glyphs from fonts instead of images.
-///  * [Icons], a predefined font based set of icons from the material design library.
+///  * [Icons], the library of Material Icons.
 class ImageIcon extends StatelessWidget {
   /// Creates an image icon.
   ///
   /// The [size] and [color] default to the value given by the current [IconTheme].
   const ImageIcon(
     this.image, {
-    Key? key,
+    super.key,
     this.size,
     this.color,
     this.semanticLabel,
-  }) : super(key: key);
+  });
 
   /// The image to display as the icon.
   ///
@@ -51,7 +51,7 @@ class ImageIcon extends StatelessWidget {
   /// Defaults to the current [IconTheme] color, if any. If there is
   /// no [IconTheme], then it defaults to not recolorizing the image.
   ///
-  /// The image will additionally be adjusted by the opacity of the current
+  /// The image will be additionally adjusted by the opacity of the current
   /// [IconTheme], if any.
   final Color? color;
 
@@ -69,17 +69,19 @@ class ImageIcon extends StatelessWidget {
     final IconThemeData iconTheme = IconTheme.of(context);
     final double? iconSize = size ?? iconTheme.size;
 
-    if (image == null)
+    if (image == null) {
       return Semantics(
         label: semanticLabel,
         child: SizedBox(width: iconSize, height: iconSize),
       );
+    }
 
     final double? iconOpacity = iconTheme.opacity;
     Color iconColor = color ?? iconTheme.color!;
 
-    if (iconOpacity != null && iconOpacity != 1.0)
+    if (iconOpacity != null && iconOpacity != 1.0) {
       iconColor = iconColor.withOpacity(iconColor.opacity * iconOpacity);
+    }
 
     return Semantics(
       label: semanticLabel,
@@ -89,7 +91,6 @@ class ImageIcon extends StatelessWidget {
         height: iconSize,
         color: iconColor,
         fit: BoxFit.scaleDown,
-        alignment: Alignment.center,
         excludeFromSemantics: true,
       ),
     );

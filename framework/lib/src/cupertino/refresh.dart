@@ -2,9 +2,9 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-import 'dart:async';
 import 'dart:math';
 
+import 'package:flute/foundation.dart' show clampDouble;
 import 'package:flute/rendering.dart';
 import 'package:flute/scheduler.dart';
 import 'package:flute/services.dart';
@@ -17,14 +17,12 @@ const double _kActivityIndicatorMargin = 16.0;
 
 class _CupertinoSliverRefresh extends SingleChildRenderObjectWidget {
   const _CupertinoSliverRefresh({
-    Key? key,
     this.refreshIndicatorLayoutExtent = 0.0,
     this.hasLayoutExtent = false,
-    Widget? child,
+    super.child,
   }) : assert(refreshIndicatorLayoutExtent != null),
        assert(refreshIndicatorLayoutExtent >= 0.0),
-       assert(hasLayoutExtent != null),
-       super(key: key, child: child);
+       assert(hasLayoutExtent != null);
 
   // The amount of space the indicator should occupy in the sliver in a
   // resting state when in the refreshing mode.
@@ -78,8 +76,9 @@ class _RenderCupertinoSliverRefresh extends RenderSliver
   set refreshIndicatorLayoutExtent(double value) {
     assert(value != null);
     assert(value >= 0.0);
-    if (value == _refreshIndicatorExtent)
+    if (value == _refreshIndicatorExtent) {
       return;
+    }
     _refreshIndicatorExtent = value;
     markNeedsLayout();
   }
@@ -91,8 +90,9 @@ class _RenderCupertinoSliverRefresh extends RenderSliver
   bool _hasLayoutExtent;
   set hasLayoutExtent(bool value) {
     assert(value != null);
-    if (value == _hasLayoutExtent)
+    if (value == _hasLayoutExtent) {
       return;
+    }
     _hasLayoutExtent = value;
     markNeedsLayout();
   }
@@ -267,58 +267,12 @@ typedef RefreshCallback = Future<void> Function();
 /// sliver such as [CupertinoSliverNavigationBar] and your main scrollable
 /// content's sliver.
 ///
-/// {@tool dartpad --template=stateful_widget_material_no_null_safety}
-///
+/// {@tool dartpad}
 /// When the user scrolls past [refreshTriggerPullDistance],
 /// this sample shows the default iOS pull to refresh indicator for 1 second and
 /// adds a new item to the top of the list view.
 ///
-/// ```dart imports
-/// import 'package:flute/cupertino.dart';
-/// ```
-///
-/// ```dart
-/// List<Color> colors = [
-///   CupertinoColors.systemYellow,
-///   CupertinoColors.systemOrange,
-///   CupertinoColors.systemPink
-/// ];
-/// List<Widget> items = [
-///   Container(color: CupertinoColors.systemPink, height: 100.0),
-///   Container(color: CupertinoColors.systemOrange, height: 100.0),
-///   Container(color: CupertinoColors.systemYellow, height: 100.0),
-/// ];
-///
-/// @override
-/// Widget build(BuildContext context) {
-///   return CupertinoApp(
-///     home: CupertinoPageScaffold(
-///       child: CustomScrollView(
-///         physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
-///         slivers: <Widget>[
-///           const CupertinoSliverNavigationBar(largeTitle: Text('Scroll down')),
-///           CupertinoSliverRefreshControl(
-///             refreshTriggerPullDistance: 100.0,
-///             refreshIndicatorExtent: 60.0,
-///             onRefresh: () async {
-///               await Future.delayed(Duration(milliseconds: 1000));
-///               setState(() {
-///                 items.insert(0, Container(color: colors[items.length % 3], height: 100.0));
-///               });
-///             },
-///           ),
-///           SliverList(
-///             delegate: SliverChildBuilderDelegate(
-///               (BuildContext context, int index) => items[index],
-///               childCount: items.length,
-///             ),
-///           ),
-///         ],
-///       )
-///     )
-///   );
-/// }
-/// ```
+/// ** See code in examples/api/lib/cupertino/refresh/cupertino_sliver_refresh_control.0.dart **
 /// {@end-tool}
 ///
 /// See also:
@@ -344,7 +298,7 @@ class CupertinoSliverRefreshControl extends StatefulWidget {
   /// The [onRefresh] argument will be called when pulled far enough to trigger
   /// a refresh.
   const CupertinoSliverRefreshControl({
-    Key? key,
+    super.key,
     this.refreshTriggerPullDistance = _defaultRefreshTriggerPullDistance,
     this.refreshIndicatorExtent = _defaultRefreshIndicatorExtent,
     this.builder = buildRefreshIndicator,
@@ -356,9 +310,8 @@ class CupertinoSliverRefreshControl extends StatefulWidget {
        assert(
          refreshTriggerPullDistance >= refreshIndicatorExtent,
          'The refresh indicator cannot take more space in its final state '
-         'than the amount initially created by overscrolling.'
-       ),
-       super(key: key);
+         'than the amount initially created by overscrolling.',
+       );
 
   /// The amount of overscroll the scrollable must be dragged to trigger a reload.
   ///
@@ -425,15 +378,15 @@ class CupertinoSliverRefreshControl extends StatefulWidget {
     double refreshTriggerPullDistance,
     double refreshIndicatorExtent,
   ) {
-    final double percentageComplete = pulledExtent / refreshTriggerPullDistance;
+    final double percentageComplete = clampDouble(pulledExtent / refreshTriggerPullDistance, 0.0, 1.0);
 
-    // Place the indicator at the top of the sliver that opens up. Note that we're using
-    // a Stack/Positioned widget because the CupertinoActivityIndicator does some internal
-    // translations based on the current size (which grows as the user drags) that makes
-    // Padding calculations difficult. Rather than be reliant on the internal implementation
-    // of the activity indicator, the Positioned widget allows us to be explicit where the
-    // widget gets placed. Also note that the indicator should appear over the top of the
-    // dragged widget, hence the use of Overflow.visible.
+    // Place the indicator at the top of the sliver that opens up. We're using a
+    // Stack/Positioned widget because the CupertinoActivityIndicator does some
+    // internal translations based on the current size (which grows as the user drags)
+    // that makes Padding calculations difficult. Rather than be reliant on the
+    // internal implementation of the activity indicator, the Positioned widget allows
+    // us to be explicit where the widget gets placed. The indicator should appear
+    // over the top of the dragged widget, hence the use of Clip.none.
     return Center(
       child: Stack(
         clipBehavior: Clip.none,
@@ -469,12 +422,12 @@ class CupertinoSliverRefreshControl extends StatefulWidget {
         return CupertinoActivityIndicator(radius: radius * percentageComplete);
       case RefreshIndicatorMode.inactive:
         // Anything else doesn't show anything.
-        return Container();
+        return const SizedBox.shrink();
     }
   }
 
   @override
-  _CupertinoSliverRefreshControlState createState() => _CupertinoSliverRefreshControlState();
+  State<CupertinoSliverRefreshControl> createState() => _CupertinoSliverRefreshControlState();
 }
 
 class _CupertinoSliverRefreshControlState extends State<CupertinoSliverRefreshControl> {
@@ -511,10 +464,10 @@ class _CupertinoSliverRefreshControlState extends State<CupertinoSliverRefreshCo
       nextState = RefreshIndicatorMode.done;
       // Either schedule the RenderSliver to re-layout on the next frame
       // when not currently in a frame or schedule it on the next frame.
-      if (SchedulerBinding.instance!.schedulerPhase == SchedulerPhase.idle) {
+      if (SchedulerBinding.instance.schedulerPhase == SchedulerPhase.idle) {
         setState(() => hasSliverLayoutExtent = false);
       } else {
-        SchedulerBinding.instance!.addPostFrameCallback((Duration timestamp) {
+        SchedulerBinding.instance.addPostFrameCallback((Duration timestamp) {
           setState(() => hasSliverLayoutExtent = false);
         });
       }
@@ -540,7 +493,7 @@ class _CupertinoSliverRefreshControlState extends State<CupertinoSliverRefreshCo
             // Call onRefresh after this frame finished since the function is
             // user supplied and we're always here in the middle of the sliver's
             // performLayout.
-            SchedulerBinding.instance!.addPostFrameCallback((Duration timestamp) {
+            SchedulerBinding.instance.addPostFrameCallback((Duration timestamp) {
               refreshTask = widget.onRefresh!()..whenComplete(() {
                 if (mounted) {
                   setState(() => refreshTask = null);

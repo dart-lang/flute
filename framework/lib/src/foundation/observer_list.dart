@@ -48,10 +48,18 @@ class ObserverList<T> extends Iterable<T> {
     return _list.remove(item);
   }
 
+  /// Removes all items from the list.
+  void clear() {
+    _isDirty = false;
+    _list.clear();
+    _set.clear();
+  }
+
   @override
   bool contains(Object? element) {
-    if (_list.length < 3)
+    if (_list.length < 3) {
       return _list.contains(element);
+    }
 
     if (_isDirty) {
       _set.addAll(_list);
@@ -69,6 +77,11 @@ class ObserverList<T> extends Iterable<T> {
 
   @override
   bool get isNotEmpty => _list.isNotEmpty;
+
+  @override
+  List<T> toList({bool growable = true}) {
+    return _list.toList(growable: growable);
+  }
 }
 
 /// A list optimized for the observer pattern, but for larger numbers of observers.

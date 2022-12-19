@@ -4,8 +4,6 @@
 
 import 'dart:math' as math;
 
-import 'package:flute/foundation.dart';
-import 'package:flute/gestures.dart';
 import 'package:vector_math/vector_math_64.dart';
 
 import 'debug.dart';
@@ -107,8 +105,9 @@ abstract class RenderSliverEdgeInsetsPadding extends RenderSliver with RenderObj
 
   @override
   void setupParentData(RenderObject child) {
-    if (child.parentData is! SliverPhysicalParentData)
+    if (child.parentData is! SliverPhysicalParentData) {
       child.parentData = SliverPhysicalParentData();
+    }
   }
 
   @override
@@ -120,10 +119,21 @@ abstract class RenderSliverEdgeInsetsPadding extends RenderSliver with RenderObj
     final double mainAxisPadding = this.mainAxisPadding;
     final double crossAxisPadding = this.crossAxisPadding;
     if (child == null) {
+      final double paintExtent = calculatePaintOffset(
+          constraints,
+          from: 0.0,
+          to: mainAxisPadding,
+      );
+      final double cacheExtent = calculateCacheOffset(
+          constraints,
+          from: 0.0,
+          to: mainAxisPadding,
+      );
       geometry = SliverGeometry(
         scrollExtent: mainAxisPadding,
-        paintExtent: math.min(mainAxisPadding, constraints.remainingPaintExtent),
+        paintExtent: math.min(paintExtent, constraints.remainingPaintExtent),
         maxPaintExtent: mainAxisPadding,
+        cacheExtent: cacheExtent,
       );
       return;
     }
@@ -328,8 +338,9 @@ class RenderSliverPadding extends RenderSliverEdgeInsetsPadding {
   EdgeInsets? _resolvedPadding;
 
   void _resolve() {
-    if (resolvedPadding != null)
+    if (resolvedPadding != null) {
       return;
+    }
     _resolvedPadding = padding.resolve(textDirection);
     assert(resolvedPadding!.isNonNegative);
   }
@@ -348,8 +359,9 @@ class RenderSliverPadding extends RenderSliverEdgeInsetsPadding {
   set padding(EdgeInsetsGeometry value) {
     assert(value != null);
     assert(padding.isNonNegative);
-    if (_padding == value)
+    if (_padding == value) {
       return;
+    }
     _padding = value;
     _markNeedsResolution();
   }
@@ -361,8 +373,9 @@ class RenderSliverPadding extends RenderSliverEdgeInsetsPadding {
   TextDirection? get textDirection => _textDirection;
   TextDirection? _textDirection;
   set textDirection(TextDirection? value) {
-    if (_textDirection == value)
+    if (_textDirection == value) {
       return;
+    }
     _textDirection = value;
     _markNeedsResolution();
   }

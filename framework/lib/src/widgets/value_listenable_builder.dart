@@ -6,9 +6,6 @@ import 'package:flute/foundation.dart';
 
 import 'framework.dart';
 
-// Examples can assume:
-// // @dart = 2.9
-
 /// Builds a [Widget] when given a concrete value of a [ValueListenable<T>].
 ///
 /// If the `child` parameter provided to the [ValueListenableBuilder] is not
@@ -50,11 +47,11 @@ typedef ValueWidgetBuilder<T> = Widget Function(BuildContext context, T value, W
 ///
 /// ```dart
 /// class MyHomePage extends StatefulWidget {
-///   MyHomePage({Key key, this.title}) : super(key: key);
+///   const MyHomePage({super.key, required this.title});
 ///   final String title;
 ///
 ///   @override
-///   _MyHomePageState createState() => _MyHomePageState();
+///   State<MyHomePage> createState() => _MyHomePageState();
 /// }
 ///
 /// class _MyHomePageState extends State<MyHomePage> {
@@ -70,16 +67,16 @@ typedef ValueWidgetBuilder<T> = Widget Function(BuildContext context, T value, W
 ///         child: Column(
 ///           mainAxisAlignment: MainAxisAlignment.center,
 ///           children: <Widget>[
-///             Text('You have pushed the button this many times:'),
-///             ValueListenableBuilder(
-///               builder: (BuildContext context, int value, Widget child) {
+///             const Text('You have pushed the button this many times:'),
+///             ValueListenableBuilder<int>(
+///               builder: (BuildContext context, int value, Widget? child) {
 ///                 // This builder will only get called when the _counter
 ///                 // is updated.
 ///                 return Row(
 ///                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
 ///                   children: <Widget>[
 ///                     Text('$value'),
-///                     child,
+///                     child!,
 ///                   ],
 ///                 );
 ///               },
@@ -93,7 +90,7 @@ typedef ValueWidgetBuilder<T> = Widget Function(BuildContext context, T value, W
 ///         ),
 ///       ),
 ///       floatingActionButton: FloatingActionButton(
-///         child: Icon(Icons.plus_one),
+///         child: const Icon(Icons.plus_one),
 ///         onPressed: () => _counter.value += 1,
 ///       ),
 ///     );
@@ -118,13 +115,12 @@ class ValueListenableBuilder<T> extends StatefulWidget {
   /// The [child] is optional but is good practice to use if part of the widget
   /// subtree does not depend on the value of the [valueListenable].
   const ValueListenableBuilder({
-    Key? key,
+    super.key,
     required this.valueListenable,
     required this.builder,
     this.child,
   }) : assert(valueListenable != null),
-       assert(builder != null),
-       super(key: key);
+       assert(builder != null);
 
   /// The [ValueListenable] whose value you depend on in order to build.
   ///
@@ -167,12 +163,12 @@ class _ValueListenableBuilderState<T> extends State<ValueListenableBuilder<T>> {
 
   @override
   void didUpdateWidget(ValueListenableBuilder<T> oldWidget) {
+    super.didUpdateWidget(oldWidget);
     if (oldWidget.valueListenable != widget.valueListenable) {
       oldWidget.valueListenable.removeListener(_valueChanged);
       value = widget.valueListenable.value;
       widget.valueListenable.addListener(_valueChanged);
     }
-    super.didUpdateWidget(oldWidget);
   }
 
   @override

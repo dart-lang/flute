@@ -31,7 +31,7 @@ import 'package:flute/rendering.dart';
 ///
 ///  * [FixedScrollMetrics], which is an immutable object that implements this
 ///    interface.
-abstract class ScrollMetrics {
+mixin ScrollMetrics {
   /// Creates a [ScrollMetrics] that has the same properties as this object.
   ///
   /// This is useful if this object is mutable, but you want to get a snapshot
@@ -116,9 +116,9 @@ abstract class ScrollMetrics {
     assert(minScrollExtent <= maxScrollExtent);
     return viewportDimension
       // "above" overscroll value
-      - (minScrollExtent - pixels).clamp(0, viewportDimension)
+      - clampDouble(minScrollExtent - pixels, 0, viewportDimension)
       // "below" overscroll value
-      - (pixels - maxScrollExtent).clamp(0, viewportDimension);
+      - clampDouble(pixels - maxScrollExtent, 0, viewportDimension);
   }
 
   /// The quantity of content conceptually "below" the viewport in the scrollable.
@@ -129,7 +129,7 @@ abstract class ScrollMetrics {
 /// An immutable snapshot of values associated with a [Scrollable] viewport.
 ///
 /// For details, see [ScrollMetrics], which defines this object's interfaces.
-class FixedScrollMetrics extends ScrollMetrics {
+class FixedScrollMetrics with ScrollMetrics {
   /// Creates an immutable snapshot of values associated with a [Scrollable] viewport.
   FixedScrollMetrics({
     required double? minScrollExtent,

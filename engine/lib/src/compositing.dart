@@ -31,6 +31,13 @@ class Scene {
     throw UnimplementedError();
   }
 
+  Image toImageSync(int width, int height) {
+    if (width <= 0 || height <= 0) {
+      throw Exception('Invalid image dimensions.');
+    }
+    throw UnimplementedError();
+  }
+
   /// Releases the resources used by this scene.
   ///
   /// After calling this function, the scene is cannot be used further.
@@ -68,6 +75,18 @@ abstract class _EngineLayerWrapper implements EngineLayer {
         'to it, use the layer returned by the method as oldLayer in subsequent '
         'frames.');
     return true;
+  }
+
+  bool _disposed = false;
+
+  @override
+  void dispose() {
+    _disposed = true;
+  }
+
+  @override
+  bool get debugDisposed {
+    return _disposed;
   }
 }
 
@@ -481,6 +500,7 @@ class SceneBuilder {
   /// See [pop] for details about the operation stack.
   ImageFilterEngineLayer? pushImageFilter(
     ImageFilter filter, {
+    Offset? offset,
     ImageFilterEngineLayer? oldLayer,
   }) {
     assert(filter != null); // ignore: unnecessary_null_comparison
@@ -504,6 +524,7 @@ class SceneBuilder {
   /// See [pop] for details about the operation stack.
   BackdropFilterEngineLayer? pushBackdropFilter(
     ImageFilter filter, {
+    BlendMode? blendMode,
     BackdropFilterEngineLayer? oldLayer,
   }) {
     assert(_debugCheckCanBeUsedAsOldLayer(oldLayer, 'pushBackdropFilter'));

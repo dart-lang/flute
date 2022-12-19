@@ -2,7 +2,6 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-import 'package:flute/services.dart';
 import 'package:flute/widgets.dart';
 
 import 'date.dart';
@@ -26,7 +25,7 @@ import 'theme.dart';
 ///
 /// See also:
 ///
-///  * [showDatePicker], which shows a dialog that contains a material design
+///  * [showDatePicker], which shows a dialog that contains a Material Design
 ///    date picker which includes support for text entry of dates.
 ///  * [MaterialLocalizations.parseCompactDate], which is used to parse the text
 ///    input into a [DateTime].
@@ -46,7 +45,7 @@ class InputDatePickerFormField extends StatefulWidget {
   /// [firstDate], [lastDate], and [autofocus] must be non-null.
   ///
   InputDatePickerFormField({
-    Key? key,
+    super.key,
     DateTime? initialDate,
     required DateTime firstDate,
     required DateTime lastDate,
@@ -57,29 +56,29 @@ class InputDatePickerFormField extends StatefulWidget {
     this.errorInvalidText,
     this.fieldHintText,
     this.fieldLabelText,
+    this.keyboardType,
     this.autofocus = false,
   }) : assert(firstDate != null),
        assert(lastDate != null),
        assert(autofocus != null),
        initialDate = initialDate != null ? DateUtils.dateOnly(initialDate) : null,
        firstDate = DateUtils.dateOnly(firstDate),
-       lastDate = DateUtils.dateOnly(lastDate),
-       super(key: key) {
+       lastDate = DateUtils.dateOnly(lastDate) {
     assert(
       !this.lastDate.isBefore(this.firstDate),
-      'lastDate ${this.lastDate} must be on or after firstDate ${this.firstDate}.'
+      'lastDate ${this.lastDate} must be on or after firstDate ${this.firstDate}.',
     );
     assert(
       initialDate == null || !this.initialDate!.isBefore(this.firstDate),
-      'initialDate ${this.initialDate} must be on or after firstDate ${this.firstDate}.'
+      'initialDate ${this.initialDate} must be on or after firstDate ${this.firstDate}.',
     );
     assert(
       initialDate == null || !this.initialDate!.isAfter(this.lastDate),
-      'initialDate ${this.initialDate} must be on or before lastDate ${this.lastDate}.'
+      'initialDate ${this.initialDate} must be on or before lastDate ${this.lastDate}.',
     );
     assert(
       selectableDayPredicate == null || initialDate == null || selectableDayPredicate!(this.initialDate!),
-      'Provided initialDate ${this.initialDate} must satisfy provided selectableDayPredicate.'
+      'Provided initialDate ${this.initialDate} must satisfy provided selectableDayPredicate.',
     );
   }
 
@@ -126,11 +125,16 @@ class InputDatePickerFormField extends StatefulWidget {
   /// string. For example, 'Month, Day, Year' for en_US.
   final String? fieldLabelText;
 
+  /// The keyboard type of the [TextField].
+  ///
+  /// If this is null, it will default to [TextInputType.datetime]
+  final TextInputType? keyboardType;
+
   /// {@macro flutter.widgets.editableText.autofocus}
   final bool autofocus;
 
   @override
-  _InputDatePickerFormFieldState createState() => _InputDatePickerFormFieldState();
+  State<InputDatePickerFormField> createState() => _InputDatePickerFormFieldState();
 }
 
 class _InputDatePickerFormFieldState extends State<InputDatePickerFormField> {
@@ -162,7 +166,7 @@ class _InputDatePickerFormFieldState extends State<InputDatePickerFormField> {
     super.didUpdateWidget(oldWidget);
     if (widget.initialDate != oldWidget.initialDate) {
       // Can't update the form field in the middle of a build, so do it next frame
-      WidgetsBinding.instance!.addPostFrameCallback((Duration timeStamp) {
+      WidgetsBinding.instance.addPostFrameCallback((Duration timeStamp) {
         setState(() {
           _selectedDate = widget.initialDate;
           _updateValueForSelectedDate();
@@ -175,7 +179,7 @@ class _InputDatePickerFormFieldState extends State<InputDatePickerFormField> {
     if (_selectedDate != null) {
       final MaterialLocalizations localizations = MaterialLocalizations.of(context);
       _inputText = localizations.formatCompactDate(_selectedDate!);
-      TextEditingValue textEditingValue = _controller.value.copyWith(text: _inputText);
+      TextEditingValue textEditingValue = TextEditingValue(text: _inputText!);
       // Select the new text if we are auto focused and haven't selected the text before.
       if (widget.autofocus && !_autoSelected) {
         textEditingValue = textEditingValue.copyWith(selection: TextSelection(
@@ -187,7 +191,7 @@ class _InputDatePickerFormFieldState extends State<InputDatePickerFormField> {
       _controller.value = textEditingValue;
     } else {
       _inputText = '';
-      _controller.value = _controller.value.copyWith(text: _inputText);
+      _controller.value = TextEditingValue(text: _inputText!);
     }
   }
 
@@ -243,7 +247,7 @@ class _InputDatePickerFormFieldState extends State<InputDatePickerFormField> {
         labelText: widget.fieldLabelText ?? localizations.dateInputLabel,
       ),
       validator: _validateDate,
-      keyboardType: TextInputType.datetime,
+      keyboardType: widget.keyboardType ?? TextInputType.datetime,
       onSaved: _handleSaved,
       onFieldSubmitted: _handleSubmitted,
       autofocus: widget.autofocus,

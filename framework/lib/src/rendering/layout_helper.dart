@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-import 'package:flute/ui.dart';
+import 'package:engine/ui.dart';
 
 import 'box.dart';
 
@@ -18,23 +18,25 @@ typedef ChildLayouter = Size Function(RenderBox child, BoxConstraints constraint
 ///
 /// All of the functions adhere to the [ChildLayouter] signature.
 class ChildLayoutHelper {
+  // This class is not meant to be instantiated or extended; this constructor
+  // prevents instantiation and extension.
   const ChildLayoutHelper._();
 
   /// Returns the [Size] that the [RenderBox] would have if it were to
-  /// be layed out with the given [BoxConstraints].
+  /// be laid out with the given [BoxConstraints].
   ///
   /// This method calls [RenderBox.getDryLayout] on the given [RenderBox].
   ///
   /// This method should only be called by the parent of the provided
-  /// [RenderBox] child as it bounds parent and child together (if the child
+  /// [RenderBox] child as it binds parent and child together (if the child
   /// is marked as dirty, the child will also be marked as dirty).
   ///
   /// See also:
   ///
   ///  * [layoutChild], which actually lays out the child with the given
   ///    constraints.
-  static Size dryLayoutChild(RenderBox child, BoxConstraints constrains) {
-    return child.getDryLayout(constrains);
+  static Size dryLayoutChild(RenderBox child, BoxConstraints constraints) {
+    return child.getDryLayout(constraints);
   }
 
   /// Lays out the [RenderBox] with the given constraints and returns its
@@ -44,7 +46,7 @@ class ChildLayoutHelper {
   /// `parentUsesSize` set to true to receive its [Size].
   ///
   /// This method should only be called by the parent of the provided
-  /// [RenderBox] child as it bounds parent and child together (if the child
+  /// [RenderBox] child as it binds parent and child together (if the child
   /// is marked as dirty, the child will also be marked as dirty).
   ///
   /// See also:

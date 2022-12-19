@@ -160,6 +160,9 @@
 ///    explicit [Animation] to animate their properties.
 library animation;
 
+// AnimationController can throw TickerCanceled
+export 'package:flute/scheduler.dart' show TickerCanceled;
+
 export 'src/animation/animation.dart';
 export 'src/animation/animation_controller.dart';
 export 'src/animation/animations.dart';

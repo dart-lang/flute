@@ -2,19 +2,16 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-import 'package:flute/ui.dart';
 
 import 'package:flute/foundation.dart';
 import 'package:flute/gestures.dart';
+import 'package:flute/scheduler.dart';
 import 'package:flute/semantics.dart';
 import 'package:flute/services.dart';
 
 import 'box.dart';
 import 'layer.dart';
-import 'mouse_cursor.dart';
-import 'mouse_tracking.dart';
 import 'object.dart';
-
 
 /// How an embedded platform view behave during hit tests.
 enum PlatformViewHitTestBehavior {
@@ -54,7 +51,7 @@ Set<Type> _factoriesTypeSet<T>(Set<Factory<T>> factories) {
 
 /// A render object for an Android view.
 ///
-/// Requires Android API level 20 or greater.
+/// Requires Android API level 23 or greater.
 ///
 /// [RenderAndroidView] is responsible for sizing, displaying and passing touch events to an
 /// Android [View](https://developer.android.com/reference/android/view/View).
@@ -76,8 +73,7 @@ Set<Type> _factoriesTypeSet<T>(Set<Factory<T>> factories) {
 ///
 ///  * [AndroidView] which is a widget that is used to show an Android view.
 ///  * [PlatformViewsService] which is a service for controlling platform views.
-class RenderAndroidView extends RenderBox with _PlatformViewGestureMixin {
-
+class RenderAndroidView extends PlatformViewRenderBox {
   /// Creates a render object for an Android view.
   RenderAndroidView({
     required AndroidViewController viewController,
@@ -89,28 +85,40 @@ class RenderAndroidView extends RenderBox with _PlatformViewGestureMixin {
        assert(gestureRecognizers != null),
        assert(clipBehavior != null),
        _viewController = viewController,
-       _clipBehavior = clipBehavior {
+       _clipBehavior = clipBehavior,
+       super(controller: viewController, hitTestBehavior: hitTestBehavior, gestureRecognizers: gestureRecognizers) {
     _viewController.pointTransformer = (Offset offset) => globalToLocal(offset);
     updateGestureRecognizers(gestureRecognizers);
     _viewController.addOnPlatformViewCreatedListener(_onPlatformViewCreated);
     this.hitTestBehavior = hitTestBehavior;
+    _setOffset();
   }
 
   _PlatformViewState _state = _PlatformViewState.uninitialized;
 
+  Size? _currentTextureSize;
+
+  bool _isDisposed = false;
+
   /// The Android view controller for the Android view associated with this render object.
-  AndroidViewController get viewcontroller => _viewController;
+  @override
+  AndroidViewController get controller => _viewController;
+
   AndroidViewController _viewController;
+
   /// Sets a new Android view controller.
-  ///
-  /// `viewController` must not be null.
-  set viewController(AndroidViewController viewController) {
+  @override
+  set controller(AndroidViewController controller) {
+    assert(!_isDisposed);
     assert(_viewController != null);
-    assert(viewController != null);
-    if (_viewController == viewController)
+    assert(controller != null);
+    if (_viewController == controller) {
       return;
+    }
     _viewController.removeOnPlatformViewCreatedListener(_onPlatformViewCreated);
-    _viewController = viewController;
+    super.controller = controller;
+    _viewController = controller;
+    _viewController.pointTransformer = (Offset offset) => globalToLocal(offset);
     _sizePlatformView();
     if (_viewController.isCreated) {
       markNeedsSemanticsUpdate();
@@ -133,27 +141,8 @@ class RenderAndroidView extends RenderBox with _PlatformViewGestureMixin {
   }
 
   void _onPlatformViewCreated(int id) {
+    assert(!_isDisposed);
     markNeedsSemanticsUpdate();
-  }
-
-  /// {@template flutter.rendering.RenderAndroidView.updateGestureRecognizers}
-  /// Updates which gestures should be forwarded to the platform view.
-  ///
-  /// Gesture recognizers created by factories in this set participate in the gesture arena for each
-  /// pointer that was put down on the render box. If any of the recognizers on this list wins the
-  /// gesture arena, the entire pointer event sequence starting from the pointer down event
-  /// will be dispatched to the Android view.
-  ///
-  /// The `gestureRecognizers` property must not contain more than one factory with the same [Factory.type].
-  ///
-  /// Setting a new set of gesture recognizer factories with the same [Factory.type]s as the current
-  /// set has no effect, because the factories' constructors would have already been called with the previous set.
-  /// {@endtemplate}
-  ///
-  /// Any active gesture arena the Android view participates in is rejected when the
-  /// set of gesture recognizers is changed.
-  void updateGestureRecognizers(Set<Factory<OneSequenceGestureRecognizer>> gestureRecognizers) {
-    _updateGestureRecognizersWithCallBack(gestureRecognizers, _viewController.dispatchPointerEvent);
   }
 
   @override
@@ -176,8 +165,6 @@ class RenderAndroidView extends RenderBox with _PlatformViewGestureMixin {
     _sizePlatformView();
   }
 
-  late Size _currentAndroidViewSize;
-
   Future<void> _sizePlatformView() async {
     // Android virtual displays cannot have a zero size.
     // Trying to size it to 0 crashes the app, which was happening when starting the app
@@ -192,8 +179,10 @@ class RenderAndroidView extends RenderBox with _PlatformViewGestureMixin {
     Size targetSize;
     do {
       targetSize = size;
-      await _viewController.setSize(targetSize);
-      _currentAndroidViewSize = targetSize;
+      _currentTextureSize = await _viewController.setSize(targetSize);
+      if (_isDisposed) {
+        return;
+      }
       // We've resized the platform view to targetSize, but it is possible that
       // while we were resizing the render object's size was changed again.
       // In that case we will resize the platform view again.
@@ -203,45 +192,82 @@ class RenderAndroidView extends RenderBox with _PlatformViewGestureMixin {
     markNeedsPaint();
   }
 
-  @override
-  void paint(PaintingContext context, Offset offset) {
-    if (_viewController.textureId == null)
-      return;
-
-    // Clip the texture if it's going to paint out of the bounds of the renter box
-    // (see comment in _paintTexture for an explanation of when this happens).
-    if ((size.width < _currentAndroidViewSize.width || size.height < _currentAndroidViewSize.height) && clipBehavior != Clip.none) {
-      _clipRectLayer = context.pushClipRect(true, offset, offset & size, _paintTexture, clipBehavior: clipBehavior,
-          oldLayer: _clipRectLayer);
-      return;
-    }
-    _clipRectLayer = null;
-    _paintTexture(context, offset);
+  // Sets the offset of the underlying platform view on the platform side.
+  //
+  // This allows the Android native view to draw the a11y highlights in the same
+  // location on the screen as the platform view widget in the Flutter framework.
+  //
+  // It also allows platform code to obtain the correct position of the Android
+  // native view on the screen.
+  void _setOffset() {
+    SchedulerBinding.instance.addPostFrameCallback((_) async {
+      if (!_isDisposed) {
+        if (attached) {
+          await _viewController.setOffset(localToGlobal(Offset.zero));
+        }
+        // Schedule a new post frame callback.
+        _setOffset();
+      }
+    });
   }
 
-  ClipRectLayer? _clipRectLayer;
+  @override
+  void paint(PaintingContext context, Offset offset) {
+    if (_viewController.textureId == null || _currentTextureSize == null) {
+      return;
+    }
 
-  void _paintTexture(PaintingContext context, Offset offset) {
     // As resizing the Android view happens asynchronously we don't know exactly when is a
     // texture frame with the new size is ready for consumption.
     // TextureLayer is unaware of the texture frame's size and always maps it to the
     // specified rect. If the rect we provide has a different size from the current texture frame's
     // size the texture frame will be scaled.
-    // To prevent unwanted scaling artifacts while resizing we freeze the texture frame, until
-    // we know that a frame with the new size is in the buffer.
+    // To prevent unwanted scaling artifacts while resizing, clip the texture.
     // This guarantees that the size of the texture frame we're painting is always
-    // _currentAndroidViewSize.
+    // _currentAndroidTextureSize.
+    final bool isTextureLargerThanWidget = _currentTextureSize!.width > size.width ||
+                                           _currentTextureSize!.height > size.height;
+    if (isTextureLargerThanWidget && clipBehavior != Clip.none) {
+      _clipRectLayer.layer = context.pushClipRect(
+        true,
+        offset,
+        offset & size,
+        _paintTexture,
+        clipBehavior: clipBehavior,
+        oldLayer: _clipRectLayer.layer,
+      );
+      return;
+    }
+    _clipRectLayer.layer = null;
+    _paintTexture(context, offset);
+  }
+
+  final LayerHandle<ClipRectLayer> _clipRectLayer = LayerHandle<ClipRectLayer>();
+
+  @override
+  void dispose() {
+    _isDisposed = true;
+    _clipRectLayer.layer = null;
+    _viewController.removeOnPlatformViewCreatedListener(_onPlatformViewCreated);
+    super.dispose();
+  }
+
+  void _paintTexture(PaintingContext context, Offset offset) {
+    if (_currentTextureSize == null) {
+      return;
+    }
+
     context.addLayer(TextureLayer(
-      rect: offset & _currentAndroidViewSize,
+      rect: offset & _currentTextureSize!,
       textureId: _viewController.textureId!,
-      freeze: _state == _PlatformViewState.resizing,
     ));
   }
 
   @override
-  void describeSemanticsConfiguration (SemanticsConfiguration config) {
-    super.describeSemanticsConfiguration(config);
-
+  void describeSemanticsConfiguration(SemanticsConfiguration config) {
+    // Don't call the super implementation since `platformViewId` should
+    // be set only when the platform view is created, but the concept of
+    // a "created" platform view belongs to this subclass.
     config.isSemanticBoundary = true;
 
     if (_viewController.isCreated) {
@@ -294,10 +320,13 @@ class RenderUiKitView extends RenderBox {
   /// must have been created by calling [PlatformViewsService.initUiKitView].
   UiKitViewController get viewController => _viewController;
   UiKitViewController _viewController;
-  set viewController(UiKitViewController viewController) {
-    assert(viewController != null);
-    final bool needsSemanticsUpdate = _viewController.id != viewController.id;
-    _viewController = viewController;
+  set viewController(UiKitViewController value) {
+    assert(value != null);
+    if (_viewController == value) {
+      return;
+    }
+    final bool needsSemanticsUpdate = _viewController.id != value.id;
+    _viewController = value;
     markNeedsPaint();
     if (needsSemanticsUpdate) {
       markNeedsSemanticsUpdate();
@@ -309,13 +338,14 @@ class RenderUiKitView extends RenderBox {
   // any newly arriving events there's nothing we need to invalidate.
   PlatformViewHitTestBehavior hitTestBehavior;
 
-  /// {@macro flutter.rendering.RenderAndroidView.updateGestureRecognizers}
+  /// {@macro flutter.rendering.PlatformViewRenderBox.updateGestureRecognizers}
   void updateGestureRecognizers(Set<Factory<OneSequenceGestureRecognizer>> gestureRecognizers) {
     assert(gestureRecognizers != null);
     assert(
-    _factoriesTypeSet(gestureRecognizers).length == gestureRecognizers.length,
-    'There were multiple gesture recognizer factories for the same type, there must only be a single '
-        'gesture recognizer factory for each gesture recognizer type.',);
+      _factoriesTypeSet(gestureRecognizers).length == gestureRecognizers.length,
+      'There were multiple gesture recognizer factories for the same type, there must only be a single '
+      'gesture recognizer factory for each gesture recognizer type.',
+    );
     if (_factoryTypesSetEquals(gestureRecognizers, _gestureRecognizer?.gestureRecognizerFactories)) {
       return;
     }
@@ -351,8 +381,9 @@ class RenderUiKitView extends RenderBox {
 
   @override
   bool hitTest(BoxHitTestResult result, { Offset? position }) {
-    if (hitTestBehavior == PlatformViewHitTestBehavior.transparent || !size.contains(position!))
+    if (hitTestBehavior == PlatformViewHitTestBehavior.transparent || !size.contains(position!)) {
       return false;
+    }
     result.add(BoxHitTestEntry(this, position));
     return hitTestBehavior == PlatformViewHitTestBehavior.opaque;
   }
@@ -397,28 +428,27 @@ class RenderUiKitView extends RenderBox {
   @override
   void attach(PipelineOwner owner) {
     super.attach(owner);
-    GestureBinding.instance!.pointerRouter.addGlobalRoute(_handleGlobalPointerEvent);
+    GestureBinding.instance.pointerRouter.addGlobalRoute(_handleGlobalPointerEvent);
   }
 
   @override
   void detach() {
-    GestureBinding.instance!.pointerRouter.removeGlobalRoute(_handleGlobalPointerEvent);
+    GestureBinding.instance.pointerRouter.removeGlobalRoute(_handleGlobalPointerEvent);
     _gestureRecognizer!.reset();
     super.detach();
   }
 }
 
 // This recognizer constructs gesture recognizers from a set of gesture recognizer factories
-// it was give, adds all of them to a gesture arena team with the _UiKitViewGesturrRecognizer
+// it was give, adds all of them to a gesture arena team with the _UiKitViewGestureRecognizer
 // as the team captain.
 // When the team wins a gesture the recognizer notifies the engine that it should release
 // the touch sequence to the embedded UIView.
 class _UiKitViewGestureRecognizer extends OneSequenceGestureRecognizer {
   _UiKitViewGestureRecognizer(
     this.controller,
-    this.gestureRecognizerFactories, {
-    PointerDeviceKind? kind,
-  }) : super(kind: kind) {
+    this.gestureRecognizerFactories
+  ) {
     team = GestureArenaTeam()
       ..captain = this;
     _gestureRecognizers = gestureRecognizerFactories.map(
@@ -440,7 +470,6 @@ class _UiKitViewGestureRecognizer extends OneSequenceGestureRecognizer {
     ).toSet();
   }
 
-
   // We use OneSequenceGestureRecognizers as they support gesture arena teams.
   // TODO(amirh): get a list of GestureRecognizers here.
   // https://github.com/flutter/flutter/issues/20953
@@ -451,7 +480,7 @@ class _UiKitViewGestureRecognizer extends OneSequenceGestureRecognizer {
 
   @override
   void addAllowedPointer(PointerDownEvent event) {
-    startTrackingPointer(event.pointer, event.transform);
+    super.addAllowedPointer(event);
     for (final OneSequenceGestureRecognizer recognizer in _gestureRecognizers) {
       recognizer.addPointer(event);
     }
@@ -494,9 +523,8 @@ typedef _HandlePointerEvent = Future<void> Function(PointerEvent event);
 class _PlatformViewGestureRecognizer extends OneSequenceGestureRecognizer {
   _PlatformViewGestureRecognizer(
     _HandlePointerEvent handlePointerEvent,
-    this.gestureRecognizerFactories, {
-    PointerDeviceKind? kind,
-  }) : super(kind: kind) {
+    this.gestureRecognizerFactories
+  ) {
     team = GestureArenaTeam()
       ..captain = this;
     _gestureRecognizers = gestureRecognizerFactories.map(
@@ -539,7 +567,7 @@ class _PlatformViewGestureRecognizer extends OneSequenceGestureRecognizer {
 
   @override
   void addAllowedPointer(PointerDownEvent event) {
-    startTrackingPointer(event.pointer, event.transform);
+    super.addAllowedPointer(event);
     for (final OneSequenceGestureRecognizer recognizer in _gestureRecognizers) {
       recognizer.addPointer(event);
     }
@@ -604,7 +632,6 @@ class _PlatformViewGestureRecognizer extends OneSequenceGestureRecognizer {
 /// [PlatformViewRenderBox] presents a platform view by adding a [PlatformViewLayer] layer,
 /// integrates it with the gesture arenas system and adds relevant semantic nodes to the semantics tree.
 class PlatformViewRenderBox extends RenderBox with _PlatformViewGestureMixin {
-
   /// Creating a render object for a [PlatformViewSurface].
   ///
   /// The `controller` parameter must not be null.
@@ -620,14 +647,15 @@ class PlatformViewRenderBox extends RenderBox with _PlatformViewGestureMixin {
     updateGestureRecognizers(gestureRecognizers);
   }
 
-  /// Sets the [controller] for this render object.
-  ///
+  /// The controller for this render object.
+  PlatformViewController get controller => _controller;
+  PlatformViewController _controller;
   /// This value must not be null, and setting it to a new value will result in a repaint.
-  set controller(PlatformViewController controller) {
+  set controller(covariant PlatformViewController controller) {
     assert(controller != null);
     assert(controller.viewId != null && controller.viewId > -1);
 
-    if ( _controller == controller) {
+    if (_controller == controller) {
       return;
     }
     final bool needsSemanticsUpdate = _controller.viewId != controller.viewId;
@@ -638,15 +666,25 @@ class PlatformViewRenderBox extends RenderBox with _PlatformViewGestureMixin {
     }
   }
 
-  /// {@macro  flutter.rendering.RenderAndroidView.updateGestureRecognizers}
+  /// {@template flutter.rendering.PlatformViewRenderBox.updateGestureRecognizers}
+  /// Updates which gestures should be forwarded to the platform view.
+  ///
+  /// Gesture recognizers created by factories in this set participate in the gesture arena for each
+  /// pointer that was put down on the render box. If any of the recognizers on this list wins the
+  /// gesture arena, the entire pointer event sequence starting from the pointer down event
+  /// will be dispatched to the Android view.
+  ///
+  /// The `gestureRecognizers` property must not contain more than one factory with the same [Factory.type].
+  ///
+  /// Setting a new set of gesture recognizer factories with the same [Factory.type]s as the current
+  /// set has no effect, because the factories' constructors would have already been called with the previous set.
+  /// {@endtemplate}
   ///
   /// Any active gesture arena the `PlatformView` participates in is rejected when the
   /// set of gesture recognizers is changed.
   void updateGestureRecognizers(Set<Factory<OneSequenceGestureRecognizer>> gestureRecognizers) {
     _updateGestureRecognizersWithCallBack(gestureRecognizers, _controller.dispatchPointerEvent);
   }
-
-  PlatformViewController _controller;
 
   @override
   bool get sizedByParent => true;
@@ -672,7 +710,7 @@ class PlatformViewRenderBox extends RenderBox with _PlatformViewGestureMixin {
   }
 
   @override
-  void describeSemanticsConfiguration (SemanticsConfiguration config) {
+  void describeSemanticsConfiguration(SemanticsConfiguration config) {
     super.describeSemanticsConfiguration(config);
     assert(_controller.viewId != null);
     config.isSemanticBoundary = true;
@@ -688,24 +726,26 @@ mixin _PlatformViewGestureMixin on RenderBox implements MouseTrackerAnnotation {
   set hitTestBehavior(PlatformViewHitTestBehavior value) {
     if (value != _hitTestBehavior) {
       _hitTestBehavior = value;
-      if (owner != null)
+      if (owner != null) {
         markNeedsPaint();
+      }
     }
   }
   PlatformViewHitTestBehavior? _hitTestBehavior;
 
   _HandlePointerEvent? _handlePointerEvent;
 
-  /// {@macro  flutter.rendering.RenderAndroidView.updateGestureRecognizers}
+  /// {@macro flutter.rendering.RenderAndroidView.updateGestureRecognizers}
   ///
   /// Any active gesture arena the `PlatformView` participates in is rejected when the
   /// set of gesture recognizers is changed.
   void _updateGestureRecognizersWithCallBack(Set<Factory<OneSequenceGestureRecognizer>> gestureRecognizers, _HandlePointerEvent handlePointerEvent) {
     assert(gestureRecognizers != null);
     assert(
-    _factoriesTypeSet(gestureRecognizers).length == gestureRecognizers.length,
-    'There were multiple gesture recognizer factories for the same type, there must only be a single '
-        'gesture recognizer factory for each gesture recognizer type.',);
+      _factoriesTypeSet(gestureRecognizers).length == gestureRecognizers.length,
+      'There were multiple gesture recognizer factories for the same type, there must only be a single '
+      'gesture recognizer factory for each gesture recognizer type.',
+    );
     if (_factoryTypesSetEquals(gestureRecognizers, _gestureRecognizer?.gestureRecognizerFactories)) {
       return;
     }

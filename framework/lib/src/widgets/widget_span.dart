@@ -2,11 +2,14 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-import 'package:flute/ui.dart' as ui show ParagraphBuilder, PlaceholderAlignment;
+import 'package:engine/ui.dart' as ui show ParagraphBuilder, PlaceholderAlignment;
 
 import 'package:flute/painting.dart';
 
 import 'framework.dart';
+
+// Examples can assume:
+// late WidgetSpan myWidgetSpan;
 
 /// An immutable widget that is embedded inline within text.
 ///
@@ -27,7 +30,7 @@ import 'framework.dart';
 /// A card with `Hello World!` embedded inline within a TextSpan tree.
 ///
 /// ```dart
-/// Text.rich(
+/// const Text.rich(
 ///   TextSpan(
 ///     children: <InlineSpan>[
 ///       TextSpan(text: 'Flutter is'),
@@ -71,20 +74,17 @@ class WidgetSpan extends PlaceholderSpan {
   /// decoration, foreground, background, and spacing options will be used.
   const WidgetSpan({
     required this.child,
-    ui.PlaceholderAlignment alignment = ui.PlaceholderAlignment.bottom,
-    TextBaseline? baseline,
-    TextStyle? style,
+    super.alignment,
+    super.baseline,
+    super.style,
   }) : assert(child != null),
-       assert(baseline != null || !(
-         identical(alignment, ui.PlaceholderAlignment.aboveBaseline) ||
-         identical(alignment, ui.PlaceholderAlignment.belowBaseline) ||
-         identical(alignment, ui.PlaceholderAlignment.baseline)
-       )),
-       super(
-         alignment: alignment,
-         baseline: baseline,
-         style: style,
-       );
+       assert(
+         baseline != null || !(
+          identical(alignment, ui.PlaceholderAlignment.aboveBaseline) ||
+          identical(alignment, ui.PlaceholderAlignment.belowBaseline) ||
+          identical(alignment, ui.PlaceholderAlignment.baseline)
+        ),
+      );
 
   /// The widget to embed inline within text.
   final Widget child;
@@ -137,17 +137,21 @@ class WidgetSpan extends PlaceholderSpan {
 
   @override
   int? codeUnitAtVisitor(int index, Accumulator offset) {
-    return null;
+    offset.increment(1);
+    return PlaceholderSpan.placeholderCodeUnit;
   }
 
   @override
   RenderComparison compareTo(InlineSpan other) {
-    if (identical(this, other))
+    if (identical(this, other)) {
       return RenderComparison.identical;
-    if (other.runtimeType != runtimeType)
+    }
+    if (other.runtimeType != runtimeType) {
       return RenderComparison.layout;
-    if ((style == null) != (other.style == null))
+    }
+    if ((style == null) != (other.style == null)) {
       return RenderComparison.layout;
+    }
     final WidgetSpan typedOther = other as WidgetSpan;
     if (child != typedOther.child || alignment != typedOther.alignment) {
       return RenderComparison.layout;
@@ -155,22 +159,27 @@ class WidgetSpan extends PlaceholderSpan {
     RenderComparison result = RenderComparison.identical;
     if (style != null) {
       final RenderComparison candidate = style!.compareTo(other.style!);
-      if (candidate.index > result.index)
+      if (candidate.index > result.index) {
         result = candidate;
-      if (result == RenderComparison.layout)
+      }
+      if (result == RenderComparison.layout) {
         return result;
+      }
     }
     return result;
   }
 
   @override
   bool operator ==(Object other) {
-    if (identical(this, other))
+    if (identical(this, other)) {
       return true;
-    if (other.runtimeType != runtimeType)
+    }
+    if (other.runtimeType != runtimeType) {
       return false;
-    if (super != other)
+    }
+    if (super != other) {
       return false;
+    }
     return other is WidgetSpan
         && other.child == child
         && other.alignment == alignment
@@ -178,7 +187,7 @@ class WidgetSpan extends PlaceholderSpan {
   }
 
   @override
-  int get hashCode => hashValues(super.hashCode, child, alignment, baseline);
+  int get hashCode => Object.hash(super.hashCode, child, alignment, baseline);
 
   /// Returns the text span that contains the given position in the text.
   @override

@@ -4,8 +4,6 @@
 
 import 'dart:math' as math;
 
-import 'package:flute/gestures.dart';
-import 'package:flute/painting.dart';
 import 'package:vector_math/vector_math_64.dart';
 
 import 'box.dart';
@@ -36,8 +34,9 @@ class RenderRotatedBox extends RenderBox with RenderObjectWithChildMixin<RenderB
   int _quarterTurns;
   set quarterTurns(int value) {
     assert(value != null);
-    if (_quarterTurns == value)
+    if (_quarterTurns == value) {
       return;
+    }
     _quarterTurns = value;
     markNeedsLayout();
   }
@@ -46,29 +45,33 @@ class RenderRotatedBox extends RenderBox with RenderObjectWithChildMixin<RenderB
 
   @override
   double computeMinIntrinsicWidth(double height) {
-    if (child == null)
+    if (child == null) {
       return 0.0;
+    }
     return _isVertical ? child!.getMinIntrinsicHeight(height) : child!.getMinIntrinsicWidth(height);
   }
 
   @override
   double computeMaxIntrinsicWidth(double height) {
-    if (child == null)
+    if (child == null) {
       return 0.0;
+    }
     return _isVertical ? child!.getMaxIntrinsicHeight(height) : child!.getMaxIntrinsicWidth(height);
   }
 
   @override
   double computeMinIntrinsicHeight(double width) {
-    if (child == null)
+    if (child == null) {
       return 0.0;
+    }
     return _isVertical ? child!.getMinIntrinsicWidth(width) : child!.getMinIntrinsicHeight(width);
   }
 
   @override
   double computeMaxIntrinsicHeight(double width) {
-    if (child == null)
+    if (child == null) {
       return 0.0;
+    }
     return _isVertical ? child!.getMaxIntrinsicWidth(width) : child!.getMaxIntrinsicHeight(width);
   }
 
@@ -101,13 +104,14 @@ class RenderRotatedBox extends RenderBox with RenderObjectWithChildMixin<RenderB
   @override
   bool hitTestChildren(BoxHitTestResult result, { required Offset position }) {
     assert(_paintTransform != null || debugNeedsLayout || child == null);
-    if (child == null || _paintTransform == null)
+    if (child == null || _paintTransform == null) {
       return false;
+    }
     return result.addWithPaintTransform(
       transform: _paintTransform,
       position: position,
-      hitTest: (BoxHitTestResult result, Offset? position) {
-        return child!.hitTest(result, position: position!);
+      hitTest: (BoxHitTestResult result, Offset position) {
+        return child!.hitTest(result, position: position);
       },
     );
   }
@@ -119,19 +123,31 @@ class RenderRotatedBox extends RenderBox with RenderObjectWithChildMixin<RenderB
   @override
   void paint(PaintingContext context, Offset offset) {
     if (child != null) {
-      _transformLayer = context.pushTransform(needsCompositing, offset, _paintTransform!, _paintChild,
-          oldLayer: _transformLayer);
+      _transformLayer.layer = context.pushTransform(
+        needsCompositing,
+        offset,
+        _paintTransform!,
+        _paintChild,
+        oldLayer: _transformLayer.layer,
+      );
     } else {
-      _transformLayer = null;
+      _transformLayer.layer = null;
     }
   }
 
-  TransformLayer? _transformLayer;
+  final LayerHandle<TransformLayer> _transformLayer = LayerHandle<TransformLayer>();
+
+  @override
+  void dispose() {
+    _transformLayer.layer = null;
+    super.dispose();
+  }
 
   @override
   void applyPaintTransform(RenderBox child, Matrix4 transform) {
-    if (_paintTransform != null)
+    if (_paintTransform != null) {
       transform.multiply(_paintTransform!);
+    }
     super.applyPaintTransform(child, transform);
   }
 }

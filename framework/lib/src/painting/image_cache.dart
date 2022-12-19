@@ -3,7 +3,6 @@
 // found in the LICENSE file.
 
 import 'dart:developer';
-import 'package:flute/ui.dart' show hashValues;
 
 import 'package:flute/foundation.dart';
 import 'package:flute/scheduler.dart';
@@ -19,7 +18,7 @@ const int _kDefaultSizeBytes = 100 << 20; // 100 MiB
 /// MB. The maximum size can be adjusted using [maximumSize] and
 /// [maximumSizeBytes].
 ///
-/// The cache also holds a list of "live" references. An image is considered
+/// The cache also holds a list of 'live' references. An image is considered
 /// live if its [ImageStreamCompleter]'s listener count has never dropped to
 /// zero after adding at least one listener. The cache uses
 /// [ImageStreamCompleter.addOnLastListenerRemovedCallback] to determine when
@@ -28,7 +27,7 @@ const int _kDefaultSizeBytes = 100 << 20; // 100 MiB
 /// The [putIfAbsent] method is the main entry-point to the cache API. It
 /// returns the previously cached [ImageStreamCompleter] for the given key, if
 /// available; if not, it calls the given callback to obtain it first. In either
-/// case, the key is moved to the "most recently used" position.
+/// case, the key is moved to the 'most recently used' position.
 ///
 /// A caller can determine whether an image is already in the cache by using
 /// [containsKey], which will return true if the image is tracked by the cache
@@ -52,7 +51,7 @@ const int _kDefaultSizeBytes = 100 << 20; // 100 MiB
 /// class MyImageCache extends ImageCache {
 ///   @override
 ///   void clear() {
-///     print("Clearing cache!");
+///     print('Clearing cache!');
 ///     super.clear();
 ///   }
 /// }
@@ -65,10 +64,12 @@ const int _kDefaultSizeBytes = 100 << 20; // 100 MiB
 /// void main() {
 ///   // The constructor sets global variables.
 ///   MyWidgetsBinding();
-///   runApp(MyApp());
+///   runApp(const MyApp());
 /// }
 ///
 /// class MyApp extends StatelessWidget {
+///   const MyApp({super.key});
+///
 ///   @override
 ///   Widget build(BuildContext context) {
 ///     return Container();
@@ -100,11 +101,12 @@ class ImageCache {
   set maximumSize(int value) {
     assert(value != null);
     assert(value >= 0);
-    if (value == maximumSize)
+    if (value == maximumSize) {
       return;
+    }
     TimelineTask? timelineTask;
     if (!kReleaseMode) {
-       timelineTask = TimelineTask()..start(
+      timelineTask = TimelineTask()..start(
         'ImageCache.setMaximumSize',
         arguments: <String, dynamic>{'value': value},
       );
@@ -139,8 +141,9 @@ class ImageCache {
   set maximumSizeBytes(int value) {
     assert(value != null);
     assert(value >= 0);
-    if (value == _maximumSizeBytes)
+    if (value == _maximumSizeBytes) {
       return;
+    }
     TimelineTask? timelineTask;
     if (!kReleaseMode) {
       timelineTask = TimelineTask()..start(
@@ -188,7 +191,13 @@ class ImageCache {
         },
       );
     }
+    for (final _CachedImage image in _cache.values) {
+      image.dispose();
+    }
     _cache.clear();
+    for (final _PendingImage pendingImage in _pendingImages.values) {
+      pendingImage.removeListener();
+    }
     _pendingImages.clear();
     _currentSizeBytes = 0;
   }
@@ -245,7 +254,7 @@ class ImageCache {
     if (pendingImage != null) {
       if (!kReleaseMode) {
         Timeline.instantSync('ImageCache.evict', arguments: <String, dynamic>{
-          'type': 'pending'
+          'type': 'pending',
         });
       }
       pendingImage.removeListener();
@@ -306,7 +315,7 @@ class ImageCache {
 
   /// Returns the previously cached [ImageStream] for the given key, if available;
   /// if not, calls the given callback to obtain it first. In either case, the
-  /// key is moved to the "most recently used" position.
+  /// key is moved to the 'most recently used' position.
   ///
   /// The arguments must not be null. The `loader` cannot return null.
   ///
@@ -314,7 +323,7 @@ class ImageCache {
   /// `onError` is also provided. When an exception is caught resolving an image,
   /// no completers are cached and `null` is returned instead of a new
   /// completer.
-  ImageStreamCompleter? putIfAbsent(Object key, ImageStreamCompleter loader(), { ImageErrorListener? onError }) {
+  ImageStreamCompleter? putIfAbsent(Object key, ImageStreamCompleter Function() loader, { ImageErrorListener? onError }) {
     assert(key != null);
     assert(loader != null);
     TimelineTask? timelineTask;
@@ -393,20 +402,20 @@ class ImageCache {
     if (!kReleaseMode) {
       listenerTask = TimelineTask(parent: timelineTask)..start('listener');
     }
-    // If we're doing tracing, we need to make sure that we don't try to finish
-    // the trace entry multiple times if we get re-entrant calls from a multi-
-    // frame provider here.
+    // A multi-frame provider may call the listener more than once. We need do make
+    // sure that some cleanup works won't run multiple times, such as finishing the
+    // tracing task or removing the listeners
     bool listenedOnce = false;
 
     // We shouldn't use the _pendingImages map if the cache is disabled, but we
     // will have to listen to the image at least once so we don't leak it in
     // the live image tracking.
-    // If the cache is disabled, this variable will be set.
-    _PendingImage? untrackedPendingImage;
+    final bool trackPendingImage = maximumSize > 0 && maximumSizeBytes > 0;
+    late _PendingImage pendingImage;
     void listener(ImageInfo? info, bool syncCall) {
       int? sizeBytes;
       if (info != null) {
-        sizeBytes = info.image.height * info.image.width * 4;
+        sizeBytes = info.sizeBytes;
         info.dispose();
       }
       final _CachedImage image = _CachedImage(
@@ -417,14 +426,14 @@ class ImageCache {
       _trackLiveImage(key, result, sizeBytes);
 
       // Only touch if the cache was enabled when resolve was initially called.
-      if (untrackedPendingImage == null) {
+      if (trackPendingImage) {
         _touch(key, image, listenerTask);
       } else {
         image.dispose();
       }
 
-      final _PendingImage? pendingImage = untrackedPendingImage ?? _pendingImages.remove(key);
-      if (pendingImage != null) {
+      _pendingImages.remove(key);
+      if (!listenedOnce) {
         pendingImage.removeListener();
       }
       if (!kReleaseMode && !listenedOnce) {
@@ -441,10 +450,9 @@ class ImageCache {
     }
 
     final ImageStreamListener streamListener = ImageStreamListener(listener);
-    if (maximumSize > 0 && maximumSizeBytes > 0) {
-      _pendingImages[key] = _PendingImage(result, streamListener);
-    } else {
-      untrackedPendingImage = _PendingImage(result, streamListener);
+    pendingImage = _PendingImage(result, streamListener);
+    if (trackPendingImage) {
+      _pendingImages[key] = pendingImage;
     }
     // Listener is removed in [_PendingImage.removeListener].
     result.addListener(streamListener);
@@ -512,7 +520,7 @@ class ImageCache {
       image.dispose();
       _cache.remove(key);
       if (!kReleaseMode) {
-        finishArgs['evictedKeys'].add(key.toString());
+        (finishArgs['evictedKeys'] as List<String>).add(key.toString());
       }
     }
     if (!kReleaseMode) {
@@ -591,7 +599,7 @@ class ImageCacheStatus {
   }
 
   @override
-  int get hashCode => hashValues(pending, keepAlive, live);
+  int get hashCode => Object.hash(pending, keepAlive, live);
 
   @override
   String toString() => '${objectRuntimeType(this, 'ImageCacheStatus')}(pending: $pending, live: $live, keepAlive: $keepAlive)';
@@ -617,7 +625,7 @@ abstract class _CachedImageBase {
     assert(handle != null);
     // Give any interested parties a chance to listen to the stream before we
     // potentially dispose it.
-    SchedulerBinding.instance!.addPostFrameCallback((Duration timeStamp) {
+    SchedulerBinding.instance.addPostFrameCallback((Duration timeStamp) {
       assert(handle != null);
       handle?.dispose();
       handle = null;
@@ -626,8 +634,7 @@ abstract class _CachedImageBase {
 }
 
 class _CachedImage extends _CachedImageBase {
-  _CachedImage(ImageStreamCompleter completer, {int? sizeBytes})
-      : super(completer, sizeBytes: sizeBytes);
+  _CachedImage(super.completer, {super.sizeBytes});
 }
 
 class _LiveImage extends _CachedImageBase {

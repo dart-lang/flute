@@ -4,36 +4,14 @@
 
 import 'package:flute/foundation.dart';
 
-import 'keyboard_key.dart';
-import 'keyboard_maps.dart';
+import 'keyboard_maps.g.dart';
 import 'raw_keyboard.dart';
 
-/// Maps iOS specific string values of nonvisible keys to logical keys
-///
-/// See: https://developer.apple.com/documentation/uikit/uikeycommand/input_strings_for_special_keys?language=objc
-const Map<String, LogicalKeyboardKey> _kIosToLogicalMap = <String, LogicalKeyboardKey>{
-  'UIKeyInputEscape': LogicalKeyboardKey.escape,
-  'UIKeyInputF1': LogicalKeyboardKey.f1,
-  'UIKeyInputF2': LogicalKeyboardKey.f2,
-  'UIKeyInputF3': LogicalKeyboardKey.f3,
-  'UIKeyInputF4': LogicalKeyboardKey.f4,
-  'UIKeyInputF5': LogicalKeyboardKey.f5,
-  'UIKeyInputF6': LogicalKeyboardKey.f6,
-  'UIKeyInputF7': LogicalKeyboardKey.f7,
-  'UIKeyInputF8': LogicalKeyboardKey.f8,
-  'UIKeyInputF9': LogicalKeyboardKey.f9,
-  'UIKeyInputF10': LogicalKeyboardKey.f10,
-  'UIKeyInputF11': LogicalKeyboardKey.f11,
-  'UIKeyInputF12': LogicalKeyboardKey.f12,
-  'UIKeyInputUpArrow': LogicalKeyboardKey.arrowUp,
-  'UIKeyInputDownArrow': LogicalKeyboardKey.arrowDown,
-  'UIKeyInputLeftArrow': LogicalKeyboardKey.arrowLeft,
-  'UIKeyInputRightArrow': LogicalKeyboardKey.arrowRight,
-  'UIKeyInputHome': LogicalKeyboardKey.home,
-  'UIKeyInputEnd': LogicalKeyboardKey.enter,
-  'UIKeyInputPageUp': LogicalKeyboardKey.pageUp,
-  'UIKeyInputPageDown': LogicalKeyboardKey.pageDown
-};
+export 'package:flute/foundation.dart' show DiagnosticPropertiesBuilder;
+
+export 'keyboard_key.g.dart' show LogicalKeyboardKey, PhysicalKeyboardKey;
+export 'raw_keyboard.dart' show KeyboardSide, ModifierKey;
+
 /// Platform-specific key event data for iOS.
 ///
 /// This object contains information about key events obtained from iOS'
@@ -90,8 +68,7 @@ class RawKeyEventDataIos extends RawKeyEventData {
   String get keyLabel => charactersIgnoringModifiers;
 
   @override
-  PhysicalKeyboardKey get physicalKey => kIosToPhysicalKey[keyCode] ?? PhysicalKeyboardKey.none;
-
+  PhysicalKeyboardKey get physicalKey => kIosToPhysicalKey[keyCode] ?? PhysicalKeyboardKey(LogicalKeyboardKey.iosPlane + keyCode);
 
   @override
   LogicalKeyboardKey get logicalKey {
@@ -104,16 +81,25 @@ class RawKeyEventDataIos extends RawKeyEventData {
     }
 
     // Look to see if the [keyLabel] is one we know about and have a mapping for.
-    final LogicalKeyboardKey? newKey = _kIosToLogicalMap[keyLabel];
-    if (newKey != null) {
-      return newKey;
+    final LogicalKeyboardKey? specialKey = kIosSpecialLogicalMap[keyLabel];
+    if (specialKey != null) {
+      return specialKey;
     }
+
+    // Keys that can't be derived with characterIgnoringModifiers will be
+    // derived from their key codes using this map.
+    final LogicalKeyboardKey? knownKey = kIosToLogicalKey[keyCode];
+    if (knownKey != null) {
+      return knownKey;
+    }
+
     // If this key is printable, generate the LogicalKeyboardKey from its
-    // Unicode value. Control keys such as ESC, CRTL, and SHIFT are not
+    // Unicode value. Control keys such as ESC, CTRL, and SHIFT are not
     // printable. HOME, DEL, arrow keys, and function keys are considered
     // modifier function keys, which generate invalid Unicode scalar values.
     if (keyLabel.isNotEmpty &&
-        !LogicalKeyboardKey.isControlCharacter(keyLabel)) {
+        !LogicalKeyboardKey.isControlCharacter(keyLabel) &&
+        !_isUnprintableKey(keyLabel)) {
       // Given that charactersIgnoringModifiers can contain a String of
       // arbitrary length, limit to a maximum of two Unicode scalar values. It
       // is unlikely that a keyboard would produce a code point bigger than 32
@@ -126,36 +112,29 @@ class RawKeyEventDataIos extends RawKeyEventData {
       }
 
       final int keyId = LogicalKeyboardKey.unicodePlane | (codeUnit & LogicalKeyboardKey.valueMask);
-      return LogicalKeyboardKey.findKeyByKeyId(keyId) ?? LogicalKeyboardKey(
-        keyId,
-        keyLabel: keyLabel,
-        debugName: kReleaseMode ? null : 'Key ${keyLabel.toUpperCase()}',
-      );
+      return LogicalKeyboardKey.findKeyByKeyId(keyId) ?? LogicalKeyboardKey(keyId);
     }
 
-    // Control keys like "backspace" and movement keys like arrow keys don't
-    // have a printable representation, but are present on the physical
-    // keyboard. Since there is no logical keycode map for iOS (iOS uses the
-    // keycode to reference physical keys), a LogicalKeyboardKey is created with
-    // the physical key's HID usage and debugName. This avoids duplicating the
-    // physical key map.
-    if (physicalKey != PhysicalKeyboardKey.none) {
-      final int keyId = physicalKey.usbHidUsage | LogicalKeyboardKey.hidPlane;
-      return LogicalKeyboardKey.findKeyByKeyId(keyId) ?? LogicalKeyboardKey(
-        keyId,
-        keyLabel: physicalKey.debugName ?? '',
-        debugName: physicalKey.debugName,
-      );
+    // This is a non-printable key that we don't know about, so we mint a new
+    // code.
+    return LogicalKeyboardKey(keyCode | LogicalKeyboardKey.iosPlane);
+  }
+
+  /// Returns true if the given label represents an unprintable key.
+  ///
+  /// Examples of unprintable keys are "NSUpArrowFunctionKey = 0xF700"
+  /// or "NSHomeFunctionKey = 0xF729".
+  ///
+  /// See <https://developer.apple.com/documentation/appkit/1535851-function-key_unicodes?language=objc> for more
+  /// information.
+  ///
+  /// Used by [RawKeyEvent] subclasses to help construct IDs.
+  static bool _isUnprintableKey(String label) {
+    if (label.length != 1) {
+      return false;
     }
-
-    // This is a non-printable key that is unrecognized, so a new code is minted
-    // with the autogenerated bit set.
-    const int iosKeyIdPlane = 0x00400000000;
-
-    return LogicalKeyboardKey(
-      iosKeyIdPlane | keyCode | LogicalKeyboardKey.autogeneratedMask,
-      debugName: kReleaseMode ? null : 'Unknown iOS key code $keyCode',
-    );
+    final int codeUnit = label.codeUnitAt(0);
+    return codeUnit >= 0xF700 && codeUnit <= 0xF8FF;
   }
 
   bool _isLeftRightModifierPressed(KeyboardSide side, int anyMask, int leftMask, int rightMask) {
@@ -251,6 +230,38 @@ class RawKeyEventDataIos extends RawKeyEventData {
         return KeyboardSide.all;
     }
   }
+
+  @override
+  void debugFillProperties(DiagnosticPropertiesBuilder properties) {
+    super.debugFillProperties(properties);
+        properties.add(DiagnosticsProperty<String>('characters', characters));
+        properties.add(DiagnosticsProperty<String>('charactersIgnoringModifiers', charactersIgnoringModifiers));
+        properties.add(DiagnosticsProperty<int>('keyCode', keyCode));
+        properties.add(DiagnosticsProperty<int>('modifiers', modifiers));
+  }
+
+  @override
+  bool operator==(Object other) {
+    if (identical(this, other)) {
+      return true;
+    }
+    if (other.runtimeType != runtimeType) {
+      return false;
+    }
+    return other is RawKeyEventDataIos
+        && other.characters == characters
+        && other.charactersIgnoringModifiers == charactersIgnoringModifiers
+        && other.keyCode == keyCode
+        && other.modifiers == modifiers;
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    characters,
+    charactersIgnoringModifiers,
+    keyCode,
+    modifiers,
+  );
 
   // Modifier key masks. See Apple's UIKey documentation
   // https://developer.apple.com/documentation/uikit/uikeymodifierflags?language=objc
@@ -360,11 +371,4 @@ class RawKeyEventDataIos extends RawKeyEventData {
   /// applications to mask off the device-dependent modifier flags, including
   /// event coalescing information.
   static const int deviceIndependentMask = 0xffff0000;
-
-  @override
-  String toString() {
-    return '${objectRuntimeType(this, 'RawKeyEventDataIos')}(keyLabel: $keyLabel, keyCode: $keyCode, characters: $characters,'
-        ' unmodifiedCharacters: $charactersIgnoringModifiers, modifiers: $modifiers, '
-        'modifiers down: $modifiersPressed)';
-  }
 }

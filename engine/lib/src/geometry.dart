@@ -974,6 +974,32 @@ class Radius {
   /// right-hand-side operand (a double).
   Radius operator %(double operand) => Radius.elliptical(x % operand, y % operand);
 
+  Radius clamp({Radius? minimum, Radius? maximum}) {
+    minimum ??= const Radius.circular(-double.infinity);
+    maximum ??= const Radius.circular(double.infinity);
+    return Radius.elliptical(
+      _clampDouble(x, minimum.x, maximum.x),
+      _clampDouble(y, minimum.y, maximum.y),
+    );
+  }
+
+  /// Returns this [Radius], with values clamped to the given min and max
+  /// values in each dimension
+  ///
+  /// The `minimumX` and `minimumY` values default to `-double.infinity`, and
+  /// the `maximumX` and `maximumY` values default to `double.infinity`.
+  Radius clampValues({
+    double? minimumX,
+    double? minimumY,
+    double? maximumX,
+    double? maximumY,
+  }) {
+    return Radius.elliptical(
+      _clampDouble(x, minimumX ?? -double.infinity, maximumX ?? double.infinity),
+      _clampDouble(y, minimumY ?? -double.infinity, maximumY ?? double.infinity),
+    );
+  }
+
   /// Linearly interpolate between two radii.
   ///
   /// If either is null, this function substitutes [Radius.zero] instead.
@@ -1698,25 +1724,6 @@ class RSTransform {
       ..[3] = ty;
   }
 
-  /// Creates an RSTransform from its individual components.
-  ///
-  /// The `rotation` parameter gives the rotation in radians.
-  ///
-  /// The `scale` parameter describes the uniform scale factor.
-  ///
-  /// The `anchorX` and `anchorY` parameters give the coordinate of the point
-  /// around which to rotate.
-  ///
-  /// The `translateX` and `translateY` parameters give the coordinate of the
-  /// offset by which to translate.
-  ///
-  /// This constructor computes the arguments of the [new RSTransform]
-  /// constructor and then defers to that constructor to actually create the
-  /// object. If many [RSTransform] objects are being created and there is a way
-  /// to factor out the computations of the sine and cosine of the rotation
-  /// (which are computed each time this constructor is called) and reuse them
-  /// over multiple [RSTransform] objects, it may be more efficient to directly
-  /// use the more direct [new RSTransform] constructor instead.
   factory RSTransform.fromComponents({
     required double rotation,
     required double scale,

@@ -6,7 +6,6 @@ import 'package:flute/widgets.dart';
 
 import 'constants.dart';
 import 'theme.dart';
-import 'theme_data.dart';
 
 // Examples can assume:
 // late String userAvatarUrl;
@@ -17,7 +16,12 @@ import 'theme_data.dart';
 /// such an image, the user's initials. A given user's initials should
 /// always be paired with the same background color, for consistency.
 ///
+/// If [foregroundImage] fails then [backgroundImage] is used. If
+/// [backgroundImage] fails too, [backgroundColor] is used.
+///
 /// The [onBackgroundImageError] parameter must be null if the [backgroundImage]
+/// is null.
+/// The [onForegroundImageError] parameter must be null if the [foregroundImage]
 /// is null.
 ///
 /// {@tool snippet}
@@ -42,7 +46,7 @@ import 'theme_data.dart';
 /// ```dart
 /// CircleAvatar(
 ///   backgroundColor: Colors.brown.shade800,
-///   child: Text('AH'),
+///   child: const Text('AH'),
 /// )
 /// ```
 /// {@end-tool}
@@ -56,18 +60,20 @@ import 'theme_data.dart';
 class CircleAvatar extends StatelessWidget {
   /// Creates a circle that represents a user.
   const CircleAvatar({
-    Key? key,
+    super.key,
     this.child,
     this.backgroundColor,
     this.backgroundImage,
+    this.foregroundImage,
     this.onBackgroundImageError,
+    this.onForegroundImageError,
     this.foregroundColor,
     this.radius,
     this.minRadius,
     this.maxRadius,
   }) : assert(radius == null || (minRadius == null && maxRadius == null)),
        assert(backgroundImage != null || onBackgroundImageError == null),
-       super(key: key);
+       assert(foregroundImage != null || onForegroundImageError== null);
 
   /// The widget below this widget in the tree.
   ///
@@ -78,7 +84,8 @@ class CircleAvatar extends StatelessWidget {
   /// The color with which to fill the circle. Changing the background
   /// color will cause the avatar to animate to the new color.
   ///
-  /// If a [backgroundColor] is not specified, the theme's
+  /// If a [backgroundColor] is not specified and [ThemeData.useMaterial3] is true,
+  /// [ColorScheme.primaryContainer] will be used, otherwise the theme's
   /// [ThemeData.primaryColorLight] is used with dark foreground colors, and
   /// [ThemeData.primaryColorDark] with light foreground colors.
   final Color? backgroundColor;
@@ -88,19 +95,32 @@ class CircleAvatar extends StatelessWidget {
   /// Defaults to the primary text theme color if no [backgroundColor] is
   /// specified.
   ///
-  /// Defaults to [ThemeData.primaryColorLight] for dark background colors, and
+  /// If a [foregroundColor] is not specified and [ThemeData.useMaterial3] is true,
+  /// [ColorScheme.onPrimaryContainer] will be used, otherwise the theme's
+  /// [ThemeData.primaryColorLight] for dark background colors, and
   /// [ThemeData.primaryColorDark] for light background colors.
   final Color? foregroundColor;
 
   /// The background image of the circle. Changing the background
   /// image will cause the avatar to animate to the new image.
   ///
+  /// Typically used as a fallback image for [foregroundImage].
+  ///
   /// If the [CircleAvatar] is to have the user's initials, use [child] instead.
   final ImageProvider? backgroundImage;
+
+  /// The foreground image of the circle.
+  ///
+  /// Typically used as profile image. For fallback use [backgroundImage].
+  final ImageProvider? foregroundImage;
 
   /// An optional error callback for errors emitted when loading
   /// [backgroundImage].
   final ImageErrorListener? onBackgroundImageError;
+
+  /// An optional error callback for errors emitted when loading
+  /// [foregroundImage].
+  final ImageErrorListener? onForegroundImageError;
 
   /// The size of the avatar, expressed as the radius (half the diameter).
   ///
@@ -175,8 +195,14 @@ class CircleAvatar extends StatelessWidget {
   Widget build(BuildContext context) {
     assert(debugCheckHasMediaQuery(context));
     final ThemeData theme = Theme.of(context);
-    TextStyle textStyle = theme.primaryTextTheme.subtitle1!.copyWith(color: foregroundColor);
-    Color? effectiveBackgroundColor = backgroundColor;
+    final Color? effectiveForegroundColor = foregroundColor
+      ?? (theme.useMaterial3 ? theme.colorScheme.onPrimaryContainer : null);
+    final TextStyle effectiveTextStyle = theme.useMaterial3
+      ? theme.textTheme.titleMedium!
+      : theme.primaryTextTheme.titleMedium!;
+    TextStyle textStyle = effectiveTextStyle.copyWith(color: effectiveForegroundColor);
+    Color? effectiveBackgroundColor = backgroundColor
+      ?? (theme.useMaterial3 ? theme.colorScheme.primaryContainer : null);
     if (effectiveBackgroundColor == null) {
       switch (ThemeData.estimateBrightnessForColor(textStyle.color!)) {
         case Brightness.dark:
@@ -186,7 +212,7 @@ class CircleAvatar extends StatelessWidget {
           effectiveBackgroundColor = theme.primaryColorDark;
           break;
       }
-    } else if (foregroundColor == null) {
+    } else if (effectiveForegroundColor == null) {
       switch (ThemeData.estimateBrightnessForColor(backgroundColor!)) {
         case Brightness.dark:
           textStyle = textStyle.copyWith(color: theme.primaryColorLight);
@@ -217,6 +243,16 @@ class CircleAvatar extends StatelessWidget {
           : null,
         shape: BoxShape.circle,
       ),
+      foregroundDecoration: foregroundImage != null
+          ? BoxDecoration(
+              image: DecorationImage(
+                image: foregroundImage!,
+                onError: onForegroundImageError,
+                fit: BoxFit.cover,
+              ),
+              shape: BoxShape.circle,
+            )
+          : null,
       child: child == null
           ? null
           : Center(

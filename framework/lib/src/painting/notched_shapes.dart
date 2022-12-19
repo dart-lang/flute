@@ -2,7 +2,6 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-
 import 'dart:math' as math;
 
 import 'basic_types.dart';
@@ -57,8 +56,9 @@ class CircularNotchedRectangle extends NotchedShape {
   // TODO(amirh): add an example diagram here.
   @override
   Path getOuterPath(Rect host, Rect? guest) {
-    if (guest == null || !host.overlaps(guest))
+    if (guest == null || !host.overlaps(guest)) {
       return Path()..addRect(host);
+    }
 
     // The guest's shape is a circle bounded by the guest rectangle.
     // So the guest's radius is half the guest width.
@@ -85,7 +85,7 @@ class CircularNotchedRectangle extends NotchedShape {
     final double p2yA = math.sqrt(r * r - p2xA * p2xA);
     final double p2yB = math.sqrt(r * r - p2xB * p2xB);
 
-    final List<Offset?> p = List<Offset?>.filled(6, null, growable: false);
+    final List<Offset?> p = List<Offset?>.filled(6, null);
 
     // p0, p1, and p2 are the control points for segment A.
     p[0] = Offset(a - s1, b);
@@ -100,8 +100,9 @@ class CircularNotchedRectangle extends NotchedShape {
     p[5] = Offset(-1.0 * p[0]!.dx, p[0]!.dy);
 
     // translate all points back to the absolute coordinate system.
-    for (int i = 0; i < p.length; i += 1)
+    for (int i = 0; i < p.length; i += 1) {
       p[i] = p[i]! + guest.center;
+    }
 
     return Path()
       ..moveTo(host.left, host.top)
@@ -151,10 +152,10 @@ class AutomaticNotchedShape extends NotchedShape {
   final ShapeBorder? guest;
 
   @override
-  Path getOuterPath(Rect hostRect, Rect? guestRect) { // ignore: avoid_renaming_method_parameters, the
-    // parameters are renamed over the baseclass because they would clash
-    // with properties of this object, and the use of all four of them in
-    // the code below is really confusing if they have the same names.
+  Path getOuterPath(Rect hostRect, Rect? guestRect) { // ignore: avoid_renaming_method_parameters
+    // The parameters of this method are renamed over the baseclass because they
+    // would clash with properties of this object, and the use of all four of
+    // them in the code below is really confusing if they have the same names.
     final Path hostPath = host.getOuterPath(hostRect);
     if (guest != null && guestRect != null) {
       final Path guestPath = guest!.getOuterPath(guestRect);

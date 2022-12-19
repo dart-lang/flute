@@ -2,10 +2,12 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-import 'package:flute/foundation.dart';
 import 'package:flute/widgets.dart';
 
 import 'localizations.dart';
+
+// Examples can assume:
+// late BuildContext context;
 
 /// Asserts that the given context has a [Localizations] ancestor that contains
 /// a [CupertinoLocalizations] delegate.
@@ -17,6 +19,10 @@ import 'localizations.dart';
 /// assert(debugCheckHasCupertinoLocalizations(context));
 /// ```
 ///
+/// Always place this before any early returns, so that the invariant is checked
+/// in all cases. This prevents bugs from hiding until a particular codepath is
+/// hit.
+///
 /// Does nothing if asserts are disabled. Always returns true.
 bool debugCheckHasCupertinoLocalizations(BuildContext context) {
   assert(() {
@@ -25,19 +31,19 @@ bool debugCheckHasCupertinoLocalizations(BuildContext context) {
         ErrorSummary('No CupertinoLocalizations found.'),
         ErrorDescription(
           '${context.widget.runtimeType} widgets require CupertinoLocalizations '
-          'to be provided by a Localizations widget ancestor.'
+          'to be provided by a Localizations widget ancestor.',
         ),
         ErrorDescription(
           'The cupertino library uses Localizations to generate messages, '
-          'labels, and abbreviations.'
+          'labels, and abbreviations.',
         ),
         ErrorHint(
           'To introduce a CupertinoLocalizations, either use a '
           'CupertinoApp at the root of your application to include them '
           'automatically, or add a Localization widget with a '
-          'CupertinoLocalizations delegate.'
+          'CupertinoLocalizations delegate.',
         ),
-        ...context.describeMissingAncestor(expectedAncestorType: CupertinoLocalizations)
+        ...context.describeMissingAncestor(expectedAncestorType: CupertinoLocalizations),
       ]);
     }
     return true;

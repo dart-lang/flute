@@ -5,7 +5,6 @@
 import 'dart:collection';
 import 'dart:math' as math;
 
-import 'package:flute/animation.dart';
 import 'package:flute/physics.dart';
 import 'package:flute/rendering.dart';
 import 'package:flute/scheduler.dart';
@@ -13,6 +12,7 @@ import 'package:flute/scheduler.dart';
 import 'basic.dart';
 import 'framework.dart';
 import 'notification_listener.dart';
+import 'scroll_configuration.dart';
 import 'scroll_context.dart';
 import 'scroll_controller.dart';
 import 'scroll_metrics.dart';
@@ -91,9 +91,10 @@ class ListWheelChildListDelegate extends ListWheelChildDelegate {
 
   @override
   Widget? build(BuildContext context, int index) {
-    if (index < 0 || index >= children.length)
+    if (index < 0 || index >= children.length) {
       return null;
-    return IndexedSemantics(child: children[index], index: index);
+    }
+    return IndexedSemantics(index: index, child: children[index]);
   }
 
   @override
@@ -137,9 +138,10 @@ class ListWheelChildLoopingListDelegate extends ListWheelChildDelegate {
 
   @override
   Widget? build(BuildContext context, int index) {
-    if (children.isEmpty)
+    if (children.isEmpty) {
       return null;
-    return IndexedSemantics(child: children[index % children.length], index: index);
+    }
+    return IndexedSemantics(index: index, child: children[index % children.length]);
   }
 
   @override
@@ -182,11 +184,12 @@ class ListWheelChildBuilderDelegate extends ListWheelChildDelegate {
   Widget? build(BuildContext context, int index) {
     if (childCount == null) {
       final Widget? child = builder(context, index);
-      return child == null ? null : IndexedSemantics(child: child, index: index);
+      return child == null ? null : IndexedSemantics(index: index, child: child);
     }
-    if (index < 0 || index >= childCount!)
+    if (index < 0 || index >= childCount!) {
       return null;
-    return IndexedSemantics(child: builder(context, index), index: index);
+    }
+    return IndexedSemantics(index: index, child: builder(context, index));
   }
 
   @override
@@ -307,19 +310,13 @@ class FixedExtentMetrics extends FixedScrollMetrics {
   /// Creates an immutable snapshot of values associated with a
   /// [ListWheelScrollView].
   FixedExtentMetrics({
-    required double? minScrollExtent,
-    required double? maxScrollExtent,
-    required double? pixels,
-    required double? viewportDimension,
-    required AxisDirection axisDirection,
+    required super.minScrollExtent,
+    required super.maxScrollExtent,
+    required super.pixels,
+    required super.viewportDimension,
+    required super.axisDirection,
     required this.itemIndex,
-  }) : super(
-         minScrollExtent: minScrollExtent,
-         maxScrollExtent: maxScrollExtent,
-         pixels: pixels,
-         viewportDimension: viewportDimension,
-         axisDirection: axisDirection,
-       );
+  });
 
   @override
   FixedExtentMetrics copyWith({
@@ -365,23 +362,16 @@ double _clipOffsetToScrollableRange(
 /// [_FixedExtentScrollable] and can access its `itemExtent` to derive [itemIndex].
 class _FixedExtentScrollPosition extends ScrollPositionWithSingleContext implements FixedExtentMetrics {
   _FixedExtentScrollPosition({
-    required ScrollPhysics physics,
-    required ScrollContext context,
+    required super.physics,
+    required super.context,
     required int initialItem,
-    bool keepScrollOffset = true,
-    ScrollPosition? oldPosition,
-    String? debugLabel,
+    super.oldPosition,
   }) : assert(
          context is _FixedExtentScrollableState,
-         'FixedExtentScrollController can only be used with ListWheelScrollViews'
+         'FixedExtentScrollController can only be used with ListWheelScrollViews',
        ),
        super(
-         physics: physics,
-         context: context,
          initialPixels: _getItemExtentFromScrollContext(context) * initialItem,
-         keepScrollOffset: keepScrollOffset,
-         oldPosition: oldPosition,
-         debugLabel: debugLabel,
        );
 
   static double _getItemExtentFromScrollContext(ScrollContext context) {
@@ -425,21 +415,13 @@ class _FixedExtentScrollPosition extends ScrollPositionWithSingleContext impleme
 /// size so it can pass it on ultimately to the [FixedExtentScrollController].
 class _FixedExtentScrollable extends Scrollable {
   const _FixedExtentScrollable({
-    Key? key,
-    AxisDirection axisDirection = AxisDirection.down,
-    ScrollController? controller,
-    ScrollPhysics? physics,
+    super.controller,
+    super.physics,
     required this.itemExtent,
-    required ViewportBuilder viewportBuilder,
-    String? restorationId,
-  }) : super (
-    key: key,
-    axisDirection: axisDirection,
-    controller: controller,
-    physics: physics,
-    viewportBuilder: viewportBuilder,
-    restorationId: restorationId,
-  );
+    required super.viewportBuilder,
+    super.restorationId,
+    super.scrollBehavior,
+  });
 
   final double itemExtent;
 
@@ -469,7 +451,7 @@ class _FixedExtentScrollableState extends ScrollableState {
 /// Defers back to the parent beyond the scroll extents.
 class FixedExtentScrollPhysics extends ScrollPhysics {
   /// Creates a scroll physics that always lands on items.
-  const FixedExtentScrollPhysics({ ScrollPhysics? parent }) : super(parent: parent);
+  const FixedExtentScrollPhysics({ super.parent });
 
   @override
   FixedExtentScrollPhysics applyTo(ScrollPhysics? ancestor) {
@@ -481,7 +463,7 @@ class FixedExtentScrollPhysics extends ScrollPhysics {
     assert(
       position is _FixedExtentScrollPosition,
       'FixedExtentScrollPhysics can only be used with Scrollables that uses '
-      'the FixedExtentScrollController'
+      'the FixedExtentScrollController',
     );
 
     final _FixedExtentScrollPosition metrics = position as _FixedExtentScrollPosition;
@@ -570,7 +552,7 @@ class ListWheelScrollView extends StatefulWidget {
   /// Constructs a list in which children are scrolled a wheel. Its children
   /// are passed to a delegate and lazily built during layout.
   ListWheelScrollView({
-    Key? key,
+    super.key,
     this.controller,
     this.physics,
     this.diameterRatio = RenderListWheelViewport.defaultDiameterRatio,
@@ -585,6 +567,7 @@ class ListWheelScrollView extends StatefulWidget {
     this.renderChildrenOutsideViewport = false,
     this.clipBehavior = Clip.hardEdge,
     this.restorationId,
+    this.scrollBehavior,
     required List<Widget> children,
   }) : assert(children != null),
        assert(diameterRatio != null),
@@ -605,13 +588,12 @@ class ListWheelScrollView extends StatefulWidget {
          !renderChildrenOutsideViewport || clipBehavior == Clip.none,
          RenderListWheelViewport.clipBehaviorAndRenderChildrenOutsideViewportConflict,
        ),
-       childDelegate = ListWheelChildListDelegate(children: children),
-       super(key: key);
+       childDelegate = ListWheelChildListDelegate(children: children);
 
   /// Constructs a list in which children are scrolled a wheel. Its children
   /// are managed by a delegate and are lazily built during layout.
   const ListWheelScrollView.useDelegate({
-    Key? key,
+    super.key,
     this.controller,
     this.physics,
     this.diameterRatio = RenderListWheelViewport.defaultDiameterRatio,
@@ -626,6 +608,7 @@ class ListWheelScrollView extends StatefulWidget {
     this.renderChildrenOutsideViewport = false,
     this.clipBehavior = Clip.hardEdge,
     this.restorationId,
+    this.scrollBehavior,
     required this.childDelegate,
   }) : assert(childDelegate != null),
        assert(diameterRatio != null),
@@ -645,8 +628,7 @@ class ListWheelScrollView extends StatefulWidget {
        assert(
          !renderChildrenOutsideViewport || clipBehavior == Clip.none,
          RenderListWheelViewport.clipBehaviorAndRenderChildrenOutsideViewportConflict,
-       ),
-       super(key: key);
+       );
 
   /// Typically a [FixedExtentScrollController] used to control the current item.
   ///
@@ -669,6 +651,10 @@ class ListWheelScrollView extends StatefulWidget {
   ///
   /// For example, determines how the scroll view continues to animate after the
   /// user stops dragging the scroll view.
+  ///
+  /// If an explicit [ScrollBehavior] is provided to [scrollBehavior], the
+  /// [ScrollPhysics] provided by that behavior will take precedence after
+  /// [physics].
   ///
   /// Defaults to matching platform conventions.
   final ScrollPhysics? physics;
@@ -717,8 +703,19 @@ class ListWheelScrollView extends StatefulWidget {
   /// {@macro flutter.widgets.scrollable.restorationId}
   final String? restorationId;
 
+  /// {@macro flutter.widgets.shadow.scrollBehavior}
+  ///
+  /// [ScrollBehavior]s also provide [ScrollPhysics]. If an explicit
+  /// [ScrollPhysics] is provided in [physics], it will take precedence,
+  /// followed by [scrollBehavior], and then the inherited ancestor
+  /// [ScrollBehavior].
+  ///
+  /// The [ScrollBehavior] of the inherited [ScrollConfiguration] will be
+  /// modified by default to not apply a [Scrollbar].
+  final ScrollBehavior? scrollBehavior;
+
   @override
-  _ListWheelScrollViewState createState() => _ListWheelScrollViewState();
+  State<ListWheelScrollView> createState() => _ListWheelScrollViewState();
 }
 
 class _ListWheelScrollViewState extends State<ListWheelScrollView> {
@@ -740,36 +737,39 @@ class _ListWheelScrollViewState extends State<ListWheelScrollView> {
     super.didUpdateWidget(oldWidget);
     if (widget.controller != null && widget.controller != scrollController) {
       final ScrollController? oldScrollController = scrollController;
-      SchedulerBinding.instance!.addPostFrameCallback((_) {
+      SchedulerBinding.instance.addPostFrameCallback((_) {
         oldScrollController!.dispose();
       });
       scrollController = widget.controller;
     }
   }
 
+  bool _handleScrollNotification(ScrollNotification notification) {
+    if (notification.depth == 0
+        && widget.onSelectedItemChanged != null
+        && notification is ScrollUpdateNotification
+        && notification.metrics is FixedExtentMetrics) {
+      final FixedExtentMetrics metrics = notification.metrics as FixedExtentMetrics;
+      final int currentItemIndex = metrics.itemIndex;
+      if (currentItemIndex != _lastReportedItemIndex) {
+        _lastReportedItemIndex = currentItemIndex;
+        final int trueIndex = widget.childDelegate.trueIndexOf(currentItemIndex);
+        widget.onSelectedItemChanged!(trueIndex);
+      }
+    }
+    return false;
+  }
+
   @override
   Widget build(BuildContext context) {
     return NotificationListener<ScrollNotification>(
-      onNotification: (ScrollNotification notification) {
-        if (notification.depth == 0
-            && widget.onSelectedItemChanged != null
-            && notification is ScrollUpdateNotification
-            && notification.metrics is FixedExtentMetrics) {
-          final FixedExtentMetrics metrics = notification.metrics as FixedExtentMetrics;
-          final int currentItemIndex = metrics.itemIndex;
-          if (currentItemIndex != _lastReportedItemIndex) {
-            _lastReportedItemIndex = currentItemIndex;
-            final int trueIndex = widget.childDelegate.trueIndexOf(currentItemIndex);
-            widget.onSelectedItemChanged!(trueIndex);
-          }
-        }
-        return false;
-      },
+      onNotification: _handleScrollNotification,
       child: _FixedExtentScrollable(
         controller: scrollController,
         physics: widget.physics,
         itemExtent: widget.itemExtent,
         restorationId: widget.restorationId,
+        scrollBehavior: widget.scrollBehavior ?? ScrollConfiguration.of(context).copyWith(scrollbars: false),
         viewportBuilder: (BuildContext context, ViewportOffset offset) {
           return ListWheelViewport(
             diameterRatio: widget.diameterRatio,
@@ -794,10 +794,7 @@ class _ListWheelScrollViewState extends State<ListWheelScrollView> {
 /// Element that supports building children lazily for [ListWheelViewport].
 class ListWheelElement extends RenderObjectElement implements ListWheelChildManager {
   /// Creates an element that lazily builds children for the given widget.
-  ListWheelElement(ListWheelViewport widget) : super(widget);
-
-  @override
-  ListWheelViewport get widget => super.widget as ListWheelViewport;
+  ListWheelElement(ListWheelViewport super.widget);
 
   @override
   RenderListWheelViewport get renderObject => super.renderObject as RenderListWheelViewport;
@@ -818,24 +815,27 @@ class ListWheelElement extends RenderObjectElement implements ListWheelChildMana
 
   @override
   void update(ListWheelViewport newWidget) {
-    final ListWheelViewport oldWidget = widget;
+    final ListWheelViewport oldWidget = widget as ListWheelViewport;
     super.update(newWidget);
     final ListWheelChildDelegate newDelegate = newWidget.childDelegate;
     final ListWheelChildDelegate oldDelegate = oldWidget.childDelegate;
     if (newDelegate != oldDelegate &&
-        (newDelegate.runtimeType != oldDelegate.runtimeType || newDelegate.shouldRebuild(oldDelegate)))
+        (newDelegate.runtimeType != oldDelegate.runtimeType || newDelegate.shouldRebuild(oldDelegate))) {
       performRebuild();
+      renderObject.markNeedsLayout();
+    }
   }
 
   @override
-  int? get childCount => widget.childDelegate.estimatedChildCount;
+  int? get childCount => (widget as ListWheelViewport).childDelegate.estimatedChildCount;
 
   @override
   void performRebuild() {
     _childWidgets.clear();
     super.performRebuild();
-    if (_childElements.isEmpty)
+    if (_childElements.isEmpty) {
       return;
+    }
 
     final int firstIndex = _childElements.firstKey()!;
     final int lastIndex = _childElements.lastKey()!;
@@ -856,7 +856,7 @@ class ListWheelElement extends RenderObjectElement implements ListWheelChildMana
   /// will be cached. However when the element is rebuilt, the cache will be
   /// cleared.
   Widget? retrieveWidget(int index) {
-    return _childWidgets.putIfAbsent(index, () => widget.childDelegate.build(this, index));
+    return _childWidgets.putIfAbsent(index, () => (widget as ListWheelViewport).childDelegate.build(this, index));
   }
 
   @override
@@ -890,14 +890,15 @@ class ListWheelElement extends RenderObjectElement implements ListWheelChildMana
   }
 
   @override
-  Element? updateChild(Element? child, Widget? newWidget, dynamic newSlot) {
+  Element? updateChild(Element? child, Widget? newWidget, Object? newSlot) {
     final ListWheelParentData? oldParentData = child?.renderObject?.parentData as ListWheelParentData?;
     final Element? newChild = super.updateChild(child, newWidget, newSlot);
     final ListWheelParentData? newParentData = newChild?.renderObject?.parentData as ListWheelParentData?;
     if (newParentData != null) {
-      newParentData.index = newSlot as int;
-      if (oldParentData != null)
+      newParentData.index = newSlot! as int;
+      if (oldParentData != null) {
         newParentData.offset = oldParentData.offset;
+      }
     }
 
     return newChild;
@@ -968,7 +969,7 @@ class ListWheelViewport extends RenderObjectWidget {
   ///
   /// The [offset] argument must be provided and must not be null.
   const ListWheelViewport({
-    Key? key,
+    super.key,
     this.diameterRatio = RenderListWheelViewport.defaultDiameterRatio,
     this.perspective = RenderListWheelViewport.defaultPerspective,
     this.offAxisFraction = 0.0,
@@ -999,8 +1000,7 @@ class ListWheelViewport extends RenderObjectWidget {
        assert(
          !renderChildrenOutsideViewport || clipBehavior == Clip.none,
          RenderListWheelViewport.clipBehaviorAndRenderChildrenOutsideViewportConflict,
-       ),
-       super(key: key);
+       );
 
   /// {@macro flutter.rendering.RenderListWheelViewport.diameterRatio}
   final double diameterRatio;

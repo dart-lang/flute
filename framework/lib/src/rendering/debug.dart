@@ -2,9 +2,6 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-import 'package:flute/foundation.dart';
-import 'package:flute/painting.dart';
-
 import 'object.dart';
 
 export 'package:flute/foundation.dart' show debugPrint;
@@ -39,7 +36,7 @@ bool debugPaintLayerBordersEnabled = false;
 /// [RenderBox.debugHandleEvent].
 bool debugPaintPointersEnabled = false;
 
-/// Overlay a rotating set of colors when repainting layers in checked mode.
+/// Overlay a rotating set of colors when repainting layers in debug mode.
 ///
 /// See also:
 ///
@@ -47,51 +44,8 @@ bool debugPaintPointersEnabled = false;
 ///    areas are being excessively repainted.
 bool debugRepaintRainbowEnabled = false;
 
-/// Overlay a rotating set of colors when repainting text in checked mode.
+/// Overlay a rotating set of colors when repainting text in debug mode.
 bool debugRepaintTextRainbowEnabled = false;
-
-/// Causes [PhysicalModelLayer]s to paint a red rectangle around themselves if
-/// they are overlapping and painted out of order with regard to their elevation.
-///
-/// Android and iOS will show the last painted layer on top, whereas Fuchsia
-/// will show the layer with the highest elevation on top.
-///
-/// For example, a rectangular elevation at 3.0 that is painted before an
-/// overlapping rectangular elevation at 2.0 would render this way on Android
-/// and iOS (with fake shadows):
-/// ```
-/// ┌───────────────────┐
-/// │                   │
-/// │      3.0          │
-/// │            ┌───────────────────┐
-/// │            │                   │
-/// └────────────│                   │
-///              │        2.0        │
-///              │                   │
-///              └───────────────────┘
-/// ```
-///
-/// But this way on Fuchsia (with real shadows):
-/// ```
-/// ┌───────────────────┐
-/// │                   │
-/// │      3.0          │
-/// │                   │────────────┐
-/// │                   │            │
-/// └───────────────────┘            │
-///              │         2.0       │
-///              │                   │
-///              └───────────────────┘
-/// ```
-///
-/// This check helps developers that want a consistent look and feel detect
-/// where this inconsistency would occur.
-///
-/// This check assumes that elevations on [PhysicalModelLayer] objects have
-/// been set to non-null values before the scene is built. If this assumption
-/// is violated, the check will throw exceptions. (The scene building would
-/// also fail in that case, however.)
-bool debugCheckElevationsEnabled = false;
 
 /// The current color to overlay when repainting a layer.
 ///
@@ -135,15 +89,25 @@ bool debugPrintLayouts = false;
 
 /// Check the intrinsic sizes of each [RenderBox] during layout.
 ///
-/// By default this is turned off since these checks are expensive, but it is
-/// enabled by the test framework.
+/// By default this is turned off since these checks are expensive. If you are
+/// implementing your own children of [RenderBox] with custom intrinsics, turn
+/// this on in your unit tests for additional validations.
 bool debugCheckIntrinsicSizes = false;
 
-/// Adds [dart:developer.Timeline] events for every [RenderObject] layout.
+/// Adds [Timeline] events for every [RenderObject] layout.
 ///
-/// For details on how to use [dart:developer.Timeline] events in the Dart
-/// Observatory to optimize your app, see:
-/// <https://fuchsia.googlesource.com/topaz/+/master/shell/docs/performance.md>
+/// The timing information this flag exposes is not representative of the actual
+/// cost of layout, because the overhead of adding timeline events is
+/// significant relative to the time each object takes to lay out. However, it
+/// can expose unexpected layout behavior in the timeline.
+///
+/// In debug builds, additional information is included in the trace (such as
+/// the properties of render objects being laid out). Collecting this data is
+/// expensive and further makes these traces non-representative of actual
+/// performance. This data is omitted in profile builds.
+///
+/// For more information about performance debugging in Flutter, see
+/// <https://flutter.dev/docs/perf/rendering>.
 ///
 /// See also:
 ///
@@ -152,17 +116,24 @@ bool debugCheckIntrinsicSizes = false;
 ///  * [debugProfileBuildsEnabled], which does something similar for widgets
 ///    being rebuilt.
 ///  * [debugProfilePaintsEnabled], which does something similar for painting.
+///  * [debugEnhanceLayoutTimelineArguments], which enhances the trace with
+///    debugging information related to [RenderObject] layouts.
 bool debugProfileLayoutsEnabled = false;
 
-/// Adds [dart:developer.Timeline] events for every [RenderObject] painted.
+/// Adds [Timeline] events for every [RenderObject] painted.
 ///
-/// This is only enabled in debug builds. The timing information this exposes is
-/// not representative of actual paints. However, it can expose unexpected
-/// painting in the timeline.
+/// The timing information this flag exposes is not representative of actual
+/// paints, because the overhead of adding timeline events is significant
+/// relative to the time each object takes to paint. However, it can expose
+/// unexpected painting in the timeline.
 ///
-/// For details on how to use [dart:developer.Timeline] events in the Dart
-/// Observatory to optimize your app, see:
-/// <https://fuchsia.googlesource.com/topaz/+/master/shell/docs/performance.md>
+/// In debug builds, additional information is included in the trace (such as
+/// the properties of render objects being painted). Collecting this data is
+/// expensive and further makes these traces non-representative of actual
+/// performance. This data is omitted in profile builds.
+///
+/// For more information about performance debugging in Flutter, see
+/// <https://flutter.dev/docs/perf/rendering>.
 ///
 /// See also:
 ///
@@ -174,7 +145,51 @@ bool debugProfileLayoutsEnabled = false;
 ///  * The discussion at [RendererBinding.drawFrame].
 ///  * [RepaintBoundary], which can be used to contain repaints when unchanged
 ///    areas are being excessively repainted.
+///  * [debugEnhancePaintTimelineArguments], which enhances the trace with
+///    debugging information related to [RenderObject] paints.
 bool debugProfilePaintsEnabled = false;
+
+/// Adds debugging information to [Timeline] events related to [RenderObject]
+/// layouts.
+///
+/// This flag will only add [Timeline] event arguments for debug builds.
+/// Additional arguments will be added for the "LAYOUT" timeline event and for
+/// all [RenderObject] layout [Timeline] events, which are the events that are
+/// added when [debugProfileLayoutsEnabled] is true. The debugging information
+/// that will be added in trace arguments includes stats around [RenderObject]
+/// dirty states and [RenderObject] diagnostic information (i.e. [RenderObject]
+/// properties).
+///
+/// See also:
+///
+///  * [debugProfileLayoutsEnabled], which adds [Timeline] events for every
+///    [RenderObject] layout.
+///  * [debugEnhancePaintTimelineArguments], which does something similar for
+///    events related to [RenderObject] paints.
+///  * [debugEnhanceBuildTimelineArguments], which does something similar for
+///    events related to [Widget] builds.
+bool debugEnhanceLayoutTimelineArguments = false;
+
+/// Adds debugging information to [Timeline] events related to [RenderObject]
+/// paints.
+///
+/// This flag will only add [Timeline] event arguments for debug builds.
+/// Additional arguments will be added for the "PAINT" timeline event and for
+/// all [RenderObject] paint [Timeline] events, which are the [Timeline] events
+/// that are added when [debugProfilePaintsEnabled] is true. The debugging
+/// information that will be added in trace arguments includes stats around
+/// [RenderObject] dirty states and [RenderObject] diagnostic information
+/// (i.e. [RenderObject] properties).
+///
+/// See also:
+///
+///  * [debugProfilePaintsEnabled], which adds [Timeline] events for every
+///    [RenderObject] paint.
+///  * [debugEnhanceLayoutTimelineArguments], which does something similar for
+///    events related to [RenderObject] layouts.
+///  * [debugEnhanceBuildTimelineArguments], which does something similar for
+///    events related to [Widget] builds.
+bool debugEnhancePaintTimelineArguments = false;
 
 /// Signature for [debugOnProfilePaint] implementations.
 typedef ProfilePaintCallback = void Function(RenderObject renderObject);
@@ -284,8 +299,12 @@ bool debugAssertAllRenderVarsUnset(String reason, { bool debugCheckIntrinsicSize
         debugPrintMarkNeedsPaintStacks ||
         debugPrintLayouts ||
         debugCheckIntrinsicSizes != debugCheckIntrinsicSizesOverride ||
+        debugProfileLayoutsEnabled ||
         debugProfilePaintsEnabled ||
-        debugOnProfilePaint != null) {
+        debugOnProfilePaint != null ||
+        debugDisableClipLayers ||
+        debugDisablePhysicalShapeLayers ||
+        debugDisableOpacityLayers) {
       throw FlutterError(reason);
     }
     return true;

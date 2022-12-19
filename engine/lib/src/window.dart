@@ -258,6 +258,12 @@ abstract class FlutterView {
   void render(Scene scene) {
     // TODO(yjbanov): implement a basic preroll for better benchmark realism.
   }
+
+  void updateSemantics(SemanticsUpdate update) {
+    platformDispatcher.updateSemantics(update);
+  }
+
+  List<DisplayFeature> get displayFeatures => viewConfiguration.displayFeatures;
 }
 
 /// A top-level platform window displaying a Flutter layer tree drawn from a
@@ -329,6 +335,10 @@ class SingletonFlutterWindow extends FlutterWindow {
       0, // systemGestureInsetRight
       0, // systemGestureInsetBottom
       0, // systemGestureInsetLeft
+      0, // double physicalTouchSlop,
+      const <double>[], // List<double> displayFeaturesBounds,
+      const <int>[], // List<int> displayFeaturesType,
+      const <int>[], // List<int> displayFeaturesState,
     );
   }
 
@@ -864,3 +874,40 @@ enum Brightness {
 ///   belonging to the application, including top level application windows like
 ///   this one.
 final SingletonFlutterWindow window = SingletonFlutterWindow._(0, PlatformDispatcher.instance);
+
+class GestureSettings {
+  const GestureSettings({
+    this.physicalTouchSlop,
+    this.physicalDoubleTapSlop,
+  });
+
+  final double? physicalTouchSlop;
+
+  final double? physicalDoubleTapSlop;
+
+  GestureSettings copyWith({
+    double? physicalTouchSlop,
+    double? physicalDoubleTapSlop,
+  }) {
+    return GestureSettings(
+      physicalTouchSlop: physicalTouchSlop ?? this.physicalTouchSlop,
+      physicalDoubleTapSlop: physicalDoubleTapSlop ?? this.physicalDoubleTapSlop,
+    );
+  }
+
+  @override
+  bool operator ==(Object other) {
+    if (other.runtimeType != runtimeType) {
+      return false;
+    }
+    return other is GestureSettings &&
+      other.physicalTouchSlop == physicalTouchSlop &&
+      other.physicalDoubleTapSlop == physicalDoubleTapSlop;
+  }
+
+  @override
+  int get hashCode => Object.hash(physicalTouchSlop, physicalDoubleTapSlop);
+
+  @override
+  String toString() => 'GestureSettings(physicalTouchSlop: $physicalTouchSlop, physicalDoubleTapSlop: $physicalDoubleTapSlop)';
+}

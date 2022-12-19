@@ -8,8 +8,12 @@ part of dart.ui;
 /// Signature of callbacks that have no arguments and return no data.
 typedef VoidCallback = void Function();
 
+typedef KeyDataCallback = bool Function(KeyData data);
+
 /// Signature for [PlatformDispatcher.onBeginFrame].
 typedef FrameCallback = void Function(Duration duration);
+
+const double _kUnsetGestureSetting = -1.0;
 
 /// Signature for [PlatformDispatcher.onReportTimings].
 ///
@@ -170,6 +174,10 @@ class PlatformDispatcher {
     double systemGestureInsetRight,
     double systemGestureInsetBottom,
     double systemGestureInsetLeft,
+    double physicalTouchSlop,
+    List<double> displayFeaturesBounds,
+    List<int> displayFeaturesType,
+    List<int> displayFeaturesState,
   ) {
     final ViewConfiguration previousConfiguration =
         _viewConfigurations[id] ?? const ViewConfiguration();
@@ -204,8 +212,45 @@ class PlatformDispatcher {
         bottom: math.max(0.0, systemGestureInsetBottom),
         left: math.max(0.0, systemGestureInsetLeft),
       ),
+      // -1 is used as a sentinel for an undefined touch slop
+      gestureSettings: GestureSettings(
+        physicalTouchSlop: physicalTouchSlop == _kUnsetGestureSetting ? null : physicalTouchSlop,
+      ),
+      displayFeatures: _decodeDisplayFeatures(
+        bounds: displayFeaturesBounds,
+        type: displayFeaturesType,
+        state: displayFeaturesState,
+        devicePixelRatio: devicePixelRatio,
+      ),
     );
     _invoke(onMetricsChanged, _onMetricsChangedZone);
+  }
+
+  List<DisplayFeature> _decodeDisplayFeatures({
+    required List<double> bounds,
+    required List<int> type,
+    required List<int> state,
+    required double devicePixelRatio,
+  }) {
+    assert(bounds.length / 4 == type.length, 'Bounds are rectangles, requiring 4 measurements each');
+    assert(type.length == state.length);
+    final List<DisplayFeature> result = <DisplayFeature>[];
+    for(int i = 0; i < type.length; i++) {
+      final int rectOffset = i * 4;
+      result.add(DisplayFeature(
+        bounds: Rect.fromLTRB(
+          bounds[rectOffset] / devicePixelRatio,
+          bounds[rectOffset + 1] / devicePixelRatio,
+          bounds[rectOffset + 2] / devicePixelRatio,
+          bounds[rectOffset + 3] / devicePixelRatio,
+        ),
+        type: DisplayFeatureType.values[type[i]],
+        state: state[i] < DisplayFeatureState.values.length
+            ? DisplayFeatureState.values[state[i]]
+            : DisplayFeatureState.unknown,
+      ));
+    }
+    return result;
   }
 
   /// A callback invoked when any view begins a frame.
@@ -373,7 +418,7 @@ class PlatformDispatcher {
     assert(timings.length % FramePhase.values.length == 0);
     final List<FrameTiming> frameTimings = <FrameTiming>[];
     for (int i = 0; i < timings.length; i += FramePhase.values.length) {
-      frameTimings.add(FrameTiming._(timings.sublist(i, i + FramePhase.values.length)));
+      frameTimings.add(FrameTiming._(timings.sublist(i, i + FramePhase.values.length), _frameCount));
     }
     _invoke1(onReportTimings, _onReportTimingsZone, frameTimings);
   }
@@ -496,6 +541,8 @@ class PlatformDispatcher {
   Timer? _frameTimer;
   Duration _frameTime = Duration.zero;
 
+  static int _frameCount = 1;
+
   /// Requests that, at the next appropriate opportunity, the [onBeginFrame] and
   /// [onDrawFrame] callbacks be invoked.
   ///
@@ -511,10 +558,16 @@ class PlatformDispatcher {
         final int microseconds = _frameTime.inMicroseconds;
         _frameTime += const Duration(milliseconds: 16);
         Timer.run(() {
+          final Stopwatch beginSw = Stopwatch()..start();
           _beginFrame(microseconds);
-        });
-        Timer.run(() {
-          _drawFrame();
+          beginSw.stop();
+          Timer.run(() {
+            final Stopwatch drawSw = Stopwatch()..start();
+            _drawFrame();
+            drawSw.stop();
+            print('Frame #$_frameCount: build ${beginSw.elapsedMicroseconds / 1000} ms; draw ${drawSw.elapsedMicroseconds / 1000} ms');
+            _frameCount += 1;
+          });
         });
       },
     );
@@ -600,7 +653,7 @@ class PlatformDispatcher {
   /// platform specific APIs without invoking method channels.
   Locale? computePlatformResolvedLocale(List<Locale> supportedLocales) {
     final List<String?> supportedLocalesData = <String?>[];
-    for (Locale locale in supportedLocales) {
+    for (final Locale locale in supportedLocales) {
       supportedLocalesData.add(locale.languageCode);
       supportedLocalesData.add(locale.countryCode);
       supportedLocalesData.add(locale.scriptCode);
@@ -875,6 +928,30 @@ class PlatformDispatcher {
   ///  * [SystemChannels.navigation], which handles subsequent navigation
   ///    requests from the embedder.
   String get defaultRouteName => '/';
+
+  void requestDartPerformanceMode(DartPerformanceMode mode) {}
+
+  void sendPortPlatformMessage(
+    String name,
+    ByteData? data,
+    int identifier,
+    Object port,
+  ) {}
+
+  void registerBackgroundIsolate(RootIsolateToken token) {
+  }
+
+  KeyDataCallback? get onKeyData => _onKeyData;
+  KeyDataCallback? _onKeyData;
+  Zone? _onKeyDataZone;
+  @override
+  set onKeyData(KeyDataCallback? callback) {
+    _onKeyData = callback;
+    _onKeyDataZone = Zone.current;
+  }
+
+  bool get nativeSpellCheckServiceDefined => false;
+  bool get brieflyShowPassword => false;
 }
 
 /// Configuration of the platform.
@@ -940,9 +1017,7 @@ class PlatformConfiguration {
   final String? defaultRouteName;
 }
 
-/// An immutable view configuration.
 class ViewConfiguration {
-  /// A const constructor for an immutable [ViewConfiguration].
   const ViewConfiguration({
     this.window,
     this.devicePixelRatio = 1.0,
@@ -952,9 +1027,10 @@ class ViewConfiguration {
     this.viewPadding = WindowPadding.zero,
     this.systemGestureInsets = WindowPadding.zero,
     this.padding = WindowPadding.zero,
+    this.gestureSettings = const GestureSettings(),
+    this.displayFeatures = const <DisplayFeature>[],
   });
 
-  /// Copy this configuration with some fields replaced.
   ViewConfiguration copyWith({
     FlutterView? window,
     double? devicePixelRatio,
@@ -964,6 +1040,8 @@ class ViewConfiguration {
     WindowPadding? viewPadding,
     WindowPadding? systemGestureInsets,
     WindowPadding? padding,
+    GestureSettings? gestureSettings,
+    List<DisplayFeature>? displayFeatures,
   }) {
     return ViewConfiguration(
       window: window ?? this.window,
@@ -974,77 +1052,21 @@ class ViewConfiguration {
       viewPadding: viewPadding ?? this.viewPadding,
       systemGestureInsets: systemGestureInsets ?? this.systemGestureInsets,
       padding: padding ?? this.padding,
+      gestureSettings: gestureSettings ?? this.gestureSettings,
+      displayFeatures: displayFeatures ?? this.displayFeatures,
     );
   }
 
-  /// The top level view into which the view is placed and its geometry is
-  /// relative to.
-  ///
-  /// If null, then this configuration represents a top level view itself.
   final FlutterView? window;
-
-  /// The pixel density of the output surface.
   final double devicePixelRatio;
-
-  /// The geometry requested for the view on the screen or within its parent
-  /// window, in logical pixels.
   final Rect geometry;
-
-  /// Whether or not the view is currently visible on the screen.
   final bool visible;
-
-  /// The view insets, as it intersects with [Screen.viewInsets] for the screen
-  /// it is on.
-  ///
-  /// For instance, if the view doesn't overlap the
-  /// [ScreenConfiguration.viewInsets] area, [viewInsets] will be
-  /// [WindowPadding.zero].
-  ///
-  /// The number of physical pixels on each side of this view rectangle into
-  /// which the application can draw, but over which the operating system will
-  /// likely place system UI, such as the keyboard or system menus, that fully
-  /// obscures any content.
   final WindowPadding viewInsets;
-
-  /// The view insets, as it intersects with [ScreenConfiguration.viewPadding]
-  /// for the screen it is on.
-  ///
-  /// For instance, if the view doesn't overlap the
-  /// [ScreenConfiguration.viewPadding] area, [viewPadding] will be
-  /// [WindowPadding.zero].
-  ///
-  /// The number of physical pixels on each side of this screen rectangle into
-  /// which the application can place a view, but which may be partially
-  /// obscured by system UI (such as the system notification area), or physical
-  /// intrusions in the display (e.g. overscan regions on television screens or
-  /// phone sensor housings).
   final WindowPadding viewPadding;
-
-  /// The view insets, as it intersects with
-  /// [ScreenConfiguration.systemGestureInsets] for the screen it is on.
-  ///
-  /// For instance, if the view doesn't overlap the
-  /// [ScreenConfiguration.systemGestureInsets] area, [systemGestureInsets] will
-  /// be [WindowPadding.zero].
-  ///
-  /// The number of physical pixels on each side of this screen rectangle into
-  /// which the application can place a view, but where the operating system
-  /// will consume input gestures for the sake of system navigation.
   final WindowPadding systemGestureInsets;
-
-  /// The view insets, as it intersects with [ScreenConfiguration.padding] for
-  /// the screen it is on.
-  ///
-  /// For instance, if the view doesn't overlap the
-  /// [ScreenConfiguration.padding] area, [padding] will be
-  /// [WindowPadding.zero].
-  ///
-  /// The number of physical pixels on each side of this screen rectangle into
-  /// which the application can place a view, but which may be partially
-  /// obscured by system UI (such as the system notification area), or physical
-  /// intrusions in the display (e.g. overscan regions on television screens or
-  /// phone sensor housings).
   final WindowPadding padding;
+  final GestureSettings gestureSettings;
+  final List<DisplayFeature> displayFeatures;
 
   @override
   String toString() {
@@ -1106,6 +1128,7 @@ class FrameTiming {
     required int buildFinish,
     required int rasterStart,
     required int rasterFinish,
+    required int frameNumber,
   }) {
     return FrameTiming._(<int>[
       vsyncStart,
@@ -1113,7 +1136,7 @@ class FrameTiming {
       buildFinish,
       rasterStart,
       rasterFinish
-    ]);
+    ], frameNumber);
   }
 
   /// Construct [FrameTiming] with raw timestamps in microseconds.
@@ -1123,8 +1146,10 @@ class FrameTiming {
   ///
   /// This constructor is usually only called by the Flutter engine, or a test.
   /// To get the [FrameTiming] of your app, see [PlatformDispatcher.onReportTimings].
-  FrameTiming._(this._timestamps)
+  FrameTiming._(this._timestamps, this.frameNumber)
       : assert(_timestamps.length == FramePhase.values.length);
+
+  final int frameNumber;
 
   /// This is a raw timestamp in microseconds from some epoch. The epoch in all
   /// [FrameTiming] is the same, but it may not match [DateTime]'s epoch.
@@ -1565,4 +1590,71 @@ class Locale {
       out.write('$separator$countryCode');
     return out.toString();
   }
+}
+
+enum DartPerformanceMode {
+  balanced,
+  latency,
+  throughput,
+  memory,
+}
+
+class DisplayFeature {
+  const DisplayFeature({
+    required this.bounds,
+    required this.type,
+    required this.state,
+  });
+
+  final Rect bounds;
+  final DisplayFeatureType type;
+  final DisplayFeatureState state;
+
+  @override
+  bool operator ==(Object other) {
+    if (identical(this, other)) {
+      return true;
+    }
+    if (other.runtimeType != runtimeType) {
+      return false;
+    }
+    return other is DisplayFeature && bounds == other.bounds &&
+        type == other.type && state == other.state;
+  }
+
+  @override
+  int get hashCode => Object.hash(bounds, type, state);
+
+  @override
+  String toString() {
+    return 'DisplayFeature(rect: $bounds, type: $type, state: $state)';
+  }
+}
+
+enum DisplayFeatureType {
+  unknown,
+  fold,
+  hinge,
+  cutout,
+}
+
+enum DisplayFeatureState {
+  unknown,
+  postureFlat,
+  postureHalfOpened,
+  postureFlipped,
+}
+
+class RootIsolateToken {
+  static final RootIsolateToken? instance = 0 == 1 ? null : RootIsolateToken._(1);
+
+  RootIsolateToken._(this._token);
+
+  int _token;
+
+  @override
+  bool operator==(Object? other) => other is RootIsolateToken && _token == other._token;
+
+  @override
+  int get hashCode => _token;
 }
