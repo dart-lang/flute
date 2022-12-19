@@ -2564,8 +2564,8 @@ class Picture {
     return Image._(_Image._(width, height));
   }
 
-  void dispose() { throw UnimplementedError(); }
-  int get approximateBytesUsed { throw UnimplementedError(); }
+  void dispose() {  }
+  int get approximateBytesUsed { return 100000; }
 }
 
 class PictureRecorder {

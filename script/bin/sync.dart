@@ -47,6 +47,21 @@ Future<void> _sync(Directory flutterLib, Directory fluteLib) async {
       source = source.replaceAll("'dart:ui'", "'package:engine/ui.dart'");
     }
 
+    source = source.split('\n').map<String>((String line) {
+      final int indexOfConditionalImport = line.indexOf(r'if (dart.library');
+      if (indexOfConditionalImport == -1) {
+        return line;
+      }
+
+      final int indexOfAs = line.indexOf(r' as ');
+
+      if (indexOfAs != -1) {
+        return '${line.substring(0, indexOfConditionalImport)} ${line.substring(indexOfAs)}';
+      }
+
+      return '${line.substring(0, indexOfConditionalImport)};';
+    }).join('\n');
+
     bool skip = false;
     if (destFile.existsSync()) {
       final String currentSrc = destFile.readAsStringSync();

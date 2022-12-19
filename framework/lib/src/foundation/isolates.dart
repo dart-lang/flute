@@ -5,7 +5,7 @@
 import 'dart:async';
 
 import '_isolates_io.dart'
-  if (dart.library.js_util) '_isolates_web.dart' as isolates;
+    as isolates;
 
 /// Signature for the callback passed to [compute].
 ///

@@ -318,6 +318,7 @@ class SingletonFlutterWindow extends FlutterWindow {
       : super._(windowId, platformDispatcher) {
     platformDispatcher._updateLifecycleState('resumed');
     _updateWindowMetrics(
+      true, // isInitializing
       0, // id
       1.0, // devicePixelRatio
       // 4k

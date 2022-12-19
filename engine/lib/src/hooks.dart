@@ -10,6 +10,7 @@ part of dart.ui;
 
 // ignore: unused_element
 void _updateWindowMetrics(
+  bool isInitializing,
   Object id,
   double devicePixelRatio,
   double width,
@@ -32,6 +33,7 @@ void _updateWindowMetrics(
   List<int> displayFeaturesState,
 ) {
   PlatformDispatcher.instance._updateWindowMetrics(
+    isInitializing,
     id,
     devicePixelRatio,
     width,

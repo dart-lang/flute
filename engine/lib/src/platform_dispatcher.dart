@@ -158,6 +158,7 @@ class PlatformDispatcher {
   //
   // Updates the metrics of the window with the given id.
   void _updateWindowMetrics(
+    bool isInitializing,
     Object id,
     double devicePixelRatio,
     double width,
@@ -223,7 +224,9 @@ class PlatformDispatcher {
         devicePixelRatio: devicePixelRatio,
       ),
     );
-    _invoke(onMetricsChanged, _onMetricsChangedZone);
+    if (!isInitializing) {
+      _invoke(onMetricsChanged, _onMetricsChangedZone);
+    }
   }
 
   List<DisplayFeature> _decodeDisplayFeatures({
@@ -730,7 +733,7 @@ class PlatformDispatcher {
     return _initialLifecycleState;
   }
 
-  late String _initialLifecycleState;
+  late String _initialLifecycleState = 'AppLifecycleState.resumed';
 
   /// Tracks if the initial state has been accessed. Once accessed, we will stop
   /// updating the [initialLifecycleState], as it is not the preferred way to
