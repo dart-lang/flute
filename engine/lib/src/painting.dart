@@ -619,7 +619,7 @@ class _Image {
       });
     });
   }
-  String? _toByteData(int format, _Callback<Uint8List?> callback) { throw UnimplementedError(); }
+  String? _toByteData(int format, _Callback<Uint8List?> callback) { return null; }
 
   bool _disposed = false;
   void dispose() {
@@ -635,7 +635,7 @@ class _Image {
     _dispose();
   }
 
-  void _dispose() { throw UnimplementedError(); }
+  void _dispose() {}
 
   Set<Image> _handles = <Image>{};
 
@@ -659,11 +659,11 @@ class Codec {
 
   int? _cachedFrameCount;
   int get frameCount => _cachedFrameCount ??= _frameCount;
-  int get _frameCount { throw UnimplementedError(); }
+  int get _frameCount { return 1; }
 
   int? _cachedRepetitionCount;
   int get repetitionCount => _cachedRepetitionCount ??= _repetitionCount;
-  int get _repetitionCount { throw UnimplementedError(); }
+  int get _repetitionCount { return 1; }
   Future<FrameInfo> getNextFrame() async {
     final Completer<FrameInfo> completer = Completer<FrameInfo>.sync();
     final String? error = _getNextFrame((_Image? image, int durationMilliseconds) {
@@ -680,8 +680,8 @@ class Codec {
     }
     return completer.future;
   }
-  String? _getNextFrame(void Function(_Image?, int) callback) { throw UnimplementedError(); }
-  void dispose() { throw UnimplementedError(); }
+  String? _getNextFrame(void Function(_Image?, int) callback) { return null; }
+  void dispose() {  }
 }
 Future<Codec> instantiateImageCodec(
   Uint8List list, {
@@ -778,501 +778,83 @@ abstract class EngineLayer {
   bool get debugDisposed;
 }
 
-class _PathMethods {
-  static const int moveTo = 0;
-  static const int relativeMoveTo = 1;
-  static const int lineTo = 2;
-  static const int relativeLineTo = 3;
-  static const int quadraticBezierTo = 4;
-  static const int relativeQuadraticBezierTo = 5;
-  static const int cubicTo = 6;
-  static const int relativeCubicTo = 7;
-  static const int conicTo = 8;
-  static const int relativeConicTo = 9;
-  static const int arcTo = 10;
-  static const int arcToPoint = 11;
-  static const int relativeArcToPoint = 12;
-  static const int addRect = 13;
-  static const int addOval = 14;
-  static const int addArc = 15;
-  static const int addPolygon = 16;
-  static const int addRRect = 17;
-  static const int addPath = 18;
-  static const int addPathWithMatrix = 19;
-  static const int extendWithPath = 20;
-  static const int extendWithPathAndMatrix = 21;
-  static const int close = 22;
-  static const int reset = 23;
-}
-class Path {
-  Path();
-  Path._();
-
-  PathFillType fillType = PathFillType.nonZero;
-  double _currentX = 0;
-  double _currentY = 0;
-  Uint8List _methods = Uint8List(10);
-  int _methodsLength = 0;
-  Float32List _data = Float32List(30);
-  int _dataLength = 0;
-  List<Object> _objects = <Object>[];
-  bool _isEmpty = true;
-  double _left = 0;
-  double _top = 0;
-  double _right = 0;
-  double _bottom = 0;
-
-  void _updateBounds(double x, double y) {
-    if (_isEmpty) {
-      _left = _right = x;
-      _top = _bottom = y;
-      _isEmpty = false;
-    } else {
-      if (x < _left) {
-        _left = x;
-      }
-      if (x > _right) {
-        _right = x;
-      }
-      if (y < _top) {
-        _top = y;
-      }
-      if (y > _bottom) {
-        _bottom = y;
-      }
-    }
-  }
-
-  void _updateBoundsFromCurrent() {
-    _updateBounds(_currentX, _currentY);
-  }
-
-  void _addObject(Object object) {
-    _objects.add(object);
-  }
-
-  void _addMethod(int methodId) {
-    if (_methodsLength >= _methods.length) {
-      final Uint8List newList = Uint8List(_methods.length * 2);
-      for (int i = 0; i < _methodsLength; i++) {
-        newList[i] = _methods[i];
-      }
-      _methods = newList;
-    }
-    _methods[_methodsLength] = methodId;
-    _methodsLength += 1;
-  }
-
-  void _ensureDataLength(int newLength) {
-    if (_data.length >= newLength) {
-      return;
-    }
-
-    final Float32List newList = Float32List(_data.length * 2);
-    for (int i = 0; i < _dataLength; i++) {
-      newList[i] = _data[i];
-    }
-    _data = newList;
-  }
-
-  void _addData2(double a, double b) {
-    _ensureDataLength(_dataLength + 2);
-    _data[_dataLength++] = a;
-    _data[_dataLength++] = b;
-  }
-
-  void _addData4(double a, double b, double c, double d) {
-    _ensureDataLength(_dataLength + 4);
-    _data[_dataLength++] = a;
-    _data[_dataLength++] = b;
-    _data[_dataLength++] = c;
-    _data[_dataLength++] = d;
-  }
-
-  void _addData5(double a, double b, double c, double d, double e) {
-    _ensureDataLength(_dataLength + 5);
-    _data[_dataLength++] = a;
-    _data[_dataLength++] = b;
-    _data[_dataLength++] = c;
-    _data[_dataLength++] = d;
-    _data[_dataLength++] = e;
-  }
-
-  void _addData6(double a, double b, double c, double d, double e, double f) {
-    _ensureDataLength(_dataLength + 6);
-    _data[_dataLength++] = a;
-    _data[_dataLength++] = b;
-    _data[_dataLength++] = c;
-    _data[_dataLength++] = d;
-    _data[_dataLength++] = e;
-    _data[_dataLength++] = f;
-  }
-
-  void _addData7(double a, double b, double c, double d, double e, double f, double g) {
-    _ensureDataLength(_dataLength + 7);
-    _data[_dataLength++] = a;
-    _data[_dataLength++] = b;
-    _data[_dataLength++] = c;
-    _data[_dataLength++] = d;
-    _data[_dataLength++] = e;
-    _data[_dataLength++] = f;
-    _data[_dataLength++] = g;
-  }
-
-  void _addData12(double a, double b, double c, double d, double e, double f,
-                  double g, double h, double i, double j, double k, double l) {
-    _ensureDataLength(_dataLength + 12);
-    _data[_dataLength++] = a;
-    _data[_dataLength++] = b;
-    _data[_dataLength++] = c;
-    _data[_dataLength++] = d;
-    _data[_dataLength++] = e;
-    _data[_dataLength++] = f;
-    _data[_dataLength++] = g;
-    _data[_dataLength++] = h;
-    _data[_dataLength++] = i;
-    _data[_dataLength++] = j;
-    _data[_dataLength++] = k;
-    _data[_dataLength++] = l;
-  }
-  factory Path.from(Path source) {
-    return source.shift(Offset.zero);
-  }
-  void moveTo(double x, double y) {
-    _addMethod(_PathMethods.moveTo);
-    _addData2(x, y);
-    _currentX = x;
-    _currentY = y;
-    _updateBoundsFromCurrent();
-  }
-  void relativeMoveTo(double dx, double dy) {
-    _addMethod(_PathMethods.relativeMoveTo);
-    _addData2(dx, dy);
-    _currentX += dx;
-    _currentY += dy;
-    _updateBoundsFromCurrent();
-  }
-  void lineTo(double x, double y) {
-    _addMethod(_PathMethods.lineTo);
-    _addData2(x, y);
-    _updateBoundsFromCurrent();
-    _currentX = x;
-    _currentY = y;
-    _updateBoundsFromCurrent();
-  }
-  void relativeLineTo(double dx, double dy) {
-    _addMethod(_PathMethods.relativeLineTo);
-    _addData2(dx, dy);
-    _updateBoundsFromCurrent();
-    _currentX += dx;
-    _currentY += dy;
-    _updateBoundsFromCurrent();
-  }
-  void quadraticBezierTo(double x1, double y1, double x2, double y2) {
-    _addMethod(_PathMethods.quadraticBezierTo);
-    _addData4(x1, y1, x2, y2);
-    _currentX = x1;
-    _currentY = y1;
-    _updateBoundsFromCurrent();
-    _currentX = x2;
-    _currentY = y2;
-    _updateBoundsFromCurrent();
-  }
-  void relativeQuadraticBezierTo(double x1, double y1, double x2, double y2) {
-    _addMethod(_PathMethods.relativeQuadraticBezierTo);
-    _addData4(x1, y1, x2, y2);
-    _currentX += x1;
-    _currentY += y1;
-    _updateBoundsFromCurrent();
-    _currentX += x2;
-    _currentY += y2;
-    _updateBoundsFromCurrent();
-  }
-  void cubicTo(double x1, double y1, double x2, double y2, double x3, double y3) {
-    _addMethod(_PathMethods.cubicTo);
-    _addData6(x1, y1, x2, y2, x3, y3);
-    _currentX = x1;
-    _currentY = y1;
-    _updateBoundsFromCurrent();
-    _currentX = x2;
-    _currentY = y2;
-    _updateBoundsFromCurrent();
-    _currentX = x3;
-    _currentY = y3;
-    _updateBoundsFromCurrent();
-  }
-  void relativeCubicTo(double x1, double y1, double x2, double y2, double x3, double y3) {
-    _addMethod(_PathMethods.relativeCubicTo);
-    _addData6(x1, y1, x2, y2, x3, y3);
-    _currentX += x1;
-    _currentY += y1;
-    _updateBoundsFromCurrent();
-    _currentX += x2;
-    _currentY += y2;
-    _updateBoundsFromCurrent();
-    _currentX += x3;
-    _currentY += y3;
-    _updateBoundsFromCurrent();
-  }
-  void conicTo(double x1, double y1, double x2, double y2, double w) {
-    _addMethod(_PathMethods.conicTo);
-    _addData5(x1, y1, x2, y2, w);
-    _currentX = x1;
-    _currentY = y1;
-    _updateBoundsFromCurrent();
-    _currentX = x2;
-    _currentY = y2;
-    _updateBoundsFromCurrent();
-  }
-  void relativeConicTo(double x1, double y1, double x2, double y2, double w) {
-    _addMethod(_PathMethods.relativeConicTo);
-    _addData5(x1, y1, x2, y2, w);
-    _currentX += x1;
-    _currentY += y1;
-    _updateBoundsFromCurrent();
-    _currentX += x2;
-    _currentY += y2;
-    _updateBoundsFromCurrent();
-  }
-  void arcTo(Rect rect, double startAngle, double sweepAngle, bool forceMoveTo) {
-    assert(_rectIsValid(rect));
-    _addMethod(_PathMethods.arcTo);
-    _addData7(rect.left, rect.top, rect.right, rect.bottom, startAngle, sweepAngle, forceMoveTo ? 1 : 0);
-    _currentX = rect.left;
-    _currentY = rect.top;
-    _updateBoundsFromCurrent();
-    _currentX = rect.right;
-    _currentY = rect.bottom;
-    _updateBoundsFromCurrent();
-  }
-  void arcToPoint(Offset arcEnd, {
+abstract class Path {
+  factory Path() => SurfacePath();
+  factory Path.from(Path source) => SurfacePath.from(source as SurfacePath);
+  PathFillType get fillType;
+  set fillType(PathFillType value);
+  void moveTo(double x, double y);
+  void relativeMoveTo(double dx, double dy);
+  void lineTo(double x, double y);
+  void relativeLineTo(double dx, double dy);
+  void quadraticBezierTo(double x1, double y1, double x2, double y2);
+  void relativeQuadraticBezierTo(double x1, double y1, double x2, double y2);
+  void cubicTo(double x1, double y1, double x2, double y2, double x3, double y3);
+  void relativeCubicTo(double x1, double y1, double x2, double y2, double x3, double y3);
+  void conicTo(double x1, double y1, double x2, double y2, double w);
+  void relativeConicTo(double x1, double y1, double x2, double y2, double w);
+  void arcTo(Rect rect, double startAngle, double sweepAngle, bool forceMoveTo);
+  void arcToPoint(
+    Offset arcEnd, {
     Radius radius = Radius.zero,
     double rotation = 0.0,
     bool largeArc = false,
     bool clockwise = true,
-  }) {
-    assert(_offsetIsValid(arcEnd));
-    assert(_radiusIsValid(radius));
-    _addMethod(_PathMethods.arcToPoint);
-    _addData7(arcEnd.dx, arcEnd.dy, radius.x, radius.y, rotation, largeArc ? 1 : 0, clockwise ? 1 : 0);
-    _updateBoundsFromCurrent();
-    _currentX = arcEnd.dx;
-    _currentY = arcEnd.dy;
-    _updateBoundsFromCurrent();
-  }
-  void relativeArcToPoint(Offset arcEndDelta, {
+  });
+  void relativeArcToPoint(
+    Offset arcEndDelta, {
     Radius radius = Radius.zero,
     double rotation = 0.0,
     bool largeArc = false,
     bool clockwise = true,
-  }) {
-    assert(_offsetIsValid(arcEndDelta));
-    assert(_radiusIsValid(radius));
-    _addMethod(_PathMethods.relativeArcToPoint);
-    _addData7(arcEndDelta.dx, arcEndDelta.dy, radius.x, radius.y, rotation, largeArc ? 1 : 0, clockwise ? 1 : 0);
-    _updateBoundsFromCurrent();
-    _currentX += arcEndDelta.dx;
-    _currentY += arcEndDelta.dy;
-    _updateBoundsFromCurrent();
-  }
-  void addRect(Rect rect) {
-    assert(_rectIsValid(rect));
-    _addMethod(_PathMethods.addRect);
-    _addData4(rect.left, rect.top, rect.right, rect.bottom);
-    _currentX = rect.left;
-    _currentY = rect.top;
-    _updateBoundsFromCurrent();
-    _currentX = rect.right;
-    _currentY = rect.bottom;
-    _updateBoundsFromCurrent();
-  }
-  void addOval(Rect oval) {
-    assert(_rectIsValid(oval));
-    _addMethod(_PathMethods.addOval);
-    _addData4(oval.left, oval.top, oval.right, oval.bottom);
-    _currentX = oval.left;
-    _currentY = oval.top;
-    _updateBoundsFromCurrent();
-    _currentX = oval.right;
-    _currentY = oval.bottom;
-    _updateBoundsFromCurrent();
-  }
-  void addArc(Rect oval, double startAngle, double sweepAngle) {
-    assert(_rectIsValid(oval));
-    _addMethod(_PathMethods.addArc);
-    _addData6(oval.left, oval.top, oval.right, oval.bottom, startAngle, sweepAngle);
-    _currentX = oval.left;
-    _currentY = oval.top;
-    _updateBoundsFromCurrent();
-    _currentX = oval.right;
-    _currentY = oval.bottom;
-    _updateBoundsFromCurrent();
-  }
-  void addPolygon(List<Offset> points, bool close) {
-    assert(points != null); // ignore: unnecessary_null_comparison
-    _addMethod(_PathMethods.addPolygon);
-    _ensureDataLength(_dataLength + points.length * 2);
-    for (final Offset point in points) {
-      _data[_dataLength++] = point.dx;
-      _data[_dataLength++] = point.dy;
-      _currentX = point.dx;
-      _currentY = point.dy;
-      _updateBoundsFromCurrent();
-    }
-  }
-  void addRRect(RRect rrect) {
-    assert(_rrectIsValid(rrect));
-    _addMethod(_PathMethods.addRRect);
-    _addData12(
-      rrect.left,
-      rrect.top,
-      rrect.right,
-      rrect.bottom,
-      rrect.tlRadiusX,
-      rrect.tlRadiusY,
-      rrect.trRadiusX,
-      rrect.trRadiusY,
-      rrect.brRadiusX,
-      rrect.brRadiusY,
-      rrect.blRadiusX,
-      rrect.blRadiusY,
-    );
-    _currentX = rrect.left;
-    _currentY = rrect.top;
-    _updateBoundsFromCurrent();
-    _currentX = rrect.right;
-    _currentY = rrect.bottom;
-    _updateBoundsFromCurrent();
-  }
-  void addPath(Path path, Offset offset, {Float64List? matrix4}) {
-    // ignore: unnecessary_null_comparison
-    assert(path != null); // path is checked on the engine side
-    assert(_offsetIsValid(offset));
-    if (matrix4 != null) {
-      assert(_matrix4IsValid(matrix4));
-      _addMethod(_PathMethods.addPathWithMatrix);
-      _addData2(offset.dx, offset.dy);
-      _addObject(path);
-      _addObject(matrix4);
-    } else {
-      _addMethod(_PathMethods.addPath);
-      _addData2(offset.dx, offset.dy);
-      _addObject(path);
-    }
-    final Rect otherBounds = path.getBounds();
-    _updateBounds(otherBounds.left, otherBounds.top);
-    _updateBounds(otherBounds.right, otherBounds.bottom);
-  }
-  void extendWithPath(Path path, Offset offset, {Float64List? matrix4}) {
-    // ignore: unnecessary_null_comparison
-    assert(path != null); // path is checked on the engine side
-    assert(_offsetIsValid(offset));
-    if (matrix4 != null) {
-      assert(_matrix4IsValid(matrix4));
-      _addMethod(_PathMethods.extendWithPathAndMatrix);
-      _addData2(offset.dx, offset.dy);
-      _addObject(path);
-      _addObject(matrix4);
-    } else {
-      _addMethod(_PathMethods.extendWithPath);
-      _addData2(offset.dx, offset.dy);
-      _addObject(path);
-    }
-    final Rect otherBounds = path.getBounds();
-    _updateBounds(otherBounds.left, otherBounds.top);
-    _updateBounds(otherBounds.right, otherBounds.bottom);
-  }
-  void close() {
-    _addMethod(_PathMethods.close);
-  }
-  void reset() {
-    _addMethod(_PathMethods.reset);
-  }
-  bool contains(Offset point) {
-    assert(_offsetIsValid(point));
-    return getBounds().contains(point);
-  }
-  Path shift(Offset offset) {
-    assert(_offsetIsValid(offset));
-    // This is a dummy implementation.
-    final Path shifted = Path._();
-    shifted._methods = Uint8List.fromList(_methods);
-    shifted._methodsLength = _methodsLength;
-    shifted._data = Float32List.fromList(_data);
-    shifted._dataLength = _dataLength;
-    shifted._objects = _objects.toList();
-    shifted._isEmpty = _isEmpty;
-    shifted._left = _left + offset.dx;
-    shifted._top = _top + offset.dy;
-    shifted._right = _right + offset.dx;
-    shifted._bottom = _bottom + offset.dy;
-    shifted._currentX = _currentX + offset.dx;
-    shifted._currentY = _currentY + offset.dy;
-    shifted.fillType = fillType;
-    return shifted;
-  }
-  Path transform(Float64List matrix4) {
-    assert(_matrix4IsValid(matrix4));
-    // This is a dummy implementation.
-    final double dx = matrix4[12];
-    final double dy = matrix4[13];
-    final Path transformed = Path._();
-    transformed._methods = Uint8List.fromList(_methods);
-    transformed._methodsLength = _methodsLength;
-    transformed._data = Float32List.fromList(_data);
-    transformed._dataLength = _dataLength;
-    transformed._objects = _objects.toList();
-    transformed._isEmpty = _isEmpty;
-    transformed._left = _left + dx;
-    transformed._top = _top + dy;
-    transformed._right = _right + dx;
-    transformed._bottom = _bottom + dy;
-    transformed._currentX = _currentX + dx;
-    transformed._currentY = _currentY + dy;
-    transformed.fillType = fillType;
-    return transformed;
-  }
+  });
+  void addRect(Rect rect);
+  void addOval(Rect oval);
+  void addArc(Rect oval, double startAngle, double sweepAngle);
+  void addPolygon(List<Offset> points, bool close);
+  void addRRect(RRect rrect);
+  void addPath(Path path, Offset offset, {Float64List? matrix4});
+  void extendWithPath(Path path, Offset offset, {Float64List? matrix4});
+  void close();
+  void reset();
+  bool contains(Offset point);
+  Path shift(Offset offset);
+  Path transform(Float64List matrix4);
   // see https://skia.org/user/api/SkPath_Reference#SkPath_getBounds
-  Rect getBounds() {
-    return Rect.fromLTRB(_left, _top, _right, _bottom);
-  }
+  Rect getBounds();
+
   static Path combine(PathOperation operation, Path path1, Path path2) {
-    assert(path1 != null); // ignore: unnecessary_null_comparison
-    assert(path2 != null); // ignore: unnecessary_null_comparison
-    // This is a dummy implementation
-    final Path combined = Path._();
-    combined._methods = Uint8List.fromList(<int>[
-      ...path1._methods,
-      ...path2._methods,
-    ]);
-    combined._methodsLength = path1._methodsLength + path2._methodsLength;
-    combined._data = Float32List.fromList(<double>[
-      ...path1._data,
-      ...path2._data,
-    ]);
-    combined._dataLength = path1._dataLength + path2._dataLength;
-    combined._objects = <Object>[
-      ...path1._objects,
-      ...path2._objects,
-    ];
-    combined._isEmpty = path1._isEmpty && path2._isEmpty;
-    combined._left = math.min(path1._left, path2._left);
-    combined._top = math.min(path1._top, path2._top);
-    combined._right = math.max(path1._right, path2._right);
-    combined._bottom = math.max(path1._bottom, path2._bottom);
-    combined._currentX = path2._currentX;
-    combined._currentY = path2._currentY;
-    combined.fillType = path1.fillType;
-    return combined;
+    throw UnimplementedError('combinePaths not implemented in flute.');
   }
-  PathMetrics computeMetrics({bool forceClosed = false}) {
-    return PathMetrics._(this, forceClosed);
-  }
+
+  PathMetrics computeMetrics({bool forceClosed = false});
 }
+
+abstract class PathMetrics extends collection.IterableBase<PathMetric> {
+  @override
+  Iterator<PathMetric> get iterator;
+}
+
+abstract class PathMetricIterator implements Iterator<PathMetric> {
+  @override
+  PathMetric get current;
+
+  @override
+  bool moveNext();
+}
+
+abstract class PathMetric {
+  double get length;
+  int get contourIndex;
+  Tangent? getTangentForOffset(double distance);
+  Path extractPath(double start, double end, {bool startWithMoveTo = true});
+  bool get isClosed;
+}
+
 class Tangent {
   const Tangent(this.position, this.vector)
-    : assert(position != null), // ignore: unnecessary_null_comparison
-      assert(vector != null); // ignore: unnecessary_null_comparison
+      : assert(position != null),
+        assert(vector != null);
   factory Tangent.fromAngle(Offset position, double angle) {
     return Tangent(position, Offset(math.cos(angle), math.sin(angle)));
   }
@@ -1281,121 +863,7 @@ class Tangent {
   // flip the sign to be consistent with [Path.arcTo]'s `sweepAngle`
   double get angle => -math.atan2(vector.dy, vector.dx);
 }
-class PathMetrics extends collection.IterableBase<PathMetric> {
-  PathMetrics._(Path path, bool forceClosed) :
-    _iterator = PathMetricIterator._(_PathMeasure(path, forceClosed));
 
-  final Iterator<PathMetric> _iterator;
-
-  @override
-  Iterator<PathMetric> get iterator => _iterator;
-}
-class PathMetricIterator implements Iterator<PathMetric> {
-  PathMetricIterator._(this._pathMeasure) : assert(_pathMeasure != null); // ignore: unnecessary_null_comparison
-
-  PathMetric? _pathMetric;
-  _PathMeasure _pathMeasure;
-
-  @override
-  PathMetric get current {
-    final PathMetric? currentMetric = _pathMetric;
-    if (currentMetric == null) {
-      throw RangeError(
-        'PathMetricIterator is not pointing to a PathMetric. This can happen in two situations:\n'
-        '- The iteration has not started yet. If so, call "moveNext" to start iteration. '
-        '- The iterator ran out of elements. If so, check that "moveNext" returns true prior to calling "current".'
-      );
-    }
-    return currentMetric;
-  }
-
-  @override
-  bool moveNext() {
-    if (_pathMeasure._nextContour()) {
-      _pathMetric = PathMetric._(_pathMeasure);
-      return true;
-    }
-    _pathMetric = null;
-    return false;
-  }
-}
-class PathMetric {
-  PathMetric._(this._measure)
-    : assert(_measure != null), // ignore: unnecessary_null_comparison
-      length = _measure.length(_measure.currentContourIndex),
-      isClosed = _measure.isClosed(_measure.currentContourIndex),
-      contourIndex = _measure.currentContourIndex;
-  final double length;
-  final bool isClosed;
-  final int contourIndex;
-
-  final _PathMeasure _measure;
-  Tangent? getTangentForOffset(double distance) {
-    return _measure.getTangentForOffset(contourIndex, distance);
-  }
-  Path extractPath(double start, double end, {bool startWithMoveTo = true}) {
-    return _measure.extractPath(contourIndex, start, end, startWithMoveTo: startWithMoveTo);
-  }
-
-  @override
-  String toString() => '$runtimeType{length: $length, isClosed: $isClosed, contourIndex:$contourIndex}';
-}
-
-class _PathMeasure {
-  _PathMeasure(Path path, bool forceClosed) {
-    _constructor(path, forceClosed);
-  }
-  void _constructor(Path path, bool forceClosed) { throw UnimplementedError(); }
-
-  double length(int contourIndex) {
-    assert(contourIndex <= currentContourIndex, 'Iterator must be advanced before index $contourIndex can be used.');
-    return _length(contourIndex);
-  }
-  double _length(int contourIndex) { throw UnimplementedError(); }
-
-  Tangent? getTangentForOffset(int contourIndex, double distance) {
-    assert(contourIndex <= currentContourIndex, 'Iterator must be advanced before index $contourIndex can be used.');
-    final Float32List posTan = _getPosTan(contourIndex, distance);
-    // first entry == 0 indicates that Skia returned false
-    if (posTan[0] == 0.0) {
-      return null;
-    } else {
-      return Tangent(
-        Offset(posTan[1], posTan[2]),
-        Offset(posTan[3], posTan[4])
-      );
-    }
-  }
-  Float32List _getPosTan(int contourIndex, double distance) { throw UnimplementedError(); }
-
-  Path extractPath(int contourIndex, double start, double end, {bool startWithMoveTo = true}) {
-    assert(contourIndex <= currentContourIndex, 'Iterator must be advanced before index $contourIndex can be used.');
-    final Path path = Path._();
-    _extractPath(path, contourIndex, start, end, startWithMoveTo: startWithMoveTo);
-    return path;
-  }
-  void _extractPath(Path outPath, int contourIndex, double start, double end, {bool startWithMoveTo = true}) { throw UnimplementedError(); }
-
-  bool isClosed(int contourIndex) {
-    assert(contourIndex <= currentContourIndex, 'Iterator must be advanced before index $contourIndex can be used.');
-    return _isClosed(contourIndex);
-  }
-  bool _isClosed(int contourIndex) { throw UnimplementedError(); }
-
-  // Move to the next contour in the path.
-  //
-  // A path can have a next contour if [Path.moveTo] was called after drawing began.
-  // Return true if one exists, or false.
-  bool _nextContour() {
-    final bool next = _nativeNextContour();
-    if (next) {
-      currentContourIndex++;
-    }
-    return next;
-  }
-  bool _nativeNextContour() { throw UnimplementedError(); }
-  int currentContourIndex = -1;
-}
 // These enum values must be kept in sync with SkBlurStyle.
 enum BlurStyle {
   // These mirror SkBlurStyle and must be kept in sync.
@@ -1566,11 +1034,11 @@ class _ColorFilter {
   }
   final ColorFilter creator;
 
-  void _constructor() { throw UnimplementedError(); }
-  void _initMode(int color, int blendMode) { throw UnimplementedError(); }
-  void _initMatrix(Float32List matrix) { throw UnimplementedError(); }
-  void _initLinearToSrgbGamma() { throw UnimplementedError(); }
-  void _initSrgbToLinearGamma() { throw UnimplementedError(); }
+  void _constructor() {  }
+  void _initMode(int color, int blendMode) {  }
+  void _initMatrix(Float32List matrix) {  }
+  void _initLinearToSrgbGamma() {  }
+  void _initSrgbToLinearGamma() {  }
 }
 abstract class ImageFilter {
   factory ImageFilter.blur({ double sigmaX = 0.0, double sigmaY = 0.0, TileMode tileMode = TileMode.clamp }) {
@@ -1702,14 +1170,14 @@ class _ComposeImageFilter implements ImageFilter {
   int get hashCode => hashValues(innerFilter, outerFilter);
 }
 class _ImageFilter {
-  void _constructor() { throw UnimplementedError(); }
+  void _constructor() {  }
   _ImageFilter.blur(_GaussianBlurImageFilter filter)
     : assert(filter != null), // ignore: unnecessary_null_comparison
       creator = filter {    // ignore: prefer_initializing_formals
     _constructor();
     _initBlur(filter.sigmaX, filter.sigmaY, filter.tileMode.index);
   }
-  void _initBlur(double sigmaX, double sigmaY, int tileMode) { throw UnimplementedError(); }
+  void _initBlur(double sigmaX, double sigmaY, int tileMode) {  }
   _ImageFilter.matrix(_MatrixImageFilter filter)
     : assert(filter != null), // ignore: unnecessary_null_comparison
       creator = filter {    // ignore: prefer_initializing_formals
@@ -1718,7 +1186,7 @@ class _ImageFilter {
     _constructor();
     _initMatrix(filter.data, filter.filterQuality.index);
   }
-  void _initMatrix(Float64List matrix4, int filterQuality) { throw UnimplementedError(); }
+  void _initMatrix(Float64List matrix4, int filterQuality) {  }
   _ImageFilter.fromColorFilter(ColorFilter filter)
     : assert(filter != null), // ignore: unnecessary_null_comparison
       creator = filter {    // ignore: prefer_initializing_formals
@@ -1726,7 +1194,7 @@ class _ImageFilter {
     final _ColorFilter? nativeFilter = filter._toNativeColorFilter();
     _initColorFilter(nativeFilter);
   }
-  void _initColorFilter(_ColorFilter? colorFilter) { throw UnimplementedError(); }
+  void _initColorFilter(_ColorFilter? colorFilter) {  }
   _ImageFilter.composed(_ComposeImageFilter filter)
     : assert(filter != null), // ignore: unnecessary_null_comparison
       creator = filter {    // ignore: prefer_initializing_formals
@@ -1735,7 +1203,7 @@ class _ImageFilter {
     final _ImageFilter nativeFilterOuter = filter.outerFilter._toNativeImageFilter();
     _initComposed(nativeFilterOuter,  nativeFilterInner);
   }
-  void _initComposed(_ImageFilter outerFilter, _ImageFilter innerFilter) { throw UnimplementedError(); }
+  void _initComposed(_ImageFilter outerFilter, _ImageFilter innerFilter) {  }
   final ImageFilter creator;
 }
 class Shader {
@@ -1804,7 +1272,7 @@ Float32List _encodeTwoPoints(Offset pointA, Offset pointB) {
 }
 class Gradient extends Shader {
 
-  void _constructor() { throw UnimplementedError(); }
+  void _constructor() {}
   Gradient.linear(
     Offset from,
     Offset to,
@@ -1825,7 +1293,7 @@ class Gradient extends Shader {
     _constructor();
     _initLinear(endPointsBuffer, colorsBuffer, colorStopsBuffer, tileMode.index, matrix4);
   }
-  void _initLinear(Float32List endPoints, Int32List colors, Float32List? colorStops, int tileMode, Float64List? matrix4) { throw UnimplementedError(); }
+  void _initLinear(Float32List endPoints, Int32List colors, Float32List? colorStops, int tileMode, Float64List? matrix4) {}
   Gradient.radial(
     Offset center,
     double radius,
@@ -1855,8 +1323,8 @@ class Gradient extends Shader {
       _initConical(focal.dx, focal.dy, focalRadius, center.dx, center.dy, radius, colorsBuffer, colorStopsBuffer, tileMode.index, matrix4);
     }
   }
-  void _initRadial(double centerX, double centerY, double radius, Int32List colors, Float32List? colorStops, int tileMode, Float64List? matrix4) { throw UnimplementedError(); }
-  void _initConical(double startX, double startY, double startRadius, double endX, double endY, double endRadius, Int32List colors, Float32List? colorStops, int tileMode, Float64List? matrix4) { throw UnimplementedError(); }
+  void _initRadial(double centerX, double centerY, double radius, Int32List colors, Float32List? colorStops, int tileMode, Float64List? matrix4) {  }
+  void _initConical(double startX, double startY, double startRadius, double endX, double endY, double endRadius, Int32List colors, Float32List? colorStops, int tileMode, Float64List? matrix4) {  }
   Gradient.sweep(
     Offset center,
     List<Color> colors, [
@@ -1879,7 +1347,7 @@ class Gradient extends Shader {
     _constructor();
     _initSweep(center.dx, center.dy, colorsBuffer, colorStopsBuffer, tileMode.index, startAngle, endAngle, matrix4);
   }
-  void _initSweep(double centerX, double centerY, Int32List colors, Float32List? colorStops, int tileMode, double startAngle, double endAngle, Float64List? matrix) { throw UnimplementedError(); }
+  void _initSweep(double centerX, double centerY, Int32List colors, Float32List? colorStops, int tileMode, double startAngle, double endAngle, Float64List? matrix) {  }
 
   static void _validateColorStops(List<Color> colors, List<double>? colorStops) {
     if (colorStops == null) {
@@ -1904,8 +1372,8 @@ class ImageShader extends Shader {
     _constructor();
     _initWithImage(image._image, tmx.index, tmy.index, matrix4);
   }
-  void _constructor() { throw UnimplementedError(); }
-  void _initWithImage(_Image image, int tmx, int tmy, Float64List matrix4) { throw UnimplementedError(); }
+  void _constructor() {  }
+  void _initWithImage(_Image image, int tmx, int tmy, Float64List matrix4) {  }
 }
 // These enum values must be kept in sync with SkVertices::VertexMode.
 enum VertexMode {
@@ -1967,7 +1435,7 @@ class Vertices {
              Float32List positions,
              Float32List? textureCoordinates,
              Int32List? colors,
-             Uint16List? indices) { throw UnimplementedError(); }
+             Uint16List? indices) { return true; }
 }
 // ignore: deprecated_member_use
 // These enum values must be kept in sync with SkCanvas::PointMode.
@@ -2684,9 +2152,9 @@ class ImmutableBuffer {
     throw UnsupportedError('ImmutableBuffer.fromFilePath is not supported in flute.');
   }
 
-  void _init(Uint8List list, _Callback<void> callback) { throw UnimplementedError(); }
+  void _init(Uint8List list, _Callback<void> callback) {  }
   final int length;
-  void dispose() { throw UnimplementedError(); }
+  void dispose() {  }
 }
 class ImageDescriptor {
   ImageDescriptor._();
@@ -2696,7 +2164,7 @@ class ImageDescriptor {
       return descriptor._initEncoded(buffer, callback);
     }).then((_) => descriptor);
   }
-  String? _initEncoded(ImmutableBuffer buffer, _Callback<void> callback) { throw UnimplementedError(); }
+  String? _initEncoded(ImmutableBuffer buffer, _Callback<void> callback) { return null; }
   // Not async because there's no expensive work to do here.
   ImageDescriptor.raw(
     ImmutableBuffer buffer, {
@@ -2711,20 +2179,20 @@ class ImageDescriptor {
     _bytesPerPixel = 4;
     _initRaw(this, buffer, width, height, rowBytes ?? -1, pixelFormat.index);
   }
-  void _initRaw(ImageDescriptor outDescriptor, ImmutableBuffer buffer, int width, int height, int rowBytes, int pixelFormat) { throw UnimplementedError(); }
+  void _initRaw(ImageDescriptor outDescriptor, ImmutableBuffer buffer, int width, int height, int rowBytes, int pixelFormat) {  }
 
   int? _width;
-  int _getWidth() { throw UnimplementedError(); }
+  int _getWidth() { return 100; }
   int get width => _width ??= _getWidth();
 
   int? _height;
-  int _getHeight() { throw UnimplementedError(); }
+  int _getHeight() { return 50; }
   int get height => _height ??= _getHeight();
 
   int? _bytesPerPixel;
-  int _getBytesPerPixel() { throw UnimplementedError(); }
+  int _getBytesPerPixel() { return 4; }
   int get bytesPerPixel => _bytesPerPixel ??= _getBytesPerPixel();
-  void dispose() { throw UnimplementedError(); }
+  void dispose() {  }
   Future<Codec> instantiateCodec({int? targetWidth, int? targetHeight}) async {
     if (targetWidth != null && targetWidth <= 0) {
       targetWidth = null;
@@ -2750,7 +2218,7 @@ class ImageDescriptor {
     _instantiateCodec(codec, targetWidth!, targetHeight!);
     return codec;
   }
-  void _instantiateCodec(Codec outCodec, int targetWidth, int targetHeight) { throw UnimplementedError(); }
+  void _instantiateCodec(Codec outCodec, int targetWidth, int targetHeight) {  }
 }
 typedef _Callback<T> = void Function(T result);
 typedef _Callbacker<T> = String? Function(_Callback<T> callback);

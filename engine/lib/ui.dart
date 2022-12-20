@@ -26,6 +26,16 @@ part 'src/pointer.dart';
 part 'src/semantics.dart';
 part 'src/text.dart';
 part 'src/window.dart';
+part 'src/path/conic.dart';
+part 'src/path/cubic.dart';
+part 'src/path/path_iterator.dart';
+part 'src/path/path_metrics.dart';
+part 'src/path/path_ref.dart';
+part 'src/path/path_to_svg.dart';
+part 'src/path/path_utils.dart';
+part 'src/path/path_windings.dart';
+part 'src/path/path.dart';
+part 'src/path/tangent.dart';
 
 double _screenWidth = 1024;
 double _screenHeight = 1024;
