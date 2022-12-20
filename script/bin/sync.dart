@@ -38,6 +38,7 @@ Future<void> _sync(Directory flutterLib, Directory fluteLib) async {
 
     String source = file.readAsStringSync();
     source = source.replaceAll("'package:flutter/", "'package:flute/");
+    source = source.replaceAll('exception is NullThrownError', 'false');
     if (relPath == r'src\material\dialog.dart' ||
         relPath == r'src\material\navigation_rail.dart' ||
         relPath == r'src\material\switch.dart' ||
