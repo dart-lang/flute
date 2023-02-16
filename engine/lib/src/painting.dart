@@ -1360,7 +1360,8 @@ class Gradient extends Shader {
   }
 }
 class ImageShader extends Shader {
-    ImageShader(Image image, TileMode tmx, TileMode tmy, Float64List matrix4) :
+    // ignore: avoid_unused_constructor_parameters
+    ImageShader(Image image, TileMode tmx, TileMode tmy, Float64List matrix4, { FilterQuality? filterQuality }) :
     // ignore: unnecessary_null_comparison
     assert(image != null), // image is checked on the engine side
     assert(tmx != null), // ignore: unnecessary_null_comparison
@@ -2152,7 +2153,12 @@ class ImmutableBuffer {
     throw UnsupportedError('ImmutableBuffer.fromFilePath is not supported in flute.');
   }
 
-  void _init(Uint8List list, _Callback<void> callback) {  }
+  void _init(Uint8List list, _Callback<void> callback) {
+    _list = Uint8List.fromList(list);
+  }
+
+  Uint8List? _list;
+
   final int length;
   void dispose() {  }
 }
@@ -2314,4 +2320,84 @@ Future<Codec> instantiateImageCodecFromBuffer(
     targetWidth: targetWidth,
     targetHeight: targetHeight,
   );
+}
+
+
+Future<Codec> instantiateImageCodecWithSize(
+  ImmutableBuffer buffer, {
+  TargetImageSizeCallback? getTargetSize,
+}) async {
+  if (getTargetSize == null) {
+    return instantiateImageCodec(buffer._list!);
+  } else {
+    final Codec codec = await instantiateImageCodec(buffer._list!);
+    try {
+      final FrameInfo info = await codec.getNextFrame();
+      try {
+        final int width = info.image.width;
+        final int height = info.image.height;
+        final TargetImageSize targetSize = getTargetSize(width, height);
+        return instantiateImageCodec(buffer._list!,
+            targetWidth: targetSize.width, targetHeight: targetSize.height, allowUpscaling: false);
+      } finally {
+        info.image.dispose();
+      }
+    } finally {
+      codec.dispose();
+    }
+  }
+}
+
+/// Signature for a callback that determines the size to which an image should
+/// be decoded given its intrinsic size.
+///
+/// See also:
+///
+///  * [instantiateImageCodecWithSize], which used this signature for its
+///    `getTargetSize` argument.
+typedef TargetImageSizeCallback = TargetImageSize Function(
+  int intrinsicWidth,
+  int intrinsicHeight,
+);
+
+/// A specification of the size to which an image should be decoded.
+///
+/// See also:
+///
+///  * [TargetImageSizeCallback], a callback that returns instances of this
+///    class when consulted by image decoding methods such as
+///    [instantiateImageCodecWithSize].
+class TargetImageSize {
+  /// Creates a new instance of this class.
+  ///
+  /// The `width` and `height` may both be null, but if they're non-null, they
+  /// must be positive.
+  const TargetImageSize({this.width, this.height})
+      : assert(width == null || width > 0),
+        assert(height == null || height > 0);
+
+  /// The width into which to load the image.
+  ///
+  /// If this is non-null, the image will be decoded into the specified width.
+  /// If this is null and [height] is also null, the image will be decoded into
+  /// its intrinsic size. If this is null and [height] is non-null, the image
+  /// will be decoded into a width that maintains its intrinsic aspect ratio
+  /// while respecting the [height] value.
+  ///
+  /// If this value is non-null, it must be positive.
+  final int? width;
+
+  /// The height into which to load the image.
+  ///
+  /// If this is non-null, the image will be decoded into the specified height.
+  /// If this is null and [width] is also null, the image will be decoded into
+  /// its intrinsic size. If this is null and [width] is non-null, the image
+  /// will be decoded into a height that maintains its intrinsic aspect ratio
+  /// while respecting the [width] value.
+  ///
+  /// If this value is non-null, it must be positive.
+  final int? height;
+
+  @override
+  String toString() => 'TargetImageSize($width x $height)';
 }

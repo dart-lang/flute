@@ -24,6 +24,20 @@ double _clampDouble(double x, double min, double max) {
   return x;
 }
 
+double clampDouble(double x, double min, double max) {
+  assert(min <= max && !max.isNaN && !min.isNaN);
+  if (x < min) {
+    return min;
+  }
+  if (x > max) {
+    return max;
+  }
+  if (x.isNaN) {
+    return max;
+  }
+  return x;
+}
+
 Float32List _toMatrix32(Float64List matrix64) {
   final Float32List matrix32 = Float32List(16);
   matrix32[15] = matrix64[15];

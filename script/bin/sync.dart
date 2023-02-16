@@ -1,3 +1,5 @@
+import 'dart:io' as io;
+
 import 'package:file/file.dart';
 import 'package:file/local.dart';
 import 'package:path/path.dart' as p;
@@ -39,18 +41,27 @@ Future<void> _sync(Directory flutterLib, Directory fluteLib) async {
     String source = file.readAsStringSync();
     source = source.replaceAll("'package:flutter/", "'package:flute/");
     source = source.replaceAll('exception is NullThrownError', 'false');
-    if (relPath == r'src\material\dialog.dart' ||
-        relPath == r'src\material\navigation_rail.dart' ||
-        relPath == r'src\material\switch.dart' ||
-        relPath == r'src\widgets\icon.dart') {
+    if (relPath == p.join('src', 'material', 'dialog.dart') ||
+        relPath == p.join('src', 'material', 'navigation_rail.dart') ||
+        relPath == p.join('src', 'material', 'switch.dart') ||
+        relPath == p.join('src', 'widgets', 'icon.dart') ||
+        relPath == p.join('src', 'material', 'time_picker.dart') ||
+        relPath == p.join('src', 'material', 'time_picker_theme.dart')) {
       source = source.replaceAll("'dart:ui'", "'package:engine/ui.dart' hide TextStyle");
     } else {
       source = source.replaceAll("'dart:ui'", "'package:engine/ui.dart'");
     }
 
-    if (relPath != r'src\foundation\bitfield.dart' &&
-        relPath != r'src\foundation\platform.dart' &&
-        relPath != r'src\services\platform_channel.dart') {
+    if (relPath == p.join('src', 'foundation', 'math.dart')) {
+      source = source.split('\n').where((String line) {
+        return line.trim().isEmpty || line.trim().startsWith('//');
+      }).join('\n');
+      source += "\nexport 'package:engine/ui.dart' show clampDouble;";
+    }
+
+    if (relPath != p.join('src', 'foundation', 'bitfield.dart') &&
+        relPath != p.join('src', 'foundation', 'platform.dart') &&
+        relPath != p.join('src', 'services', 'platform_channel.dart')) {
       source = source.split('\n').map<String>((String line) {
         final int indexOfConditionalImport = line.indexOf(r'if (dart.library');
         if (indexOfConditionalImport == -1) {
@@ -67,7 +78,7 @@ Future<void> _sync(Directory flutterLib, Directory fluteLib) async {
       }).join('\n');
     }
 
-    if (relPath == r'src\foundation\_platform_web.dart') {
+    if (relPath == p.join('src', 'foundation', '_platform_web.dart')) {
       source = source.replaceAll('if (ui.debugEmulateFlutterTesterEnvironment as bool)', 'if (true)');
     }
 
@@ -90,7 +101,9 @@ Future<void> _sync(Directory flutterLib, Directory fluteLib) async {
 }
 
 Future<Directory> _findFlutterRepo() async {
-  final String where = (await pm.run(<String>['where', 'flutter'])).stdout as String;
+  final String whereOrWhich = io.Platform.operatingSystem == 'window'
+    ? 'where' : 'which';
+  final String where = (await pm.run(<String>[whereOrWhich, 'flutter'])).stdout as String;
   final String pathToFlutterBin = where.split('\n').first;
   final Directory bin = fs.directory(p.dirname(pathToFlutterBin));
   return bin.parent;
