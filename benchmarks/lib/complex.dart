@@ -10,7 +10,9 @@ const int maxDepth = 6;
 final math.Random random = math.Random(0);
 
 void main() {
-  ui.setScreenSize(3840, 2160);  // 4k
+  ui.initializeEngine(
+    screenSize: const Size(3840, 2160),  // 4k
+  );
   runApp(MyApp());
 }
 

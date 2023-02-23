@@ -1,6 +1,10 @@
+import 'package:engine/ui.dart' as ui;
 import 'package:flute/material.dart';
 
 void main() {
+  ui.initializeEngine(
+    screenSize: const Size(3840, 2160),  // 4k
+  );
   runApp(MyApp());
 }
 

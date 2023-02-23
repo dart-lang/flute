@@ -8,6 +8,9 @@ import 'dart:isolate' show SendPort;
 import 'dart:math' as math;
 import 'dart:typed_data';
 
+import 'src/initialization_io.dart'
+  if (dart.library.js_util) 'src/initialization_web.dart' as initialization;
+
 part 'src/annotations.dart';
 part 'src/channel_buffers.dart';
 part 'src/compositing.dart';
@@ -40,7 +43,12 @@ part 'src/path/tangent.dart';
 double _screenWidth = 1024;
 double _screenHeight = 1024;
 
-void setScreenSize(double width, double height) {
-  _screenWidth = width;
-  _screenHeight = height;
+Future<void> initializeEngine({
+  Size? screenSize,
+}) async {
+  if (screenSize != null) {
+    _screenWidth = screenSize.width;
+    _screenHeight = screenSize.height;
+  }
+  await initialization.initializeEngine();
 }

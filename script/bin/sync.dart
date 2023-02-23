@@ -80,6 +80,7 @@ Future<void> _sync(Directory flutterLib, Directory fluteLib) async {
 
     if (relPath == p.join('src', 'foundation', '_platform_web.dart')) {
       source = source.replaceAll('if (ui.debugEmulateFlutterTesterEnvironment as bool)', 'if (true)');
+      source = source.replaceAll('domWindow.navigator.platform?.toLowerCase()', '"android"');
     }
 
     bool skip = false;
