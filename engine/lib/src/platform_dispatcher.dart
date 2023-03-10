@@ -122,11 +122,14 @@ class PlatformDispatcher {
   /// the application.
   ///
   /// If any of their configurations change, [onMetricsChanged] will be called.
-  Iterable<FlutterView> get views => _views.values;
-  Map<Object, FlutterView> _views = <Object, FlutterView>{};
+  Iterable<FlutterView> get views => viewData.values;
+  Map<Object, FlutterView> viewData = <Object, FlutterView>{};
 
-  // A map of opaque platform view identifiers to view configurations.
-  Map<Object, ViewConfiguration> _viewConfigurations = <Object, ViewConfiguration>{};
+  Map<Object, ViewConfiguration> get windowConfigurations => _windowConfigurations;
+  final Map<Object, ViewConfiguration> _windowConfigurations =
+      <Object, ViewConfiguration>{};
+
+  FlutterView? get implicitView => viewData[kImplicitViewId];
 
   /// A callback that is invoked whenever the [ViewConfiguration] of any of the
   /// [views] changes.
@@ -181,33 +184,33 @@ class PlatformDispatcher {
     List<int> displayFeaturesState,
   ) {
     final ViewConfiguration previousConfiguration =
-        _viewConfigurations[id] ?? const ViewConfiguration();
-    if (!_views.containsKey(id)) {
-      _views[id] = FlutterWindow._(id, this);
+        _windowConfigurations[id] ?? const ViewConfiguration();
+    if (!viewData.containsKey(id)) {
+      viewData[id] = FlutterView._(id, this);
     }
-    _viewConfigurations[id] = previousConfiguration.copyWith(
-      window: _views[id],
+    _windowConfigurations[id] = previousConfiguration.copyWith(
+      window: viewData[id],
       devicePixelRatio: devicePixelRatio,
       geometry: Rect.fromLTWH(0.0, 0.0, width, height),
-      viewPadding: WindowPadding._(
+      viewPadding: ViewPadding._(
         top: viewPaddingTop,
         right: viewPaddingRight,
         bottom: viewPaddingBottom,
         left: viewPaddingLeft,
       ),
-      viewInsets: WindowPadding._(
+      viewInsets: ViewPadding._(
         top: viewInsetTop,
         right: viewInsetRight,
         bottom: viewInsetBottom,
         left: viewInsetLeft,
       ),
-      padding: WindowPadding._(
+      padding: ViewPadding._(
         top: math.max(0.0, viewPaddingTop - viewInsetTop),
         right: math.max(0.0, viewPaddingRight - viewInsetRight),
         bottom: math.max(0.0, viewPaddingBottom - viewInsetBottom),
         left: math.max(0.0, viewPaddingLeft - viewInsetLeft),
       ),
-      systemGestureInsets: WindowPadding._(
+      systemGestureInsets: ViewPadding._(
         top: math.max(0.0, systemGestureInsetTop),
         right: math.max(0.0, systemGestureInsetRight),
         bottom: math.max(0.0, systemGestureInsetBottom),
@@ -1019,10 +1022,10 @@ class ViewConfiguration {
     this.devicePixelRatio = 1.0,
     this.geometry = Rect.zero,
     this.visible = false,
-    this.viewInsets = WindowPadding.zero,
-    this.viewPadding = WindowPadding.zero,
-    this.systemGestureInsets = WindowPadding.zero,
-    this.padding = WindowPadding.zero,
+    this.viewInsets = ViewPadding.zero,
+    this.viewPadding = ViewPadding.zero,
+    this.systemGestureInsets = ViewPadding.zero,
+    this.padding = ViewPadding.zero,
     this.gestureSettings = const GestureSettings(),
     this.displayFeatures = const <DisplayFeature>[],
   });
@@ -1032,10 +1035,10 @@ class ViewConfiguration {
     double? devicePixelRatio,
     Rect? geometry,
     bool? visible,
-    WindowPadding? viewInsets,
-    WindowPadding? viewPadding,
-    WindowPadding? systemGestureInsets,
-    WindowPadding? padding,
+    ViewPadding? viewInsets,
+    ViewPadding? viewPadding,
+    ViewPadding? systemGestureInsets,
+    ViewPadding? padding,
     GestureSettings? gestureSettings,
     List<DisplayFeature>? displayFeatures,
   }) {
@@ -1057,10 +1060,10 @@ class ViewConfiguration {
   final double devicePixelRatio;
   final Rect geometry;
   final bool visible;
-  final WindowPadding viewInsets;
-  final WindowPadding viewPadding;
-  final WindowPadding systemGestureInsets;
-  final WindowPadding padding;
+  final ViewPadding viewInsets;
+  final ViewPadding viewPadding;
+  final ViewPadding systemGestureInsets;
+  final ViewPadding padding;
   final GestureSettings gestureSettings;
   final List<DisplayFeature> displayFeatures;
 
@@ -1250,43 +1253,25 @@ enum AppLifecycleState {
   detached,
 }
 
-/// A representation of distances for each of the four edges of a rectangle,
-/// used to encode the view insets and padding that applications should place
-/// around their user interface, as exposed by [FlutterView.viewInsets] and
-/// [FlutterView.padding]. View insets and padding are preferably read via
-/// [MediaQuery.of].
-///
-/// For a generic class that represents distances around a rectangle, see the
-/// [EdgeInsets] class.
-///
-/// See also:
-///
-///  * [WidgetsBindingObserver], for a widgets layer mechanism to receive
-///    notifications when the padding changes.
-///  * [MediaQuery.of], for the preferred mechanism for accessing these values.
-///  * [Scaffold], which automatically applies the padding in material design
-///    applications.
-class WindowPadding {
-  const WindowPadding._({ required this.left, required this.top, required this.right, required this.bottom });
+@Deprecated(
+  'Use ViewPadding instead. '
+  'This feature was deprecated after v3.8.0-14.0.pre.',
+)
+typedef WindowPadding = ViewPadding;
 
-  /// The distance from the left edge to the first unpadded pixel, in physical pixels.
+class ViewPadding {
+  const ViewPadding._({ required this.left, required this.top, required this.right, required this.bottom });
+
   final double left;
-
-  /// The distance from the top edge to the first unpadded pixel, in physical pixels.
   final double top;
-
-  /// The distance from the right edge to the first unpadded pixel, in physical pixels.
   final double right;
-
-  /// The distance from the bottom edge to the first unpadded pixel, in physical pixels.
   final double bottom;
 
-  /// A window padding that has zeros for each edge.
-  static const WindowPadding zero = WindowPadding._(left: 0.0, top: 0.0, right: 0.0, bottom: 0.0);
+  static const ViewPadding zero = ViewPadding._(left: 0.0, top: 0.0, right: 0.0, bottom: 0.0);
 
   @override
   String toString() {
-    return 'WindowPadding(left: $left, top: $top, right: $right, bottom: $bottom)';
+    return 'ViewPadding(left: $left, top: $top, right: $right, bottom: $bottom)';
   }
 }
 
