@@ -16,7 +16,7 @@ const int maxDepth = 6;
 final math.Random random = math.Random(0);
 
 void main(List<String> args) {
-  initializeBenchmarkHarness('Complex', args);
+  initializeBenchmarkHarness('FluteComplex', args);
   ui.initializeEngine(
     screenSize: const Size(3840, 2160),  // 4k
   );

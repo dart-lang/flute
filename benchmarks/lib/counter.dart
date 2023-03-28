@@ -8,7 +8,7 @@ import 'package:flute/material.dart';
 import 'harness.dart';
 
 void main(List<String> args) {
-  initializeBenchmarkHarness('Counter', args);
+  initializeBenchmarkHarness('FluteCounter', args);
   ui.initializeEngine(
     screenSize: const Size(3840, 2160),  // 4k
   );
