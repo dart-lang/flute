@@ -546,8 +546,16 @@ class PlatformDispatcher {
 
   Timer? _frameTimer;
   Duration _frameTime = Duration.zero;
+  bool _continue = true;
 
   static int _frameCount = 1;
+
+  // Frame callback function that can be injected by the benchmark harness.
+  static bool Function(int, double, double) frameCallback =
+      (int frameCount, double buildTime, double drawTime) {
+    print('Frame #$frameCount: build $buildTime ms; draw $drawTime ms');
+    return true;
+  };
 
   /// Requests that, at the next appropriate opportunity, the [onBeginFrame] and
   /// [onDrawFrame] callbacks be invoked.
@@ -560,7 +568,9 @@ class PlatformDispatcher {
     _frameTimer ??= Timer(
       const Duration(milliseconds: 16),
       () {
-        _frameTimer = null;
+        if (_continue) {
+          _frameTimer = null;
+        }
         final int microseconds = _frameTime.inMicroseconds;
         _frameTime += const Duration(milliseconds: 16);
         Timer.run(() {
@@ -571,7 +581,10 @@ class PlatformDispatcher {
             final Stopwatch drawSw = Stopwatch()..start();
             _drawFrame();
             drawSw.stop();
-            print('Frame #$_frameCount: build ${beginSw.elapsedMicroseconds / 1000} ms; draw ${drawSw.elapsedMicroseconds / 1000} ms');
+            _continue = frameCallback(
+                _frameCount,
+                beginSw.elapsedMicroseconds / 1000,
+                drawSw.elapsedMicroseconds / 1000);
             _frameCount += 1;
           });
         });

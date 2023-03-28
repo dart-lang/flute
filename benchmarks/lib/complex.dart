@@ -1,3 +1,7 @@
+// Copyright 2023 The Flutter Authors. All rights reserved.
+// Use of this source code is governed by a BSD-style license that can be
+// found in the LICENSE file.
+
 // @dart=2.12
 
 import 'dart:math' as math;
@@ -6,10 +10,13 @@ import 'package:engine/ui.dart' as ui;
 import 'package:flute/cupertino.dart';
 import 'package:flute/material.dart';
 
+import 'harness.dart';
+
 const int maxDepth = 6;
 final math.Random random = math.Random(0);
 
-void main() {
+void main(List<String> args) {
+  initializeBenchmarkHarness('Complex', args);
   ui.initializeEngine(
     screenSize: const Size(3840, 2160),  // 4k
   );

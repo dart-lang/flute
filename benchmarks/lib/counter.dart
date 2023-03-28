@@ -1,7 +1,14 @@
+// Copyright 2023 The Flutter Authors. All rights reserved.
+// Use of this source code is governed by a BSD-style license that can be
+// found in the LICENSE file.
+
 import 'package:engine/ui.dart' as ui;
 import 'package:flute/material.dart';
 
-void main() {
+import 'harness.dart';
+
+void main(List<String> args) {
+  initializeBenchmarkHarness('Counter', args);
   ui.initializeEngine(
     screenSize: const Size(3840, 2160),  // 4k
   );
