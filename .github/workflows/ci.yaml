@@ -30,6 +30,7 @@ jobs:
           (cd engine && dart pub get)
           (cd framework && dart pub get)
           (cd benchmarks && dart pub get)
+          (cd script && dart pub get)
       - name: Analyze
         run: |
           dart analyze --fatal-infos --fatal-warnings

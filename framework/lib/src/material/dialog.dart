@@ -4,7 +4,6 @@
 
 import 'package:engine/ui.dart' hide TextStyle;
 
-import 'package:flute/foundation.dart' show clampDouble;
 import 'package:flute/widgets.dart';
 
 import 'color_scheme.dart';

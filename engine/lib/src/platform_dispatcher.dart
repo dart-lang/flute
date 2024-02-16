@@ -1647,7 +1647,7 @@ class RootIsolateToken {
   int _token;
 
   @override
-  bool operator==(Object? other) => other is RootIsolateToken && _token == other._token;
+  bool operator==(Object other) => other is RootIsolateToken && _token == other._token;
 
   @override
   int get hashCode => _token;
