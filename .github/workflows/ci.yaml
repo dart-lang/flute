@@ -8,7 +8,11 @@ on:
 
 jobs:
   Main:
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest]
+        sdk: [beta, dev]
     steps:
       - name: Job info
         run: |
@@ -20,11 +24,13 @@ jobs:
       - name: Install Dart SDK
         uses: dart-lang/setup-dart@b64355ae6ca0b5d484f0106a033dd1388965d06d
         with:
-          sdk: 2.15.0-268.18.beta
+          sdk: ${{ matrix.sdk }}
       - name: Pub get
         run: |
           (cd engine && dart pub get)
           (cd framework && dart pub get)
+          (cd benchmarks && dart pub get)
+          (cd script && dart pub get)
       - name: Analyze
         run: |
           dart analyze --fatal-infos --fatal-warnings

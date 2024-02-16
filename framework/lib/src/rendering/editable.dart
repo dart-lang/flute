@@ -4,9 +4,9 @@
 
 import 'dart:collection';
 import 'dart:math' as math;
-import 'package:engine/ui.dart' as ui show BoxHeightStyle, BoxWidthStyle, LineMetrics, PlaceholderAlignment, TextBox;
 
 import 'package:characters/characters.dart';
+import 'package:engine/ui.dart' as ui show BoxHeightStyle, BoxWidthStyle, LineMetrics, PlaceholderAlignment, TextBox;
 import 'package:flute/foundation.dart';
 import 'package:flute/gestures.dart';
 import 'package:flute/semantics.dart';
@@ -131,7 +131,7 @@ class TextSelectionPoint {
 /// the [VerticalCaretMovementRun] must not be used. The [isValid] property must
 /// be checked before calling [movePrevious], [moveNext] and [moveByOffset],
 /// or accessing [current].
-class VerticalCaretMovementRun extends Iterator<TextPosition> {
+class VerticalCaretMovementRun implements Iterator<TextPosition> {
   VerticalCaretMovementRun._(
     this._editable,
     this._lineMetrics,

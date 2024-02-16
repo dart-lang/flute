@@ -3,10 +3,10 @@
 // found in the LICENSE file.
 
 import 'dart:math' as math;
-import 'package:engine/ui.dart' as ui;
-import 'package:engine/ui.dart' show Offset, Rect, SemanticsAction, SemanticsFlag, StringAttribute, TextDirection;
 
 import 'package:collection/collection.dart';
+import 'package:engine/ui.dart' as ui;
+import 'package:engine/ui.dart' show Offset, Rect, SemanticsAction, SemanticsFlag, StringAttribute, TextDirection;
 import 'package:flute/foundation.dart';
 import 'package:flute/painting.dart' show MatrixUtils, TransformProperty;
 import 'package:flute/services.dart';
@@ -2875,7 +2875,7 @@ class _BoxEdge implements Comparable<_BoxEdge> {
 /// nodes that share the same [SemanticsNode] parent.
 ///
 /// The [nodes] are sorted among each other separately from other nodes.
-class _SemanticsSortGroup extends Comparable<_SemanticsSortGroup> {
+class _SemanticsSortGroup implements Comparable<_SemanticsSortGroup> {
   _SemanticsSortGroup({
     required this.startOffset,
     required this.textDirection,

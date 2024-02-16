@@ -9,7 +9,7 @@ import 'dart:math' as math;
 import 'dart:typed_data';
 
 import 'src/initialization_io.dart'
-  if (dart.library.js_util) 'src/initialization_web.dart' as initialization;
+  if (dart.library.js_interop) 'src/initialization_web.dart' as initialization;
 
 part 'src/annotations.dart';
 part 'src/channel_buffers.dart';

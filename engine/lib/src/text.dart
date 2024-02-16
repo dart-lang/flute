@@ -826,10 +826,10 @@ class TextStyle {
     _locale,
     _background,
     _foreground,
-    _shadows == null ? null : Object.hashAll(_shadows!),
+    _shadows == null ? null : Object.hashAll(_shadows),
     _decorationThickness,
-    _fontFeatures == null ? null : Object.hashAll(_fontFeatures!),
-    _fontVariations == null ? null : Object.hashAll(_fontVariations!),
+    _fontFeatures == null ? null : Object.hashAll(_fontFeatures),
+    _fontVariations == null ? null : Object.hashAll(_fontVariations),
   );
 
   @override
@@ -848,7 +848,7 @@ class TextStyle {
                                      && _fontFamily != ''              ? _fontFamily                                  : "unspecified"}, '
              'fontFamilyFallback: ${ _encoded[0] & 0x00200 == 0x00200
                                      && _fontFamilyFallback != null
-                                     && _fontFamilyFallback!.isNotEmpty ? _fontFamilyFallback                         : "unspecified"}, '
+                                     && _fontFamilyFallback.isNotEmpty ? _fontFamilyFallback                         : "unspecified"}, '
              'fontSize: ${           _encoded[0] & 0x00400 == 0x00400  ? _fontSize                                    : "unspecified"}, '
              'letterSpacing: ${      _encoded[0] & 0x00800 == 0x00800  ? "${_letterSpacing}x"                         : "unspecified"}, '
              'wordSpacing: ${        _encoded[0] & 0x01000 == 0x01000  ? "${_wordSpacing}x"                           : "unspecified"}, '
@@ -886,12 +886,12 @@ class TextStyle {
         ? other._shadows
         : other._shadows == null
           ? _shadows
-          : <Shadow>[..._shadows!, ...other._shadows!],
+          : <Shadow>[..._shadows, ...other._shadows],
       fontFeatures: _fontFeatures == null
         ? other._fontFeatures
         : other._fontFeatures == null
           ? _fontFeatures
-          : <FontFeature>[..._fontFeatures!, ...other._fontFeatures!],
+          : <FontFeature>[..._fontFeatures, ...other._fontFeatures],
     );
   }
 }
@@ -2207,7 +2207,7 @@ class ParagraphBuilder {
       if (fontFamily != null)
         strutFontFamilies.add(fontFamily);
       if (strutStyle._fontFamilyFallback != null)
-        strutFontFamilies.addAll(strutStyle._fontFamilyFallback!);
+        strutFontFamilies.addAll(strutStyle._fontFamilyFallback);
     }
     return ParagraphBuilder._(style, style._toTextStyle(), strutFontFamilies);
   }
@@ -2244,7 +2244,7 @@ class ParagraphBuilder {
     final List<String> fullFontFamilies = <String>[];
     fullFontFamilies.add(style._fontFamily ?? '');
     if (style._fontFamilyFallback != null)
-    fullFontFamilies.addAll(style._fontFamilyFallback!);
+    fullFontFamilies.addAll(style._fontFamilyFallback);
 
     ByteData? encodedFontFeatures;
     final List<FontFeature>? fontFeatures = style._fontFeatures;
