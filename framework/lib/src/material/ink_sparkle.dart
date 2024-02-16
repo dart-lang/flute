@@ -290,7 +290,7 @@ class InkSparkle extends InteractiveInkFeature {
     if (_clipCallback != null) {
       _clipCanvas(
         canvas: canvas,
-        clipCallback: _clipCallback!,
+        clipCallback: _clipCallback,
         textDirection: _textDirection,
         customBorder: _customBorder,
         borderRadius: _borderRadius,
@@ -301,7 +301,7 @@ class InkSparkle extends InteractiveInkFeature {
 
     final Paint paint = Paint()..shader = _fragmentShader;
     if (_clipCallback != null) {
-      canvas.drawRect(_clipCallback!(), paint);
+      canvas.drawRect(_clipCallback(), paint);
     } else {
       canvas.drawPaint(paint);
     }

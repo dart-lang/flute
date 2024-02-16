@@ -107,7 +107,7 @@ class InkHighlight extends InteractiveInkFeature {
   void _paintHighlight(Canvas canvas, Rect rect, Paint paint) {
     canvas.save();
     if (_customBorder != null) {
-      canvas.clipPath(_customBorder!.getOuterPath(rect, textDirection: _textDirection));
+      canvas.clipPath(_customBorder.getOuterPath(rect, textDirection: _textDirection));
     }
     switch (_shape) {
       case BoxShape.circle:
@@ -133,7 +133,7 @@ class InkHighlight extends InteractiveInkFeature {
   void paintFeature(Canvas canvas, Matrix4 transform) {
     final Paint paint = Paint()..color = color.withAlpha(_alpha.value);
     final Offset? originOffset = MatrixUtils.getAsTranslation(transform);
-    final Rect rect = _rectCallback != null ? _rectCallback!() : Offset.zero & referenceBox.size;
+    final Rect rect = _rectCallback != null ? _rectCallback() : Offset.zero & referenceBox.size;
     if (originOffset == null) {
       canvas.save();
       canvas.transform(transform.storage);

@@ -1580,7 +1580,7 @@ class Locale {
     final StringBuffer out = StringBuffer(languageCode);
     if (scriptCode != null && scriptCode!.isNotEmpty)
       out.write('$separator$scriptCode');
-    if (_countryCode != null && _countryCode!.isNotEmpty)
+    if (_countryCode != null && _countryCode.isNotEmpty)
       out.write('$separator$countryCode');
     return out.toString();
   }

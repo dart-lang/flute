@@ -948,7 +948,7 @@ class ColorFilter implements ImageFilter {
         if (_matrix == null) {
           return null;
         }
-        assert(_matrix!.length == 20, 'Color Matrix must have 20 entries.');
+        assert(_matrix.length == 20, 'Color Matrix must have 20 entries.');
         return _ColorFilter.matrix(this);
       case _kTypeLinearToSrgbGamma:
         return _ColorFilter.linearToSrgbGamma(this);
