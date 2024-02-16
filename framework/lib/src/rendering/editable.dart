@@ -4,9 +4,9 @@
 
 import 'dart:collection';
 import 'dart:math' as math;
-import 'package:engine/ui.dart' as ui show BoxHeightStyle, BoxWidthStyle, LineMetrics, PlaceholderAlignment, TextBox;
 
 import 'package:characters/characters.dart';
+import 'package:engine/ui.dart' as ui show BoxHeightStyle, BoxWidthStyle, LineMetrics, PlaceholderAlignment, TextBox;
 import 'package:flute/foundation.dart';
 import 'package:flute/gestures.dart';
 import 'package:flute/semantics.dart';

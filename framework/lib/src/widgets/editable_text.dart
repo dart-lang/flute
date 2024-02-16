@@ -4,9 +4,9 @@
 
 import 'dart:async';
 import 'dart:math' as math;
-import 'package:engine/ui.dart' as ui hide TextStyle;
 
 import 'package:characters/characters.dart' show CharacterRange, StringCharacters;
+import 'package:engine/ui.dart' as ui hide TextStyle;
 import 'package:flute/foundation.dart';
 import 'package:flute/gestures.dart' show DragStartBehavior;
 import 'package:flute/rendering.dart';
