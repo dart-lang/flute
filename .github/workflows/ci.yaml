@@ -22,7 +22,7 @@ jobs:
       - name: Fetch sources
         uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11
       - name: Install Dart SDK
-        uses: dart-lang/setup-dart@b64355ae6ca0b5d484f0106a033dd1388965d06d
+        uses: dart-lang/setup-dart@f0ead981b4d9a35b37f30d36160575d60931ec30
         with:
           sdk: ${{ matrix.sdk }}
       - name: Pub get
