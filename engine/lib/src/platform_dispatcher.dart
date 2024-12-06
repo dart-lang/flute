@@ -574,9 +574,7 @@ class PlatformDispatcher {
         final int microseconds = _frameTime.inMicroseconds;
         _frameTime += const Duration(milliseconds: 16);
         Timer.run(() {
-          final Stopwatch beginSw = Stopwatch()..start();
-          _beginFrame(microseconds);
-          beginSw.stop();
+          late final Stopwatch beginSw;
           Timer.run(() {
             final Stopwatch drawSw = Stopwatch()..start();
             _drawFrame();
@@ -587,6 +585,9 @@ class PlatformDispatcher {
                 drawSw.elapsedMicroseconds / 1000);
             _frameCount += 1;
           });
+          beginSw = Stopwatch()..start();
+          _beginFrame(microseconds);
+          beginSw.stop();
         });
       },
     );
