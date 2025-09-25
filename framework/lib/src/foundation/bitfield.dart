@@ -3,7 +3,8 @@
 // found in the LICENSE file.
 
 import '_bitfield_io.dart'
-  if (dart.library.js_util) '_bitfield_web.dart' as bitfield;
+    if (dart.library.js_interop) '_bitfield_web.dart'
+    as bitfield;
 
 /// The largest SMI value.
 ///
@@ -44,5 +45,5 @@ abstract class BitField<T extends dynamic> {
   ///
   /// If the value is true, the bits are all set to one. Otherwise, the bits are
   /// all set to zero. Defaults to setting all the bits to zero.
-  void reset([ bool value = false ]);
+  void reset([bool value = false]);
 }
