@@ -20,7 +20,7 @@ jobs:
           echo "Running on ${{ runner.os }}"
           echo "Branch: ${{ github.ref }}; repo: ${{ github.repository }}."
       - name: Fetch sources
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0
       - name: Install Dart SDK
         uses: dart-lang/setup-dart@65eb853c7ba17dde3be364c3d2858773e7144260
         with:
